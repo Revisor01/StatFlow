@@ -423,8 +423,11 @@
 
 // MARK: - Dashboard Settings
 "dashboard.settings.title" = "Dashboard Settings";
+"dashboard.settings.display" = "Display";
+"dashboard.settings.showDateRangePicker" = "Show Time Periods";
 "dashboard.settings.graph" = "Graph";
 "dashboard.settings.showGraph" = "Show Graph";
+"dashboard.settings.chartStyle" = "Chart Style";
 "dashboard.settings.graph.footer" = "Display a trend graph on each website card.";
 "dashboard.settings.metrics" = "Displayed Metrics";
 "dashboard.settings.metrics.visitors" = "Visitors";

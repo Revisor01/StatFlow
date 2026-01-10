@@ -16,52 +16,58 @@ struct DashboardView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Offline-Banner
-                    if viewModel.isOffline {
-                        offlineBanner
-                    }
+            Group {
+                if isReordering {
+                    // Reorder Mode - List ohne ScrollView
+                    reorderingView
+                } else {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            // Offline-Banner
+                            if viewModel.isOffline {
+                                offlineBanner
+                            }
 
-                    // Account Switcher (only show if multiple accounts)
-                    if accountManager.hasMultipleAccounts {
-                        accountSwitcherButton
-                    }
+                            // Account Switcher (only show if multiple accounts)
+                            if accountManager.hasMultipleAccounts {
+                                accountSwitcherButton
+                            }
 
-                    dateRangePicker
+                            if settingsManager.showDateRangePicker {
+                                dateRangePicker
+                            }
 
-                    if viewModel.websites.isEmpty && !viewModel.isLoading {
-                        emptyStateView
-                    } else if isReordering {
-                        // Reorder Mode mit List für Drag & Drop
-                        reorderingView
-                    } else {
-                        LazyVStack(spacing: 16) {
-                            ForEach(viewModel.sortedWebsites) { website in
-                                WebsiteCard(
-                                    website: website,
-                                    stats: viewModel.stats[website.id],
-                                    activeVisitors: viewModel.activeVisitors[website.id] ?? 0,
-                                    sparklineData: viewModel.sparklineData[website.id] ?? [],
-                                    onShareLinkUpdated: { updatedWebsite in
-                                        viewModel.updateWebsite(updatedWebsite)
-                                    },
-                                    onRemoveSite: {
-                                        Task {
-                                            await viewModel.removeSite(website.id)
+                            if viewModel.websites.isEmpty && !viewModel.isLoading {
+                                emptyStateView
+                            } else {
+                                LazyVStack(spacing: 16) {
+                                    ForEach(viewModel.sortedWebsites) { website in
+                                        WebsiteCard(
+                                            website: website,
+                                            stats: viewModel.stats[website.id],
+                                            activeVisitors: viewModel.activeVisitors[website.id] ?? 0,
+                                            sparklineData: viewModel.sparklineData[website.id] ?? [],
+                                            onShareLinkUpdated: { updatedWebsite in
+                                                viewModel.updateWebsite(updatedWebsite)
+                                            },
+                                            onRemoveSite: {
+                                                Task {
+                                                    await viewModel.removeSite(website.id)
+                                                }
+                                            },
+                                            isUmamiProvider: !currentProviderIsPlausible,
+                                            isHourlyData: selectedDateRange.unit == "hour"
+                                        )
+                                        .onTapGesture {
+                                            selectedWebsite = website
                                         }
-                                    },
-                                    isUmamiProvider: !currentProviderIsPlausible,
-                                    isHourlyData: selectedDateRange.unit == "hour"
-                                )
-                                .onTapGesture {
-                                    selectedWebsite = website
+                                    }
                                 }
                             }
                         }
+                        .padding()
                     }
                 }
-                .padding()
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .navigationTitle("dashboard.title")
@@ -275,16 +281,18 @@ struct DashboardView: View {
         List {
             // MARK: - Display Settings
             Section {
+                Toggle("dashboard.settings.showDateRangePicker", isOn: $settingsManager.showDateRangePicker)
+
                 Toggle("dashboard.settings.showGraph", isOn: $settingsManager.showGraph)
 
                 if settingsManager.showGraph {
-                    Picker("chart.style", selection: $settingsManager.chartStyle) {
+                    Picker("dashboard.settings.chartStyle", selection: $settingsManager.chartStyle) {
                         Text("chart.style.bar").tag(DashboardChartStyle.bar)
                         Text("chart.style.line").tag(DashboardChartStyle.line)
                     }
                 }
             } header: {
-                Text("dashboard.settings.graph")
+                Text("dashboard.settings.display")
             }
 
             Section {
@@ -322,12 +330,16 @@ struct DashboardView: View {
                     viewModel.moveWebsite(from: from, to: to)
                 }
             } header: {
-                Text("dashboard.edit.order")
-            } footer: {
-                Text("dashboard.reorder.hint")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("dashboard.edit.order")
+                    Text("dashboard.reorder.hint")
+                        .font(.footnote)
+                        .fontWeight(.regular)
+                        .textCase(.none)
+                }
             }
         }
-        .environment(\.editMode, .constant(.active))
+        .listStyle(.insetGrouped)
     }
 
     private var accountSwitcherButton: some View {

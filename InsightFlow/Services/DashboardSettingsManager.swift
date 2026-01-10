@@ -73,6 +73,7 @@ class DashboardSettingsManager: ObservableObject {
     private let enabledMetricsKey = "dashboard_enabled_metrics"
     private let showGraphKey = "dashboard_show_graph"
     private let chartStyleKey = "dashboard_chart_style"
+    private let showDateRangePickerKey = "dashboard_show_date_range_picker"
 
     @Published var enabledMetrics: Set<DashboardMetric> {
         didSet {
@@ -92,9 +93,18 @@ class DashboardSettingsManager: ObservableObject {
         }
     }
 
+    @Published var showDateRangePicker: Bool {
+        didSet {
+            UserDefaults.standard.set(showDateRangePicker, forKey: showDateRangePickerKey)
+        }
+    }
+
     private init() {
         // Default: graph enabled
         showGraph = UserDefaults.standard.object(forKey: showGraphKey) as? Bool ?? true
+
+        // Default: date range picker enabled
+        showDateRangePicker = UserDefaults.standard.object(forKey: showDateRangePickerKey) as? Bool ?? true
 
         // Default chart style: bar
         if let savedStyle = UserDefaults.standard.string(forKey: chartStyleKey),

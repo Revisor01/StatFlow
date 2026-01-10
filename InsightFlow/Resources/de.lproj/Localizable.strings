@@ -424,8 +424,11 @@
 
 // MARK: - Dashboard Settings
 "dashboard.settings.title" = "Dashboard Einstellungen";
+"dashboard.settings.display" = "Anzeige";
+"dashboard.settings.showDateRangePicker" = "Zeitraumauswahl anzeigen";
 "dashboard.settings.graph" = "Graph";
 "dashboard.settings.showGraph" = "Graph anzeigen";
+"dashboard.settings.chartStyle" = "Diagrammstil";
 "dashboard.settings.graph.footer" = "Zeigt einen Verlaufsgraph auf jeder Website-Karte an.";
 "dashboard.settings.metrics" = "Angezeigte Metriken";
 "dashboard.settings.metrics.visitors" = "Besucher";

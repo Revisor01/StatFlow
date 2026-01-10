@@ -83,7 +83,7 @@ struct WebsiteCard: View {
                 loadingSection
             }
 
-            if settingsManager.showGraph && sparklineData.count >= 1 {
+            if settingsManager.showGraph && sparklineData.contains(where: { $0.value > 0 }) {
                 sparklineSection
             }
         }
@@ -263,31 +263,10 @@ struct WebsiteCard: View {
 
     @ViewBuilder
     private var sparklineSection: some View {
-        let hasData = sparklineData.contains { $0.value > 0 }
-
-        if hasData {
-            if settingsManager.chartStyle == .bar {
-                barSparkline
-            } else {
-                lineSparkline
-            }
+        if settingsManager.chartStyle == .bar {
+            barSparkline
         } else {
-            // Nulllinie anzeigen wenn keine Daten
-            Chart {
-                ForEach(sparklineData) { point in
-                    LineMark(
-                        x: .value("Datum", point.date),
-                        y: .value("Aufrufe", 0)
-                    )
-                    .foregroundStyle(.gray.opacity(0.3))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                }
-            }
-            .chartXAxis(.hidden)
-            .chartYAxis(.hidden)
-            .chartYScale(domain: 0...1)
-            .frame(maxWidth: .infinity)
-            .frame(height: 60)
+            lineSparkline
         }
     }
 
