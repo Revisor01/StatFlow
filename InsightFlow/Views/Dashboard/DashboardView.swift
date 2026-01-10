@@ -57,11 +57,6 @@ struct DashboardView: View {
                                 .onTapGesture {
                                     selectedWebsite = website
                                 }
-                                .onLongPressGesture {
-                                    withAnimation(.spring(duration: 0.3)) {
-                                        isReordering = true
-                                    }
-                                }
                             }
                         }
                     }
@@ -83,6 +78,18 @@ struct DashboardView: View {
                         }
                     }
                 } else {
+                    // Edit-Button fur Dashboard-Anpassung
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button {
+                            withAnimation(.spring(duration: 0.3)) {
+                                isReordering = true
+                            }
+                        } label: {
+                            Image(systemName: "slider.horizontal.3")
+                        }
+                        .accessibilityLabel(String(localized: "dashboard.edit.button"))
+                    }
+
                     // Chart Style Toggle (nur wenn Graph sichtbar)
                     if settingsManager.showGraph {
                         ToolbarItem(placement: .navigationBarTrailing) {
@@ -98,7 +105,7 @@ struct DashboardView: View {
                         }
                     }
 
-                    // Website hinzufügen für beide Provider
+                    // Website hinzufugen fur beide Provider
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Button {
                             if currentProviderIsPlausible {
@@ -265,13 +272,33 @@ struct DashboardView: View {
     }
 
     private var reorderingView: some View {
-        VStack(spacing: 0) {
-            Text("dashboard.reorder.hint")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .padding(.bottom, 12)
+        List {
+            // MARK: - Display Settings
+            Section {
+                Toggle("dashboard.settings.showGraph", isOn: $settingsManager.showGraph)
 
-            List {
+                if settingsManager.showGraph {
+                    Picker("chart.style", selection: $settingsManager.chartStyle) {
+                        Text("chart.style.bar").tag(ChartStyle.bar)
+                        Text("chart.style.line").tag(ChartStyle.line)
+                    }
+                }
+            } header: {
+                Text("dashboard.settings.graph")
+            }
+
+            Section {
+                Toggle("dashboard.settings.metrics.visitors", isOn: $settingsManager.showVisitors)
+                Toggle("dashboard.settings.metrics.pageviews", isOn: $settingsManager.showPageviews)
+                Toggle("dashboard.settings.metrics.visits", isOn: $settingsManager.showVisits)
+                Toggle("dashboard.settings.metrics.bounceRate", isOn: $settingsManager.showBounceRate)
+                Toggle("dashboard.settings.metrics.duration", isOn: $settingsManager.showDuration)
+            } header: {
+                Text("dashboard.settings.metrics")
+            }
+
+            // MARK: - Website Order
+            Section {
                 ForEach(viewModel.sortedWebsites) { website in
                     HStack(spacing: 12) {
                         Image(systemName: "line.3.horizontal")
@@ -293,10 +320,13 @@ struct DashboardView: View {
                 .onMove { from, to in
                     viewModel.moveWebsite(from: from, to: to)
                 }
+            } header: {
+                Text("dashboard.edit.order")
+            } footer: {
+                Text("dashboard.reorder.hint")
             }
-            .listStyle(.plain)
-            .environment(\.editMode, .constant(.active))
         }
+        .environment(\.editMode, .constant(.active))
     }
 
     private var accountSwitcherButton: some View {

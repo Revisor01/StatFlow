@@ -43,7 +43,9 @@
 "dashboard.empty.plausible" = "Füge deine erste Website hinzu, um Statistiken zu sehen.";
 "dashboard.empty.umami" = "Du hast noch keine Websites in deinem Umami-Account.";
 "dashboard.offline" = "Offline – zeige gecachte Daten";
-"dashboard.reorder.hint" = "Halte und ziehe um die Reihenfolge zu ändern";
+"dashboard.reorder.hint" = "Halte und ziehe um die Reihenfolge zu andern";
+"dashboard.edit.button" = "Dashboard anpassen";
+"dashboard.edit.order" = "Reihenfolge";
 
 // MARK: - Add Site
 "addSite.title" = "Website hinzufügen";

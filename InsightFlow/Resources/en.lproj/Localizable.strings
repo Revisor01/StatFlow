@@ -44,6 +44,8 @@
 "dashboard.empty.umami" = "You don't have any websites in your Umami account yet.";
 "dashboard.offline" = "Offline – showing cached data";
 "dashboard.reorder.hint" = "Hold and drag to reorder";
+"dashboard.edit.button" = "Customize Dashboard";
+"dashboard.edit.order" = "Order";
 
 // MARK: - Add Site
 "addSite.title" = "Add Website";
