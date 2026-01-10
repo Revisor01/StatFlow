@@ -279,8 +279,8 @@ struct DashboardView: View {
 
                 if settingsManager.showGraph {
                     Picker("chart.style", selection: $settingsManager.chartStyle) {
-                        Text("chart.style.bar").tag(ChartStyle.bar)
-                        Text("chart.style.line").tag(ChartStyle.line)
+                        Text("chart.style.bar").tag(DashboardChartStyle.bar)
+                        Text("chart.style.line").tag(DashboardChartStyle.line)
                     }
                 }
             } header: {
@@ -288,11 +288,12 @@ struct DashboardView: View {
             }
 
             Section {
-                Toggle("dashboard.settings.metrics.visitors", isOn: $settingsManager.showVisitors)
-                Toggle("dashboard.settings.metrics.pageviews", isOn: $settingsManager.showPageviews)
-                Toggle("dashboard.settings.metrics.visits", isOn: $settingsManager.showVisits)
-                Toggle("dashboard.settings.metrics.bounceRate", isOn: $settingsManager.showBounceRate)
-                Toggle("dashboard.settings.metrics.duration", isOn: $settingsManager.showDuration)
+                ForEach(DashboardMetric.allCases) { metric in
+                    Toggle(metric.localizedName, isOn: Binding(
+                        get: { settingsManager.isEnabled(metric) },
+                        set: { settingsManager.setEnabled(metric, enabled: $0) }
+                    ))
+                }
             } header: {
                 Text("dashboard.settings.metrics")
             }
