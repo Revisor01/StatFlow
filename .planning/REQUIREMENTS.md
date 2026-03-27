@@ -64,25 +64,25 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| SEC-03 | — | Pending |
-| SEC-04 | — | Pending |
-| ARCH-01 | — | Pending |
-| ARCH-02 | — | Pending |
-| ARCH-03 | — | Pending |
-| STAB-01 | — | Pending |
-| STAB-02 | — | Pending |
-| STAB-03 | — | Pending |
-| STRUC-01 | — | Pending |
-| STRUC-02 | — | Pending |
-| TEST-01 | — | Pending |
+| SEC-01 | Phase 1 | Pending |
+| SEC-02 | Phase 1 | Pending |
+| SEC-03 | Phase 1 | Pending |
+| SEC-04 | Phase 1 | Pending |
+| STAB-03 | Phase 2 | Pending |
+| STRUC-01 | Phase 2 | Pending |
+| STRUC-02 | Phase 2 | Pending |
+| STAB-01 | Phase 3 | Pending |
+| STAB-02 | Phase 3 | Pending |
+| ARCH-03 | Phase 4 | Pending |
+| ARCH-02 | Phase 4 | Pending |
+| ARCH-01 | Phase 4 | Pending |
+| TEST-01 | Phase 5 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 13 total
-- Mapped to phases: 0
-- Unmapped: 13 ⚠️
+- Mapped to phases: 13
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after initial definition*
+*Last updated: 2026-03-27 after roadmap creation*
