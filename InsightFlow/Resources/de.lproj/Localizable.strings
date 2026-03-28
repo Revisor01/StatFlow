@@ -492,3 +492,18 @@
 "events.quickAction.subtitle" = "Benutzerdefinierte Events";
 "reports.quickAction" = "Reports";
 "reports.quickAction.subtitle" = "Analyse-Reports";
+
+// MARK: - Plausible Goals
+"website.goals" = "Ziele";
+"website.goals.conversions" = "Conversions";
+"website.goals.conversionRate" = "Conv.-Rate";
+
+// MARK: - Plausible Filters
+"filter.source" = "Quelle";
+"filter.medium" = "Medium";
+"filter.campaign" = "Kampagne";
+"filter.country" = "Land";
+"filter.device" = "Gerät";
+"filter.browser" = "Browser";
+"filter.select" = "Filter auswählen";
+"filter.clear" = "Zurücksetzen";

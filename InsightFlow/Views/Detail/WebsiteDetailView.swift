@@ -44,6 +44,8 @@ struct WebsiteDetailView: View {
     @State private var showCustomDatePicker = false
     @State private var customStartDate = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
     @State private var customEndDate = Date()
+    @State private var showFilterSheet = false
+    @State private var filterSheetDimension: String?
 
     private var isPlausible: Bool {
         AnalyticsManager.shared.providerType == .plausible
@@ -51,13 +53,15 @@ struct WebsiteDetailView: View {
 
     init(website: Website) {
         self.website = website
-        _viewModel = StateObject(wrappedValue: WebsiteDetailViewModel(websiteId: website.id))
+        _viewModel = StateObject(wrappedValue: WebsiteDetailViewModel(websiteId: website.id, domain: website.domain ?? ""))
     }
 
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 20) {
                 dateRangePicker
+
+                filterChipBar
 
                 if let stats = viewModel.stats {
                     heroStats(stats)
@@ -85,6 +89,8 @@ struct WebsiteDetailView: View {
                 }
 
                 WebsiteDetailMetricsSections(viewModel: viewModel)
+
+                goalsSection
             }
             .padding()
         }
@@ -548,6 +554,121 @@ struct WebsiteDetailView: View {
         }
     }
 
+    // MARK: - Filter Chip Bar
+
+    private let filterDimensions: [(dimension: String, labelKey: String, icon: String)] = [
+        ("visit:source", "filter.source", "link"),
+        ("visit:medium", "filter.medium", "arrow.triangle.branch"),
+        ("visit:campaign", "filter.campaign", "megaphone"),
+        ("visit:country", "filter.country", "globe"),
+        ("visit:device", "filter.device", "iphone"),
+        ("visit:browser", "filter.browser", "globe")
+    ]
+
+    @ViewBuilder
+    private var filterChipBar: some View {
+        if isPlausible {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(filterDimensions, id: \.dimension) { filter in
+                        let activeFilter = viewModel.activeFilters.first { $0.dimension == filter.dimension }
+                        Button {
+                            if activeFilter != nil {
+                                viewModel.removeFilter(dimension: filter.dimension)
+                                Task { await viewModel.loadData(dateRange: selectedDateRange) }
+                            } else {
+                                filterSheetDimension = filter.dimension
+                                showFilterSheet = true
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: filter.icon)
+                                    .font(.caption)
+                                if let active = activeFilter {
+                                    Text("\(String(localized: String.LocalizationValue(filter.labelKey))): \(active.values.first ?? "")")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                    Image(systemName: "xmark")
+                                        .font(.caption2)
+                                } else {
+                                    Text(String(localized: String.LocalizationValue(filter.labelKey)))
+                                        .font(.caption)
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(activeFilter != nil ? Color.accentColor : Color(.secondarySystemBackground))
+                            .foregroundStyle(activeFilter != nil ? .white : .primary)
+                            .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 4)
+                .padding(.trailing, 20)
+            }
+            .mask(
+                HStack(spacing: 0) {
+                    Color.black
+                    LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: 30)
+                }
+            )
+            .sheet(isPresented: $showFilterSheet) {
+                if let dimension = filterSheetDimension {
+                    FilterSelectionSheet(
+                        dimension: dimension,
+                        dimensionLabel: filterDimensions.first(where: { $0.dimension == dimension })?.labelKey ?? dimension,
+                        viewModel: viewModel,
+                        selectedDateRange: selectedDateRange
+                    )
+                    .presentationDetents([.medium, .large])
+                }
+            }
+        }
+    }
+
+    // MARK: - Goals Section
+
+    @ViewBuilder
+    private var goalsSection: some View {
+        if isPlausible && !viewModel.goals.isEmpty {
+            GlassCard {
+                VStack(alignment: .leading, spacing: 16) {
+                    SectionHeader(title: String(localized: "website.goals"), icon: "target")
+
+                    ForEach(viewModel.goals.prefix(10)) { goal in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(goal.goalName)
+                                    .font(.subheadline)
+                                    .lineLimit(1)
+                                Text(goal.goalName.hasPrefix("/") ? "Page Goal" : "Event Goal")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(goal.events.formatted())
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                let rate = Double(goal.visitors) / Double(max(viewModel.totalVisitors, 1)) * 100
+                                Text(String(format: "%.1f%%", rate))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+
+                        if goal.id != viewModel.goals.prefix(10).last?.id {
+                            Divider()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // MARK: - Helper Functions
 
     private func shortenReferrer(_ referrer: String) -> String {
@@ -561,6 +682,70 @@ struct WebsiteDetailView: View {
         }
 
         return result.count > 25 ? String(result.prefix(22)) + "..." : result
+    }
+}
+
+// MARK: - Filter Selection Sheet
+
+private struct FilterSelectionSheet: View {
+    let dimension: String
+    let dimensionLabel: String
+    @ObservedObject var viewModel: WebsiteDetailViewModel
+    let selectedDateRange: DateRange
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var availableValues: [String] {
+        switch dimension {
+        case "visit:country":
+            return viewModel.countries.map { $0.name }.filter { !$0.isEmpty }
+        case "visit:device":
+            return viewModel.devices.map { $0.name }.filter { !$0.isEmpty }
+        case "visit:browser":
+            return viewModel.browsers.map { $0.name }.filter { !$0.isEmpty }
+        case "visit:source":
+            return viewModel.referrers.map { $0.name }.filter { !$0.isEmpty }
+        default:
+            return []
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if availableValues.isEmpty {
+                    ContentUnavailableView(
+                        String(localized: String.LocalizationValue(dimensionLabel)),
+                        systemImage: "line.3.horizontal.decrease.circle",
+                        description: Text(String(localized: "filter.select"))
+                    )
+                } else {
+                    List(availableValues, id: \.self) { value in
+                        Button {
+                            viewModel.applyFilter(PlausibleQueryFilter(
+                                dimension: dimension,
+                                operator_: .is_,
+                                values: [value]
+                            ))
+                            Task { await viewModel.loadData(dateRange: selectedDateRange) }
+                            dismiss()
+                        } label: {
+                            Text(value.isEmpty ? String(localized: "website.referrer.direct") : value)
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                }
+            }
+            .navigationTitle(String(localized: String.LocalizationValue(dimensionLabel)))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(String(localized: "button.cancel")) {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
