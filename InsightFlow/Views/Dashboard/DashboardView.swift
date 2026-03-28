@@ -902,7 +902,9 @@ class DashboardViewModel: ObservableObject {
             do {
                 try await umamiAPI.deleteWebsite(websiteId: websiteId)
             } catch {
+                #if DEBUG
                 print("Failed to delete Umami website: \(error)")
+                #endif
                 return
             }
         }
