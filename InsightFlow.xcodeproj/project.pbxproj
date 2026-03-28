@@ -216,7 +216,7 @@
 			);
 			productName = InsightFlowTests;
 			productReference = A2000000000000000000010 /* InsightFlowTests.xctest */;
-			productType = "com.apple.product-type.unit-test-bundle";
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -524,6 +524,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				PRODUCT_BUNDLE_IDENTIFIER = de.godsapp.PrivacyFlow.InsightFlowTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/InsightFlow.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/InsightFlow";
@@ -540,6 +542,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				PRODUCT_BUNDLE_IDENTIFIER = de.godsapp.PrivacyFlow.InsightFlowTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/InsightFlow.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/InsightFlow";
