@@ -26,7 +26,9 @@
   2. Der große Account-Switcher-Bereich im Dashboard ist entfernt
   3. Das Account-Hinzufügen-Modal zeigt keinen "Abbrechen"-Button wenn es vom Account-Switcher geöffnet wurde
   4. Account-Switching funktioniert weiterhin korrekt (alle Daten laden nach Switch)
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 01-01-PLAN.md — Account-Switcher zu Toolbar-Menu umbauen + Cancel-Button entfernen
 **UI hint**: yes
 
 ### Phase 2: Widget Deep Link Fix
@@ -58,6 +60,6 @@ Phases execute in order: 1 → 2 → 3 (Phase 2 könnte parallel zu Phase 1)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Dashboard UX Polish | 0/? | Not started | - |
+| 1. Dashboard UX Polish | 0/1 | Planning done | - |
 | 2. Widget Deep Link Fix | 0/? | Not started | - |
 | 3. Alle-Accounts-Ansicht | 0/? | Not started | - |
