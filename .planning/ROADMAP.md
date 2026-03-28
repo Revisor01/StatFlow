@@ -72,7 +72,11 @@ Plans:
   2. `WebsiteDetailViewModel` enthält kein `if isPlausible`-Branching mehr — alle `loadX()`-Methoden rufen ausschließlich `currentProvider.methodName()` auf
   3. `AuthManager` ist entfernt oder auf einen dünnen Wrapper reduziert — `AccountManager` ist die einzige Autorität über den Auth-State
   4. Login, Account-Switching und Logout funktionieren für Umami- und Plausible-Accounts nach der Konsolidierung korrekt
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 04-01-PLAN.md — PlausibleAPI von @MainActor class auf actor umstellen (ARCH-03)
+- [ ] 04-02-PLAN.md — WebsiteDetailViewModel auf AnalyticsProvider-Protokoll umstellen (ARCH-02)
+- [ ] 04-03-PLAN.md — AuthManager entfernen, Auth-State in AccountManager konsolidieren (ARCH-01)
 
 ### Phase 5: Tests
 **Goal**: Kritische Pfade sind mit Unit Tests abgedeckt. Zukünftige Refactorings haben ein Sicherheitsnetz.
