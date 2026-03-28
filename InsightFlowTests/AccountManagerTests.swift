@@ -125,4 +125,65 @@ class AccountManagerTests: XCTestCase {
 
         XCTAssertNotNil(UserDefaults.standard.string(forKey: "active_account_id"))
     }
+
+    func testMigrateFromLegacyCredentials_Umami() async throws {
+        let manager = AccountManager.shared
+        // setUp ensures accounts is empty
+
+        addTeardownBlock {
+            try? KeychainService.delete(for: .serverURL)
+            try? KeychainService.delete(for: .providerType)
+            try? KeychainService.delete(for: .token)
+        }
+
+        try KeychainService.save("https://umami.test.com", for: .serverURL)
+        try KeychainService.save("umami", for: .providerType)
+        try KeychainService.save("legacy-token-123", for: .token)
+
+        manager.migrateFromLegacyCredentials()
+
+        XCTAssertEqual(manager.accounts.count, 1)
+        XCTAssertEqual(manager.accounts[0].serverURL, "https://umami.test.com")
+        XCTAssertEqual(manager.accounts[0].providerType, .umami)
+        XCTAssertNotNil(manager.activeAccount)
+    }
+
+    func testMigrateFromLegacyCredentials_SkipsWhenAccountsExist() async throws {
+        let manager = AccountManager.shared
+        let existing = makeTestAccount(name: "Existing", serverURL: "https://existing.com")
+        manager.addAccount(existing)
+
+        addTeardownBlock {
+            try? KeychainService.delete(for: .serverURL)
+            try? KeychainService.delete(for: .providerType)
+            try? KeychainService.delete(for: .token)
+        }
+
+        try KeychainService.save("https://umami.test.com", for: .serverURL)
+        try KeychainService.save("umami", for: .providerType)
+        try KeychainService.save("legacy-token-123", for: .token)
+
+        manager.migrateFromLegacyCredentials()
+
+        XCTAssertEqual(manager.accounts.count, 1)
+        XCTAssertEqual(manager.accounts[0].serverURL, "https://existing.com")
+    }
+
+    func testSetActiveAccountAppliesCredentialsToKeychain() async throws {
+        let manager = AccountManager.shared
+
+        addTeardownBlock {
+            try? KeychainService.delete(for: .serverURL)
+            try? KeychainService.delete(for: .providerType)
+            try? KeychainService.delete(for: .token)
+        }
+
+        let account = makeTestAccount(name: "Cred Test", serverURL: "https://cred.test.com")
+        manager.addAccount(account)
+        manager.setActiveAccount(account)
+
+        XCTAssertEqual(KeychainService.load(for: .serverURL), "https://cred.test.com")
+        XCTAssertEqual(KeychainService.load(for: .providerType), "umami")
+        XCTAssertEqual(KeychainService.load(for: .token), "test-token")
+    }
 }
