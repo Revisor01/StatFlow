@@ -746,6 +746,61 @@ actor UmamiAPI: AnalyticsProvider {
         _ = try await deleteRequest(endpoint: "api/teams/\(teamId)/users/\(userId)")
     }
 
+    func getUserTeams(page: Int = 1, pageSize: Int = 20) async throws -> [Team] {
+        let data = try await request(
+            endpoint: "api/teams",
+            queryItems: [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "pageSize", value: String(pageSize))
+            ]
+        )
+        let response = try decoder.decode(TeamsResponse.self, from: data)
+        return response.data
+    }
+
+    func joinTeam(accessCode: String) async throws -> TeamMember {
+        let body: [String: Any] = ["accessCode": accessCode]
+        let data = try await postRequest(endpoint: "api/teams/join", body: body)
+        return try decoder.decode(TeamMember.self, from: data)
+    }
+
+    func getTeam(teamId: String) async throws -> Team {
+        let data = try await request(endpoint: "api/teams/\(teamId)")
+        return try decoder.decode(Team.self, from: data)
+    }
+
+    func updateTeam(teamId: String, name: String? = nil, accessCode: String? = nil) async throws -> Team {
+        var body: [String: Any] = [:]
+        if let name = name { body["name"] = name }
+        if let accessCode = accessCode { body["accessCode"] = accessCode }
+
+        let data = try await postRequest(endpoint: "api/teams/\(teamId)", body: body)
+        return try decoder.decode(Team.self, from: data)
+    }
+
+    func getTeamMember(teamId: String, userId: String) async throws -> TeamMember {
+        let data = try await request(endpoint: "api/teams/\(teamId)/users/\(userId)")
+        return try decoder.decode(TeamMember.self, from: data)
+    }
+
+    func updateTeamMemberRole(teamId: String, userId: String, role: String) async throws -> TeamMember {
+        let body: [String: Any] = ["role": role]
+        let data = try await postRequest(endpoint: "api/teams/\(teamId)/users/\(userId)", body: body)
+        return try decoder.decode(TeamMember.self, from: data)
+    }
+
+    func getTeamWebsites(teamId: String, page: Int = 1, pageSize: Int = 20) async throws -> [Website] {
+        let data = try await request(
+            endpoint: "api/teams/\(teamId)/websites",
+            queryItems: [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "pageSize", value: String(pageSize))
+            ]
+        )
+        let response = try decoder.decode(TeamWebsitesResponse.self, from: data)
+        return response.data
+    }
+
     // MARK: - Users (Admin)
 
     func getUsers() async throws -> [UmamiUser] {
@@ -766,6 +821,109 @@ actor UmamiAPI: AnalyticsProvider {
 
     func deleteUser(userId: String) async throws {
         _ = try await deleteRequest(endpoint: "api/users/\(userId)")
+    }
+
+    func getUser(userId: String) async throws -> UmamiUser {
+        let data = try await request(endpoint: "api/users/\(userId)")
+        return try decoder.decode(UmamiUser.self, from: data)
+    }
+
+    func updateUser(userId: String, username: String? = nil, password: String? = nil, role: String? = nil) async throws -> UmamiUser {
+        var body: [String: Any] = [:]
+        if let username = username { body["username"] = username }
+        if let password = password { body["password"] = password }
+        if let role = role { body["role"] = role }
+
+        let data = try await postRequest(endpoint: "api/users/\(userId)", body: body)
+        return try decoder.decode(UmamiUser.self, from: data)
+    }
+
+    func getUserWebsites(userId: String, includeTeams: Bool = false, page: Int = 1, pageSize: Int = 20) async throws -> [Website] {
+        var queryItems = [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "pageSize", value: String(pageSize))
+        ]
+        if includeTeams {
+            queryItems.append(URLQueryItem(name: "includeTeams", value: "true"))
+        }
+
+        let data = try await request(endpoint: "api/users/\(userId)/websites", queryItems: queryItems)
+        let response = try decoder.decode(UserWebsitesResponse.self, from: data)
+        return response.data
+    }
+
+    func getUserTeamsList(userId: String, page: Int = 1, pageSize: Int = 20) async throws -> [Team] {
+        let data = try await request(
+            endpoint: "api/users/\(userId)/teams",
+            queryItems: [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "pageSize", value: String(pageSize))
+            ]
+        )
+        let response = try decoder.decode(UserTeamsResponse.self, from: data)
+        return response.data
+    }
+
+    // MARK: - Share
+
+    func createSharePage(entityId: String, shareType: Int, name: String, slug: String, parameters: [String: Any]? = nil) async throws -> SharePage {
+        var body: [String: Any] = [
+            "entityId": entityId,
+            "shareType": shareType,
+            "name": name,
+            "slug": slug
+        ]
+        if let parameters = parameters { body["parameters"] = parameters }
+
+        let data = try await postRequest(endpoint: "api/share", body: body)
+        return try decoder.decode(SharePage.self, from: data)
+    }
+
+    func getSharePage(shareId: String) async throws -> SharePage {
+        let data = try await request(endpoint: "api/share/id/\(shareId)")
+        return try decoder.decode(SharePage.self, from: data)
+    }
+
+    func updateSharePage(shareId: String, name: String? = nil, slug: String? = nil, parameters: [String: Any]? = nil) async throws -> SharePage {
+        var body: [String: Any] = [:]
+        if let name = name { body["name"] = name }
+        if let slug = slug { body["slug"] = slug }
+        if let parameters = parameters { body["parameters"] = parameters }
+
+        let data = try await postRequest(endpoint: "api/share/id/\(shareId)", body: body)
+        return try decoder.decode(SharePage.self, from: data)
+    }
+
+    func deleteSharePage(shareId: String) async throws {
+        _ = try await deleteRequest(endpoint: "api/share/id/\(shareId)")
+    }
+
+    func getWebsiteShares(websiteId: String) async throws -> [SharePage] {
+        let data = try await request(endpoint: "api/websites/\(websiteId)/shares")
+        let response = try decoder.decode(ShareListResponse.self, from: data)
+        return response.data
+    }
+
+    func createWebsiteShare(websiteId: String, name: String, parameters: [String: Any]? = nil) async throws -> SharePage {
+        var body: [String: Any] = ["name": name]
+        if let parameters = parameters { body["parameters"] = parameters }
+
+        let data = try await postRequest(endpoint: "api/websites/\(websiteId)/shares", body: body)
+        return try decoder.decode(SharePage.self, from: data)
+    }
+
+    // MARK: - Admin
+
+    func getAdminWebsites(page: Int = 1, pageSize: Int = 20) async throws -> [Website] {
+        let data = try await request(
+            endpoint: "api/admin/websites",
+            queryItems: [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "pageSize", value: String(pageSize))
+            ]
+        )
+        let response = try decoder.decode(WebsiteResponse.self, from: data)
+        return response.websites
     }
 
     // MARK: - Journey Report
