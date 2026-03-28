@@ -91,7 +91,7 @@ class AccountManagerTests: XCTestCase {
         let account = makeTestAccount()
 
         manager.addAccount(account)
-        manager.setActiveAccount(account)
+        await manager.setActiveAccount(account)
 
         XCTAssertEqual(manager.activeAccount?.id, account.id)
     }
@@ -101,7 +101,7 @@ class AccountManagerTests: XCTestCase {
         let account = makeTestAccount()
 
         manager.addAccount(account)
-        manager.setActiveAccount(account)
+        await manager.setActiveAccount(account)
         manager.clearActiveAccount()
 
         XCTAssertNil(manager.activeAccount)
@@ -121,7 +121,7 @@ class AccountManagerTests: XCTestCase {
         let account = makeTestAccount()
 
         manager.addAccount(account)
-        manager.setActiveAccount(account)
+        await manager.setActiveAccount(account)
 
         XCTAssertNotNil(UserDefaults.standard.string(forKey: "active_account_id"))
     }
@@ -145,6 +145,8 @@ class AccountManagerTests: XCTestCase {
         XCTAssertEqual(manager.accounts.count, 1)
         XCTAssertEqual(manager.accounts[0].serverURL, "https://umami.test.com")
         XCTAssertEqual(manager.accounts[0].providerType, .umami)
+        // setActiveAccount runs in a Task — give it time to complete
+        try await Task.sleep(nanoseconds: 100_000_000)
         XCTAssertNotNil(manager.activeAccount)
     }
 
@@ -180,7 +182,7 @@ class AccountManagerTests: XCTestCase {
 
         let account = makeTestAccount(name: "Cred Test", serverURL: "https://cred.test.com")
         manager.addAccount(account)
-        manager.setActiveAccount(account)
+        await manager.setActiveAccount(account)
 
         XCTAssertEqual(KeychainService.load(for: .serverURL), "https://cred.test.com")
         XCTAssertEqual(KeychainService.load(for: .providerType), "umami")

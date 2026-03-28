@@ -58,13 +58,7 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     /// Reconfigure from Keychain - called when switching accounts
-    nonisolated func reconfigureFromKeychain() {
-        Task {
-            await reconfigureFromKeychainInternal()
-        }
-    }
-
-    private func reconfigureFromKeychainInternal() {
+    func reconfigureFromKeychain() {
         if let serverURL = KeychainService.load(for: .serverURL),
            let url = URL(string: serverURL),
            let token = KeychainService.load(for: .token) {

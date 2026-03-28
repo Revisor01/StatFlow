@@ -26,7 +26,7 @@ class LoginViewModel: ObservableObject {
                 credentials: AccountCredentials(token: token, apiKey: nil)
             )
             AccountManager.shared.addAccount(account)
-            AccountManager.shared.setActiveAccount(account)
+            await AccountManager.shared.setActiveAccount(account)
         } catch let error as APIError {
             errorMessage = error.errorDescription
         } catch {
@@ -57,7 +57,7 @@ class LoginViewModel: ObservableObject {
                 sites: sites
             )
             AccountManager.shared.addAccount(account)
-            AccountManager.shared.setActiveAccount(account)
+            await AccountManager.shared.setActiveAccount(account)
         } catch let error as PlausibleError {
             errorMessage = error.errorDescription
         } catch {

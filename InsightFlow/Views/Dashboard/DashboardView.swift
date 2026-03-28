@@ -397,9 +397,11 @@ struct AccountSwitcherSheet: View {
                             account: account,
                             isActive: accountManager.activeAccount?.id == account.id,
                             onSelect: {
-                                accountManager.setActiveAccount(account)
-                                onAccountChanged?()
-                                dismiss()
+                                Task {
+                                    await accountManager.setActiveAccount(account)
+                                    onAccountChanged?()
+                                    dismiss()
+                                }
                             }
                         )
                     }
@@ -661,7 +663,7 @@ struct AddAccountView: View {
                     credentials: AccountCredentials(token: token, apiKey: nil)
                 )
                 accountManager.addAccount(account)
-                accountManager.setActiveAccount(account)
+                await accountManager.setActiveAccount(account)
             } else {
                 // Authenticate with Plausible
                 try await PlausibleAPI.shared.authenticate(serverURL: normalizedURL, credentials: .plausible(apiKey: apiKey))
@@ -674,7 +676,7 @@ struct AddAccountView: View {
                     sites: []
                 )
                 accountManager.addAccount(account)
-                accountManager.setActiveAccount(account)
+                await accountManager.setActiveAccount(account)
             }
 
             await MainActor.run {
