@@ -84,6 +84,12 @@ class AccountManager: ObservableObject {
             migrateCredentialsToKeychain()
         }
         loadAccounts()
+        // Configure API services for the active account on app start
+        if let account = activeAccount {
+            Task {
+                await applyAccountCredentials(account)
+            }
+        }
     }
 
     // MARK: - Account Management
