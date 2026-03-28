@@ -396,9 +396,14 @@ struct SettingsView: View {
                 Text("PrivacyFlow v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")")
                 HStack(spacing: 4) {
                     Text("Made with")
-                    Image(systemName: "heart.fill")
+                    Image(systemName: "dove.fill")
+                        .foregroundStyle(.secondary)
                     Text("in Hennstedt")
                 }
+                Text("Friede. Schalom. Salam.")
+                    .font(.caption2)
+                    .italic()
+                    .foregroundStyle(.tertiary)
             }
             .font(.caption)
             .foregroundStyle(.secondary)
