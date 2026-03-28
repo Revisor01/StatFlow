@@ -10,8 +10,14 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 ## Current State
 
-**Latest shipped:** v2.2 Support & API Coverage (completed 2026-03-28)
-**Current milestone:** v2.3 API Data Screens & Analytics Setup
+**Latest shipped:** v2.3 API Data Screens & Analytics Setup (completed 2026-03-28)
+**Next milestone:** Not yet defined
+
+### v2.3 Accomplishments
+- EventsView + ReportsHub (Funnel, UTM, Goals, Attribution) als neue Screens
+- Entry/Exit Pages + Plausible Filter-Chip-Bar (6 Dimensionen)
+- In-App Setup Guide (Umami/Plausible Tracking + Goals)
+- Analytics Glossar (12 Begriffe, DE+EN)
 
 ### v2.2 Accomplishments
 - SupportView redesigned: SF Symbols statt Emojis, dezentes Branding "Ein Pastorenprojekt"
@@ -64,12 +70,7 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] SCREEN-01: Events-View (Event-Liste, Details, Statistiken) für Umami
-- [ ] SCREEN-02: Reports-View (Funnel, UTM, Goals, Attribution) für Umami
-- [ ] SCREEN-03: Entry/Exit Pages und erweiterte Session-Details
-- [ ] SCREEN-04: Plausible Goals + Filter in bestehenden Views nutzen
-- [ ] SETUP-01: Analytics-Tracking auf eigenen Websites einrichten (Umami/Plausible)
-- [ ] GUIDE-01: In-App Erklärungen was die Daten bedeuten
+*No active requirements — start next milestone with `/gsd:new-milestone`*
 
 ### Out of Scope
 
@@ -124,4 +125,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — v2.3 milestone started*
+*Last updated: 2026-03-28 — v2.3 milestone archived*
