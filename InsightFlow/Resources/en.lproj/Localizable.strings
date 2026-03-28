@@ -483,3 +483,9 @@
 "reports.funnel.dropoff" = "Dropoff";
 "reports.goals.completion" = "Completion";
 "reports.selectReport" = "Select Report";
+
+// MARK: - Quick Actions
+"events.quickAction" = "Events";
+"events.quickAction.subtitle" = "Custom events";
+"reports.quickAction" = "Reports";
+"reports.quickAction.subtitle" = "Analytics reports";
