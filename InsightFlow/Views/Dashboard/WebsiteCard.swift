@@ -63,6 +63,7 @@ struct WebsiteCard: View {
     var onRemoveSite: (() -> Void)? = nil
     var isUmamiProvider: Bool = true
     var isHourlyData: Bool = false
+    var providerName: String? = nil
 
     @State private var showTrackingCode = false
     @State private var showShareSheet = false
@@ -159,11 +160,30 @@ struct WebsiteCard: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+                providerBadge
             }
 
             Spacer()
 
             LiveIndicator(count: activeVisitors)
+        }
+    }
+
+    @ViewBuilder
+    private var providerBadge: some View {
+        if let name = providerName {
+            let color: Color = name == "Umami" ? .orange : .blue
+            Text(name)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(color.opacity(0.15))
+                .foregroundStyle(color)
+                .clipShape(Capsule())
+        } else {
+            EmptyView()
         }
     }
 
