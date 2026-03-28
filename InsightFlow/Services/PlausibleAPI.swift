@@ -73,7 +73,7 @@ actor PlausibleAPI: AnalyticsProvider {
         // Save credentials with normalized URL
         try KeychainService.save(normalizedURL, for: .serverURL)
         try KeychainService.save(apiKey, for: .apiKey)
-        AnalyticsManager.shared.saveProviderType(.plausible)
+        await MainActor.run { AnalyticsManager.shared.saveProviderType(.plausible) }
     }
 
     /// Normalizes the server URL by ensuring it has https:// prefix and no trailing slash
@@ -120,7 +120,7 @@ actor PlausibleAPI: AnalyticsProvider {
         _ = try decoder.decode(PlausibleAPIResponse.self, from: data)
 
         // Save to local storage
-        PlausibleSitesManager.shared.addSite(normalizedDomain)
+        await MainActor.run { PlausibleSitesManager.shared.addSite(normalizedDomain) }
     }
 
     /// Normalizes a domain by removing protocol, trailing slashes, and whitespace
@@ -144,14 +144,14 @@ actor PlausibleAPI: AnalyticsProvider {
         return normalized.lowercased()
     }
 
-    func removeSite(domain: String) {
-        PlausibleSitesManager.shared.removeSite(domain)
+    func removeSite(domain: String) async {
+        await MainActor.run { PlausibleSitesManager.shared.removeSite(domain) }
     }
 
     // MARK: - Websites
 
     func getAnalyticsWebsites() async throws -> [AnalyticsWebsite] {
-        let sites = PlausibleSitesManager.shared.sites
+        let sites = await MainActor.run { PlausibleSitesManager.shared.sites }
         return sites.map { domain in
             AnalyticsWebsite(
                 id: domain,
@@ -548,7 +548,7 @@ actor PlausibleAPI: AnalyticsProvider {
 
     // MARK: - Tracking Code
 
-    func getTrackingCode(domain: String) -> String {
+    nonisolated func getTrackingCode(domain: String) -> String {
         """
         <script defer data-domain="\(domain)" src="\(serverURL)/js/script.js"></script>
         """
