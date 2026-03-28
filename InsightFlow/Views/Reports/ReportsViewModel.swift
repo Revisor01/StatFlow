@@ -113,11 +113,10 @@ class ReportsViewModel: ObservableObject {
 
         do {
             let params = parseParameters(report.parameters)
-            let goals = params?["goals"] as? [[String: Any]] ?? []
             goalData = try await api.getGoalReport(
                 websiteId: websiteId,
                 dateRange: dateRange,
-                goals: goals
+                goals: []
             )
         } catch {
             #if DEBUG

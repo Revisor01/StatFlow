@@ -7,7 +7,7 @@ struct EventsView: View {
 
     @StateObject private var viewModel: EventsViewModel
     @State private var selectedDateRange: DateRange = .thisWeek
-    @State private var selectedEvent: MetricItem?
+    @State private var selectedEvent: AnalyticsMetricItem?
 
     init(website: Website) {
         self.website = website
@@ -141,7 +141,7 @@ struct EventsView: View {
 // MARK: - EventRow
 
 struct EventRow: View {
-    let event: MetricItem
+    let event: AnalyticsMetricItem
 
     var body: some View {
         HStack(spacing: 12) {

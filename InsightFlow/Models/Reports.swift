@@ -9,7 +9,7 @@ struct ReportListResponse: Codable, Sendable {
     let pageSize: Int
 }
 
-struct Report: Codable, Identifiable, Sendable {
+struct Report: Codable, Identifiable, Sendable, Hashable {
     let id: String
     let userId: String
     let websiteId: String
