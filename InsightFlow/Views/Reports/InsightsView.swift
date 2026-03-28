@@ -325,7 +325,9 @@ class ComparisonViewModel: ObservableObject {
             }
 
         } catch {
+            #if DEBUG
             print("Comparison error: \(error)")
+            #endif
         }
 
         isLoading = false

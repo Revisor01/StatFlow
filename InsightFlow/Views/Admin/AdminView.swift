@@ -954,7 +954,9 @@ class AdminViewModel: ObservableObject {
         do {
             teams = try await umamiAPI.getTeams()
         } catch {
+            #if DEBUG
             print("Teams error: \(error)")
+            #endif
         }
     }
 
@@ -962,7 +964,9 @@ class AdminViewModel: ObservableObject {
         do {
             users = try await umamiAPI.getUsers()
         } catch {
+            #if DEBUG
             print("Users error: \(error)")
+            #endif
         }
     }
 

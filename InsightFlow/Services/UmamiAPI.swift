@@ -405,9 +405,11 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         // Debug output for troubleshooting
+        #if DEBUG
         if let jsonString = String(data: data, encoding: .utf8) {
             print("Team create response: \(jsonString)")
         }
+        #endif
 
         throw APIError.invalidResponse
     }

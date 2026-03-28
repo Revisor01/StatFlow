@@ -83,6 +83,8 @@ struct AddPlausibleSiteView: View {
 
 #Preview {
     AddPlausibleSiteView {
+        #if DEBUG
         print("Site added")
+        #endif
     }
 }

@@ -556,7 +556,9 @@ struct DashboardShareLinkSheet: View {
                                 } catch {
                                     // Revert toggle on error
                                     isShareEnabled = !newValue
+                                    #if DEBUG
                                     print("Share link error: \(error)")
+                                    #endif
                                 }
                                 isUpdating = false
                             }
