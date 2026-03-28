@@ -448,3 +448,26 @@
 "accessibility.chart.visitors" = "Visitors over time";
 "accessibility.dateRange.selected" = "Selected";
 "accessibility.dateRange.notSelected" = "Not selected";
+
+// MARK: - Reports
+"reports.title" = "Reports";
+"reports.funnel" = "Funnels";
+"reports.funnel.subtitle" = "Conversion paths";
+"reports.utm" = "UTM Campaigns";
+"reports.utm.subtitle" = "Traffic sources";
+"reports.goals" = "Goals";
+"reports.goals.subtitle" = "Goal tracking";
+"reports.attribution" = "Attribution";
+"reports.attribution.subtitle" = "Channel attribution";
+"reports.empty.utm" = "No UTM Data";
+"reports.empty.utm.description" = "No UTM campaign data for this period.";
+"reports.empty.attribution" = "No Attribution Data";
+"reports.empty.attribution.description" = "No attribution data for this period.";
+"reports.empty.funnel" = "No Funnel Reports";
+"reports.empty.funnel.description" = "Create funnel reports in the Umami dashboard first.";
+"reports.empty.goals" = "No Goal Reports";
+"reports.empty.goals.description" = "Create goal reports in the Umami dashboard first.";
+"reports.funnel.visitors" = "Visitors";
+"reports.funnel.dropoff" = "Dropoff";
+"reports.goals.completion" = "Completion";
+"reports.selectReport" = "Select Report";
