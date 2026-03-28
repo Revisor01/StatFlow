@@ -88,9 +88,9 @@ Plans:
   3. Unit Tests für API-Response-Parsing von `UmamiAPI` und `PlausibleAPI` mit Mock-Daten laufen grün
   4. Unit Tests für `DateRange`-Berechnungen (Presets, Custom, Provider-Formatierung) laufen grün
   5. Unit Tests für `AnalyticsCacheService` (save/load, TTL-Expiry) laufen grün
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
-- [ ] 05-01-PLAN.md — Test-Target anlegen, CacheService refactorn, KeychainService + DateRange Tests (TEST-01)
+- [x] 05-01-PLAN.md — Test-Target anlegen, CacheService refactorn, KeychainService + DateRange Tests (TEST-01)
 - [ ] 05-02-PLAN.md — Umami + Plausible API Response Parsing Tests (TEST-01)
 - [ ] 05-03-PLAN.md — AccountManager + AnalyticsCacheService Tests (TEST-01)
 
@@ -105,4 +105,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Quick Wins & Widget Split | 2/4 | In Progress|  |
 | 3. Stabilität | 1/2 | In Progress|  |
 | 4. Architektur | 3/3 | Complete   | 2026-03-28 |
-| 5. Tests | 0/3 | Not started | - |
+| 5. Tests | 1/3 | In Progress|  |

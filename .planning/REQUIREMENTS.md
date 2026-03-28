@@ -33,7 +33,7 @@ Requirements für Code Quality & Security Hardening. Jedes Requirement mappt auf
 
 ### Tests
 
-- [ ] **TEST-01**: Unit Tests für KeychainService, AccountManager, API-Response-Parsing, DateRange, Cache
+- [x] **TEST-01**: Unit Tests für KeychainService, AccountManager, API-Response-Parsing, DateRange, Cache
 
 ## Future Requirements
 
@@ -76,7 +76,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARCH-03 | Phase 4 | Complete |
 | ARCH-02 | Phase 4 | Complete |
 | ARCH-01 | Phase 4 | Complete |
-| TEST-01 | Phase 5 | Pending |
+| TEST-01 | Phase 5 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 13 total

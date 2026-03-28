@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Code Quality & Security Hardening
-status: verifying
-stopped_at: Completed 04-architektur-03-PLAN.md
-last_updated: "2026-03-28T03:50:58.198Z"
+status: executing
+stopped_at: Completed 05-tests-01-PLAN.md
+last_updated: "2026-03-28T04:19:32.126Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  total_plans: 14
+  completed_plans: 12
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Phase 04 — Architektur
+**Current focus:** Phase 05 — Tests
 
 ## Current Position
 
-Phase: 04 (Architektur) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
+Phase: 05 (Tests) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -57,6 +57,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-architektur P01 | 15min | 2 tasks | 5 files |
 | Phase 04-architektur P02 | 15min | 2 tasks | 3 files |
 | Phase 04-architektur P03 | 10min | 2 tasks | 9 files |
+| Phase 05-tests P01 | 25min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 04-architektur]: AnalyticsManager.isAuthenticated entfernt: redundant zu currentProvider != nil, nicht von Views direkt gelesen
 - [Phase 04-architektur]: LoginViewModel delegiert alle Post-Login-Effekte an AccountManager.setActiveAccount() -- kein doppeltes Keychain-Schreiben
 - [Phase 04-architektur]: AccountManager.clearActiveAccount() als Drop-in-Ersatz fuer authManager.logout() -- erweitert um UmamiAPI.clearConfiguration und PlausibleSitesManager.clearAll
+- [Phase 05-tests]: productType = com.apple.product-type.bundle.unit-test statt com.apple.product-type.unit-test-bundle (Xcode 26 umbenennt den Identifier)
+- [Phase 05-tests]: init(cacheDirectoryOverride:) als internal init neben private init() — minimales Refactoring fuer Testbarkeit ohne shared-Singleton zu brechen
+- [Phase 05-tests]: shouldAutocreateTestPlan entfernt aus Schema: kollidiert mit manuell gesetzten Testables und verhindert Test-Ausfuehrung
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T03:50:58.196Z
-Stopped at: Completed 04-architektur-03-PLAN.md
+Last session: 2026-03-28T04:19:32.123Z
+Stopped at: Completed 05-tests-01-PLAN.md
 Resume file: None
