@@ -139,13 +139,11 @@ struct WebsiteDetailView: View {
         .refreshable {
             await viewModel.loadData(dateRange: selectedDateRange)
         }
-        .task {
+        .task(id: selectedDateRange) {
             await viewModel.loadData(dateRange: selectedDateRange)
         }
-        .onChange(of: selectedDateRange) { _, newValue in
-            Task {
-                await viewModel.loadData(dateRange: newValue)
-            }
+        .onDisappear {
+            viewModel.cancelLoading()
         }
     }
 
