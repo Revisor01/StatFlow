@@ -25,7 +25,11 @@
   2. Nutzer kann Reports zu Funnels, UTM-Kampagnen, Goal-Tracking und Attribution für eine Umami-Website aufrufen
   3. Events- und Reports-Screens sind über die bestehende Website-Detailansicht erreichbar
   4. Leere States (keine Events, keine Reports) werden sauber angezeigt
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 08-01-PLAN.md — Events-Screen (Liste + Detail Drill-Down) mit ViewModel
+- [ ] 08-02-PLAN.md — Reports-Hub (4 Karten) und Detail-Views (Funnel, UTM, Goals, Attribution)
+- [ ] 08-03-PLAN.md — Integration in WebsiteDetailView Quick Actions + visuelle Verifikation
 **UI hint**: yes
 
 ### Phase 09: Entry/Exit Pages + Plausible Filters
@@ -64,7 +68,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 08. Events & Reports Screens | 0/? | Not started | - |
+| 08. Events & Reports Screens | 0/3 | Planning complete | - |
 | 09. Entry/Exit Pages + Plausible Filters | 0/? | Not started | - |
 | 10. Analytics Setup | 0/? | Not started | - |
 | 11. In-App Data Guide | 0/? | Not started | - |
