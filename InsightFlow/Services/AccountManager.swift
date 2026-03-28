@@ -291,10 +291,8 @@ class AccountManager: ObservableObject {
         // Update widget
         updateWidgetCredentials(for: account)
 
-        // Notify all views to refresh (with delay to ensure all data is set)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            NotificationCenter.default.post(name: .accountDidChange, object: nil)
-        }
+        // Notify all views to refresh
+        NotificationCenter.default.post(name: .accountDidChange, object: nil)
     }
 
     private func updateWidgetCredentials(for account: AnalyticsAccount) {

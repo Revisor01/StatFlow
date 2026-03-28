@@ -87,10 +87,7 @@ class AuthManager: ObservableObject {
         currentProvider = .plausible
 
         // Save to shared file for widget (with Plausible sites)
-        // Use a slight delay to ensure PlausibleSitesManager has loaded
         Task { @MainActor in
-            // Wait a moment for sites to load
-            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
             let sites = PlausibleSitesManager.shared.getSites()
             SharedCredentials.save(
                 serverURL: serverURLString,
