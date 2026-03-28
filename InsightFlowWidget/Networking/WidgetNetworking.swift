@@ -34,7 +34,7 @@ struct Provider: AppIntentTimelineProvider {
         }
 
         // Nächste Aktualisierung nach 15 Minuten
-        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 15, to: now)!
+        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 15, to: now) ?? now.addingTimeInterval(15 * 60)
         return Timeline(entries: entries, policy: .after(nextRefresh))
     }
 
@@ -179,14 +179,14 @@ struct Provider: AppIntentTimelineProvider {
             startDate = calendar.startOfDay(for: now)
             endDate = now
         case .yesterday:
-            let yesterday = calendar.date(byAdding: .day, value: -1, to: now)!
+            let yesterday = calendar.date(byAdding: .day, value: -1, to: now) ?? now
             startDate = calendar.startOfDay(for: yesterday)
             endDate = calendar.startOfDay(for: now).addingTimeInterval(-1)
         case .last7Days:
-            startDate = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: now))!
+            startDate = calendar.date(byAdding: .day, value: -6, to: calendar.startOfDay(for: now)) ?? now
             endDate = now
         case .last30Days:
-            startDate = calendar.date(byAdding: .day, value: -29, to: calendar.startOfDay(for: now))!
+            startDate = calendar.date(byAdding: .day, value: -29, to: calendar.startOfDay(for: now)) ?? now
             endDate = now
         }
 
@@ -197,13 +197,18 @@ struct Provider: AppIntentTimelineProvider {
 
         do {
             // Stats
-            var statsURL = URLComponents(url: baseURL.appendingPathComponent("api/websites/\(website.id)/stats"), resolvingAgainstBaseURL: false)!
+            guard var statsURL = URLComponents(url: baseURL.appendingPathComponent("api/websites/\(website.id)/stats"), resolvingAgainstBaseURL: false) else {
+                return .error(String(localized: "widget.error.invalidURL"))
+            }
             statsURL.queryItems = [
                 URLQueryItem(name: "startAt", value: String(startAt)),
                 URLQueryItem(name: "endAt", value: String(endAt)),
                 URLQueryItem(name: "timezone", value: timezone)
             ]
-            var statsReq = URLRequest(url: statsURL.url!)
+            guard let statsURLBuilt = statsURL.url else {
+                return .error(String(localized: "widget.error.invalidURL"))
+            }
+            var statsReq = URLRequest(url: statsURLBuilt)
             statsReq.setValue("Bearer \(creds.token)", forHTTPHeaderField: "Authorization")
             statsReq.timeoutInterval = 15
 
@@ -248,14 +253,19 @@ struct Provider: AppIntentTimelineProvider {
             }
 
             // Sparkline
-            var pvURL = URLComponents(url: baseURL.appendingPathComponent("api/websites/\(website.id)/pageviews"), resolvingAgainstBaseURL: false)!
+            guard var pvURL = URLComponents(url: baseURL.appendingPathComponent("api/websites/\(website.id)/pageviews"), resolvingAgainstBaseURL: false) else {
+                return .error(String(localized: "widget.error.invalidURL"))
+            }
             pvURL.queryItems = [
                 URLQueryItem(name: "startAt", value: String(startAt)),
                 URLQueryItem(name: "endAt", value: String(endAt)),
                 URLQueryItem(name: "unit", value: timeRange.unit),
                 URLQueryItem(name: "timezone", value: timezone)
             ]
-            var pvReq = URLRequest(url: pvURL.url!)
+            guard let pvURLBuilt = pvURL.url else {
+                return .error(String(localized: "widget.error.invalidURL"))
+            }
+            var pvReq = URLRequest(url: pvURLBuilt)
             pvReq.setValue("Bearer \(creds.token)", forHTTPHeaderField: "Authorization")
             pvReq.timeoutInterval = 15
 
@@ -290,7 +300,7 @@ struct Provider: AppIntentTimelineProvider {
                     let currentHour = calendar.component(.hour, from: today)
                     let maxHour = timeRange == .today ? currentHour : 23
 
-                    let baseDate = timeRange == .today ? today : calendar.date(byAdding: .day, value: -1, to: today)!
+                    let baseDate = timeRange == .today ? today : calendar.date(byAdding: .day, value: -1, to: today) ?? today
                     let startOfDay = calendar.startOfDay(for: baseDate)
 
                     for hour in 0...maxHour {
@@ -377,28 +387,28 @@ struct Provider: AppIntentTimelineProvider {
         case .today:
             dateRangeValue = "day"
             // Compare with yesterday - Plausible needs [start, end] array format
-            let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+            let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
             let yesterdayStr = formatter.string(from: yesterday)
             comparisonDateRangeValue = [yesterdayStr, yesterdayStr]
         case .yesterday:
-            let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+            let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
             let yesterdayStr = formatter.string(from: yesterday)
             dateRangeValue = [yesterdayStr, yesterdayStr]
             // Compare with day before yesterday
-            let dayBefore = calendar.date(byAdding: .day, value: -2, to: today)!
+            let dayBefore = calendar.date(byAdding: .day, value: -2, to: today) ?? today
             let dayBeforeStr = formatter.string(from: dayBefore)
             comparisonDateRangeValue = [dayBeforeStr, dayBeforeStr]
         case .last7Days:
             dateRangeValue = "7d"
             // Compare with previous 7 days
-            let start = calendar.date(byAdding: .day, value: -13, to: today)!
-            let end = calendar.date(byAdding: .day, value: -7, to: today)!
+            let start = calendar.date(byAdding: .day, value: -13, to: today) ?? today
+            let end = calendar.date(byAdding: .day, value: -7, to: today) ?? today
             comparisonDateRangeValue = [formatter.string(from: start), formatter.string(from: end)]
         case .last30Days:
             dateRangeValue = "30d"
             // Compare with previous 30 days
-            let start = calendar.date(byAdding: .day, value: -59, to: today)!
-            let end = calendar.date(byAdding: .day, value: -30, to: today)!
+            let start = calendar.date(byAdding: .day, value: -59, to: today) ?? today
+            let end = calendar.date(byAdding: .day, value: -30, to: today) ?? today
             comparisonDateRangeValue = [formatter.string(from: start), formatter.string(from: end)]
         }
 
@@ -531,7 +541,7 @@ struct Provider: AppIntentTimelineProvider {
                 let maxHour = timeRange == .today ? currentHour : 23
 
                 // Determine base date for generating timestamps
-                let baseDate = timeRange == .today ? today : calendar.date(byAdding: .day, value: -1, to: today)!
+                let baseDate = timeRange == .today ? today : calendar.date(byAdding: .day, value: -1, to: today) ?? today
                 let startOfDay = calendar.startOfDay(for: baseDate)
 
                 // Try multiple hour formats that Plausible might return
@@ -592,10 +602,15 @@ struct Provider: AppIntentTimelineProvider {
 
             // Fetch active visitors (realtime) using v1 API - works with all Plausible CE versions
             var active = 0
-            var realtimeComponents = URLComponents(url: baseURL.appendingPathComponent("api/v1/stats/realtime/visitors"), resolvingAgainstBaseURL: false)!
+            guard var realtimeComponents = URLComponents(url: baseURL.appendingPathComponent("api/v1/stats/realtime/visitors"), resolvingAgainstBaseURL: false) else {
+                return .error(String(localized: "widget.error.invalidURL"))
+            }
             realtimeComponents.queryItems = [URLQueryItem(name: "site_id", value: siteId)]
 
-            var realtimeRequest = URLRequest(url: realtimeComponents.url!)
+            guard let realtimeURL = realtimeComponents.url else {
+                return .error(String(localized: "widget.error.invalidURL"))
+            }
+            var realtimeRequest = URLRequest(url: realtimeURL)
             realtimeRequest.setValue("Bearer \(creds.token)", forHTTPHeaderField: "Authorization")
             realtimeRequest.timeoutInterval = 10
 
