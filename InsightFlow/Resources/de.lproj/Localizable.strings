@@ -554,3 +554,45 @@
 "setupGuide.verify.step3.desc" = "Nach einer Conversion bis zu 10 Minuten warten. Goals erscheinen in der Website-Detailansicht im Goals-Bereich.";
 "setupGuide.verify.step4.title" = "Keine Daten?";
 "setupGuide.verify.step4.desc" = "Prüfe ob das Script lädt: Browser DevTools → Netzwerk-Tab, nach script.js suchen. Website-ID oder Domain muss exakt übereinstimmen.";
+
+// MARK: - Analytics Glossar
+
+"glossary.title" = "Analytics-Glossar";
+"glossary.settings.link" = "Analytics-Glossar";
+"glossary.intro" = "Einfache Erklärungen zu den Metriken in InsightFlow. Kein Analytics-Vorwissen nötig.";
+
+"glossary.term.pageviews.title" = "Seitenaufrufe (Pageviews)";
+"glossary.term.pageviews.desc" = "Jedes Mal, wenn eine Seite im Browser geladen wird, zählt das als ein Seitenaufruf. Ein Besucher, der 3 Artikel liest, erzeugt 3 Pageviews.";
+
+"glossary.term.visits.title" = "Besuche (Sessions)";
+"glossary.term.visits.desc" = "Eine Folge von Seitenaufrufen derselben Person innerhalb eines kurzen Zeitfensters (meist 30 Minuten). Ein Besucher kann an einem Tag mehrere Besuche haben.";
+
+"glossary.term.visitors.title" = "Eindeutige Besucher";
+"glossary.term.visitors.desc" = "Die Anzahl verschiedener Personen, die deine Website besucht haben — pro Tag einmal gezählt, egal wie viele Seiten sie aufgerufen haben.";
+
+"glossary.term.bounce-rate.title" = "Absprungrate (Bounce Rate)";
+"glossary.term.bounce-rate.desc" = "Der Anteil der Besuche, bei denen jemand nach dem Ansehen nur einer Seite ohne Interaktion gegangen ist. Eine hohe Absprungrate (über 70 %) kann bedeuten, dass Besucher nicht fanden, was sie suchten.";
+
+"glossary.term.session-duration.title" = "Verweildauer";
+"glossary.term.session-duration.desc" = "Wie lange ein typischer Besuch dauert — vom ersten bis zum letzten Seitenaufruf. Längere Verweildauer bedeutet meist mehr Interesse an deinen Inhalten.";
+
+"glossary.term.referrer.title" = "Herkunft (Referrer)";
+"glossary.term.referrer.desc" = "Woher ein Besucher kam — z.B. Google, Twitter oder eine andere Website. 'Direkt' bedeutet, er hat deine URL direkt eingegeben oder ein Lesezeichen genutzt.";
+
+"glossary.term.utm.title" = "UTM-Parameter";
+"glossary.term.utm.desc" = "Tags, die du in Anzeigen oder Newsletter-URLs einfügst, um Klicks zu verfolgen. Beispiel: ?utm_source=newsletter&utm_medium=email. Umami und Plausible zeigen sie unter 'Kampagnen'.";
+
+"glossary.term.entry-exit.title" = "Einstiegs- und Absprungseiten";
+"glossary.term.entry-exit.desc" = "Einstiegsseiten sind die erste Seite eines Besuchs. Absprungseiten die letzte. Hohe Absprungraten auf einer Checkout-Seite weisen oft auf ein Problem hin, das es wert ist zu untersuchen.";
+
+"glossary.term.events.title" = "Events";
+"glossary.term.events.desc" = "Benutzerdefinierte Aktionen auf deiner Website — z.B. Klicks, Formular-Absenden oder Video-Starts. Umami nennt sie 'Events', Plausible 'Custom Events'.";
+
+"glossary.term.goals.title" = "Ziele (Goals)";
+"glossary.term.goals.desc" = "Eine Aktion, die Besucher ausführen sollen — z.B. /danke aufrufen oder ein 'signup'-Event auslösen. Ziele zeigen, ob deine Website ihren Zweck erfüllt.";
+
+"glossary.term.conversion-rate.title" = "Conversion-Rate";
+"glossary.term.conversion-rate.desc" = "Der Anteil der Besucher, die ein Ziel erreicht haben. Besuchen 100 Personen die Seite und melden sich 5 an, ist die Conversion-Rate 5 %. Selbst kleine Verbesserungen können großen Unterschied machen.";
+
+"glossary.term.funnels.title" = "Funnels (Trichter)";
+"glossary.term.funnels.desc" = "Eine Abfolge von Seiten, die Besucher der Reihe nach aufrufen sollen — z.B. Startseite → Preise → Checkout → Danke. Funnels zeigen, wo Besucher in einem mehrstufigen Prozess abspringen.";

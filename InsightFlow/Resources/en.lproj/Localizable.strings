@@ -553,3 +553,45 @@
 "setupGuide.verify.step3.desc" = "After a conversion, wait up to 10 minutes. Goals appear in the website detail view under the Goals section.";
 "setupGuide.verify.step4.title" = "No data showing?";
 "setupGuide.verify.step4.desc" = "Check that the script is loading: browser DevTools → Network tab, look for script.js. Website ID or domain must match exactly.";
+
+// MARK: - Analytics Glossary
+
+"glossary.title" = "Analytics Glossary";
+"glossary.settings.link" = "Analytics Glossary";
+"glossary.intro" = "Simple explanations for the metrics you see in InsightFlow. No analytics background required.";
+
+"glossary.term.pageviews.title" = "Pageviews";
+"glossary.term.pageviews.desc" = "Every time a page is loaded in a browser, that counts as one pageview. Refreshing the page adds another. A visitor who reads 3 articles creates 3 pageviews.";
+
+"glossary.term.visits.title" = "Visits (Sessions)";
+"glossary.term.visits.desc" = "A series of pageviews from the same person within a short time window (usually 30 minutes). One visitor can create multiple visits per day.";
+
+"glossary.term.visitors.title" = "Unique Visitors";
+"glossary.term.visitors.desc" = "The number of distinct people who visited your site — counted once per day, regardless of how many pages they viewed.";
+
+"glossary.term.bounce-rate.title" = "Bounce Rate";
+"glossary.term.bounce-rate.desc" = "The percentage of visits where someone left after viewing only one page without any interaction. A high bounce rate (above 70%) can mean visitors didn't find what they were looking for.";
+
+"glossary.term.session-duration.title" = "Session Duration";
+"glossary.term.session-duration.desc" = "How long a typical visit lasts from the first to the last pageview. Longer sessions usually mean more engagement with your content.";
+
+"glossary.term.referrer.title" = "Referrer";
+"glossary.term.referrer.desc" = "Where a visitor came from before arriving at your site — for example Google, Twitter, or another website. 'Direct' means they typed your URL directly or used a bookmark.";
+
+"glossary.term.utm.title" = "UTM Parameters";
+"glossary.term.utm.desc" = "Tags you add to URLs in ads or newsletters to track where traffic comes from. Example: ?utm_source=newsletter&utm_medium=email. Umami and Plausible show these under 'Campaigns'.";
+
+"glossary.term.entry-exit.title" = "Entry & Exit Pages";
+"glossary.term.entry-exit.desc" = "Entry pages are where visitors first land. Exit pages are the last page before they leave. High exit rates on checkout pages often signal a problem worth investigating.";
+
+"glossary.term.events.title" = "Events";
+"glossary.term.events.desc" = "Custom actions tracked on your website — like button clicks, form submissions, or video plays. You define events in your tracking code. Umami calls them 'Events', Plausible calls them 'Custom Events'.";
+
+"glossary.term.goals.title" = "Goals";
+"glossary.term.goals.desc" = "A specific action you want visitors to complete — like visiting /thank-you or triggering a 'signup' event. Goals let you measure whether your site is achieving its purpose.";
+
+"glossary.term.conversion-rate.title" = "Conversion Rate";
+"glossary.term.conversion-rate.desc" = "The percentage of visitors who completed a goal. If 100 people visit and 5 sign up, your conversion rate is 5%. Even small improvements here can have a big impact.";
+
+"glossary.term.funnels.title" = "Funnels";
+"glossary.term.funnels.desc" = "A sequence of pages a visitor should visit in order — for example: Homepage → Pricing → Checkout → Thank You. Funnels reveal where people drop off in a multi-step process.";

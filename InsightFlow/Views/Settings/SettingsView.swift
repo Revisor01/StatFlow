@@ -311,6 +311,18 @@ struct SettingsView: View {
                 }
             }
 
+            NavigationLink {
+                AnalyticsGlossaryView()
+            } label: {
+                HStack {
+                    Label(String(localized: "glossary.settings.link"), systemImage: "book.closed")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
             // Umami Link
             Link(destination: URL(string: "https://umami.is")!) {
                 HStack {
