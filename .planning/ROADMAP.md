@@ -50,7 +50,9 @@ Plans:
   2. Bei Auswahl von "Alle" zeigt das Dashboard alle Websites von allen Accounts in einer Liste
   3. Jede Website-Card zeigt den zugehörigen Account/Provider als Badge
   4. Tap auf eine Website navigiert wie gewohnt zur Detail-Ansicht (mit automatischem Account-Switch falls nötig)
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 03-01-PLAN.md — Alle-Modus im Account-Switcher + Provider-Badges + Auto-Account-Switch
 **UI hint**: yes
 
 ## Progress
@@ -62,4 +64,4 @@ Phases execute in order: 1 → 2 → 3 (Phase 2 könnte parallel zu Phase 1)
 |-------|----------------|--------|-----------|
 | 1. Dashboard UX Polish | 0/1 | Planning done | - |
 | 2. Widget Deep Link Fix | 0/? | Not started | - |
-| 3. Alle-Accounts-Ansicht | 0/? | Not started | - |
+| 3. Alle-Accounts-Ansicht | 0/1 | Planning done | - |
