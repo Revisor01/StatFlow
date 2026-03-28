@@ -283,8 +283,12 @@ class AccountManager: ObservableObject {
                 #endif
                 PlausibleSitesManager.shared.clearAll()
             }
-            // Reconfigure PlausibleAPI with stored credentials
-            PlausibleAPI.shared.reconfigureFromKeychain()
+            // Reconfigure PlausibleAPI with stored credentials (actor — must await)
+            Task {
+                await PlausibleAPI.shared.reconfigureFromKeychain()
+            }
+            // Notify PlausibleSitesManager observers (previously done inside PlausibleAPI.reconfigureFromKeychain)
+            PlausibleSitesManager.shared.objectWillChange.send()
             AnalyticsManager.shared.setProvider(PlausibleAPI.shared)
         }
 
