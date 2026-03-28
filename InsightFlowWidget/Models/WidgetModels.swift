@@ -83,7 +83,7 @@ struct WidgetData {
 
     var deepLinkURL: URL? {
         guard let websiteId = websiteId, let provider = providerType else { return nil }
-        return URL(string: "insightflow://website?id=\(websiteId)&provider=\(provider)")
+        return URL(string: "privacyflow://website?id=\(websiteId)&provider=\(provider)")
     }
 
     static let placeholder = WidgetData(
