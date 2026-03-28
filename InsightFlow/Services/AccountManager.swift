@@ -306,12 +306,8 @@ class AccountManager: ObservableObject {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
-    /// Syncs all accounts to widget storage
+    /// Syncs all accounts to widget storage (encrypted)
     private func syncAccountsToWidget() {
-        guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.de.godsapp.PrivacyFlow") else {
-            return
-        }
-
         // Convert accounts to widget format using Codable struct
         struct WidgetAccount: Codable {
             let id: String
@@ -341,13 +337,17 @@ class AccountManager: ObservableObject {
             )
         }
 
-        let fileURL = containerURL.appendingPathComponent("widget_accounts.json")
         do {
             let data = try JSONEncoder().encode(widgetAccounts)
-            try data.write(to: fileURL)
-            print("AccountManager: synced \(widgetAccounts.count) accounts to widget, sites: \(widgetAccounts.map { $0.sites ?? [] })")
+            if SharedCredentials.saveWidgetAccounts(data) {
+                #if DEBUG
+                print("AccountManager: synced \(widgetAccounts.count) accounts to widget (encrypted)")
+                #endif
+            }
         } catch {
-            print("Failed to sync accounts to widget: \(error)")
+            #if DEBUG
+            print("Failed to encode widget accounts: \(error)")
+            #endif
         }
     }
 
