@@ -176,6 +176,12 @@ class AccountManager: ObservableObject {
         SharedCredentials.delete()
         AnalyticsManager.shared.logout()
 
+        // API-Services aufraumen (aus AuthManager.logout)
+        Task {
+            await UmamiAPI.shared.clearConfiguration()
+        }
+        PlausibleSitesManager.shared.clearAll()
+
         // Notify that user should be logged out (no accounts left)
         NotificationCenter.default.post(name: .allAccountsRemoved, object: nil)
     }
