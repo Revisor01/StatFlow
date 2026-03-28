@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import AppIntents
 
 // MARK: - Time Range Enum
 
