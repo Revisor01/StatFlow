@@ -416,7 +416,9 @@ class RetentionViewModel: ObservableObject {
         do {
             retentionRows = try await api.getRetention(websiteId: websiteId, dateRange: dateRange)
         } catch {
+            #if DEBUG
             print("Retention error: \(error)")
+            #endif
             retentionRows = []
         }
 

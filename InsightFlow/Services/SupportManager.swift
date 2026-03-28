@@ -33,7 +33,9 @@ class SupportManager: ObservableObject {
             products = try await Product.products(for: productIds)
                 .sorted { $0.price < $1.price }
         } catch {
+            #if DEBUG
             print("Failed to load products: \(error)")
+            #endif
         }
     }
 

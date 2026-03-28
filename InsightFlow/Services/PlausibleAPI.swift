@@ -829,10 +829,14 @@ class PlausibleSitesManager: ObservableObject {
     private func updateActiveAccountSites() {
         guard let activeAccount = AccountManager.shared.activeAccount,
               activeAccount.providerType == .plausible else {
+            #if DEBUG
             print("PlausibleSitesManager: updateActiveAccountSites skipped - no active Plausible account")
+            #endif
             return
         }
+        #if DEBUG
         print("PlausibleSitesManager: updating account \(activeAccount.name) with sites: \(sites)")
+        #endif
         AccountManager.shared.updateAccountSites(activeAccount, sites: sites)
     }
 

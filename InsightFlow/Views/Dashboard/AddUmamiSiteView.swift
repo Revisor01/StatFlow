@@ -83,6 +83,8 @@ struct AddUmamiSiteView: View {
 
 #Preview {
     AddUmamiSiteView {
+        #if DEBUG
         print("Site added")
+        #endif
     }
 }

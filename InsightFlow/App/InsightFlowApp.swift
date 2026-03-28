@@ -118,7 +118,9 @@ struct PrivacyFlowApp: App {
         do {
             try BGTaskScheduler.shared.submit(request)
         } catch {
+            #if DEBUG
             print("Could not schedule app refresh: \(error)")
+            #endif
         }
     }
 }
