@@ -48,9 +48,9 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 - [ ] Auth-System auf einen Manager konsolidieren
 - [ ] AnalyticsProvider-Protokoll in ViewModel nutzen
 - [ ] Force Unwraps durch safe unwrapping ersetzen
-- [ ] Widget-Code in mehrere Dateien aufteilen
+- [x] Widget-Code in mehrere Dateien aufteilen — Validated in Phase 2: Quick Wins & Widget Split
 - [ ] Timing-Hacks durch async/await Koordination ersetzen
-- [ ] Print-Statements aufräumen (#if DEBUG)
+- [x] Print-Statements aufräumen (#if DEBUG) — Validated in Phase 2: Quick Wins & Widget Split
 - [ ] Unit Tests für kritische Pfade ergänzen
 
 ### Out of Scope
@@ -105,4 +105,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 1 (Security Hardening) completion*
+*Last updated: 2026-03-28 after Phase 2 (Quick Wins & Widget Split) completion*
