@@ -10,8 +10,14 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 ## Current State
 
-**Latest shipped:** v2.1 UX Polish & Features (completed 2026-03-28)
-**Current milestone:** v2.2 Support & API Coverage
+**Latest shipped:** v2.2 Support & API Coverage (completed 2026-03-28)
+**Next milestone:** Not yet defined
+
+### v2.2 Accomplishments
+- SupportView redesigned: SF Symbols statt Emojis, dezentes Branding "Ein Pastorenprojekt"
+- UmamiAPI: 103 Methoden, 30 neue Response-Models (vollständige Self-Hosted API)
+- PlausibleAPI: Sites-Liste, Goals CRUD, Filter-Infrastruktur, UTM/Entry/Exit-Dimensionen
+- Push-Notifications: Account-gruppiert mit threadIdentifier, Summary bei 5+ Sites
 
 ### v2.1 Accomplishments
 - Account-Switcher als kompakter Provider-Icon Menu-Button in der Toolbar
@@ -58,9 +64,7 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] API-01: Vollständige Umami Self-Hosted API-Abdeckung
-- [ ] API-02: Vollständige Plausible CE Self-Hosted API-Abdeckung
-- [ ] NOTIF-01: Push-Benachrichtigungs-Logik überarbeiten — strukturierte Gruppierung
+*No active requirements — start next milestone with `/gsd:new-milestone`*
 
 ### Out of Scope
 
@@ -115,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — Phase 04 Support & Branding complete*
+*Last updated: 2026-03-28 — v2.2 milestone archived*
