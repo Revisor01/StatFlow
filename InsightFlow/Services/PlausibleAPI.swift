@@ -427,6 +427,46 @@ actor PlausibleAPI: AnalyticsProvider {
         return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:os")
     }
 
+    func getBrowserVersions(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:browser_version", filters: filters)
+    }
+
+    func getOSVersions(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:os_version", filters: filters)
+    }
+
+    // MARK: - Entry & Exit Pages
+
+    func getEntryPages(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:entry_page", filters: filters)
+    }
+
+    func getExitPages(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:exit_page", filters: filters)
+    }
+
+    // MARK: - UTM Parameters
+
+    func getUTMSources(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:utm_source", filters: filters)
+    }
+
+    func getUTMMedia(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:utm_medium", filters: filters)
+    }
+
+    func getUTMCampaigns(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:utm_campaign", filters: filters)
+    }
+
+    func getUTMTerms(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:utm_term", filters: filters)
+    }
+
+    func getUTMContent(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:utm_content", filters: filters)
+    }
+
     private func getBreakdown(websiteId: String, dateRange: DateRange, dimension: String, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
         let body = buildQueryBody(siteId: websiteId, metrics: ["visitors"], dateRange: dateRange, dimensions: [dimension], filters: filters)
 
