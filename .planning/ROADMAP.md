@@ -42,7 +42,7 @@ Plans:
   3. Plausible Goals werden in der Website-Detailansicht angezeigt mit Conversion-Rate und absoluten Werten
 **Plans**: 2 plans
 Plans:
-- [ ] 09-01-PLAN.md — Entry/Exit Pages Section (Traffic Flow) in der Detailansicht
+- [x] 09-01-PLAN.md — Entry/Exit Pages Section (Traffic Flow) in der Detailansicht
 - [ ] 09-02-PLAN.md — Plausible Goals Section + Filter-UI mit Dimension-Chips
 **UI hint**: yes
 

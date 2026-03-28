@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 08-events-reports-screens 08-03-PLAN.md
-last_updated: "2026-03-28T21:00:02.280Z"
+status: executing
+stopped_at: Completed 09-entry-exit-plausible-filters 09-01-PLAN.md
+last_updated: "2026-03-28T21:08:33.262Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Phase 08 — Events & Reports Screens
+**Current focus:** Phase 09 — entry-exit-plausible-filters
 
 ## Current Position
 
-Phase: 09
-Plan: Not started
-Status: Plan 01 complete — Events Screen shipped
+Phase: 09 (entry-exit-plausible-filters) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -52,6 +52,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 03-alle-accounts-ansicht]: websiteAccountMap pattern for website-to-account lookup in flat All-mode view
 - [Phase 08-events-reports-screens]: Each view (EventsView + EventDetailView) owns its own @StateObject EventsViewModel
 - [Phase 08-events-reports-screens]: LazyVGrid statt HStack fuer Umami Quick Actions — skaliert auf 4 Karten ohne Overflow
+- [Phase 09]: Plausible-only Entry/Exit via PlausibleAPI cast — no AnalyticsProvider protocol change needed
 
 ### Pending Todos
 
@@ -63,6 +64,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:59:31.814Z
-Stopped at: Completed 08-events-reports-screens 08-03-PLAN.md
+Last session: 2026-03-28T21:08:33.260Z
+Stopped at: Completed 09-entry-exit-plausible-filters 09-01-PLAN.md
 Resume file: None

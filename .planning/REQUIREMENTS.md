@@ -14,7 +14,7 @@ Neue UI-Screens für die in v2.2 implementierten API-Endpoints, Analytics auf ec
 
 ### Data Screens (Allgemein)
 
-- [ ] **SCREEN-03**: Entry/Exit Pages und erweiterte Session-Details — Nutzer sehen woher Besucher kommen und wohin sie gehen
+- [x] **SCREEN-03**: Entry/Exit Pages und erweiterte Session-Details — Nutzer sehen woher Besucher kommen und wohin sie gehen
 - [ ] **SCREEN-04**: Plausible Goals + Filter — Nutzer können Goals einsehen und Plausible-Daten nach Dimensionen filtern
 
 ### Analytics Setup
@@ -39,7 +39,7 @@ Neue UI-Screens für die in v2.2 implementierten API-Endpoints, Analytics auf ec
 |-------------|-------|--------|
 | SCREEN-01 | Phase 08 | Complete |
 | SCREEN-02 | Phase 08 | Complete |
-| SCREEN-03 | Phase 09 | Pending |
+| SCREEN-03 | Phase 09 | Complete |
 | SCREEN-04 | Phase 09 | Pending |
 | SETUP-01 | Phase 10 | Pending |
 | GUIDE-01 | Phase 11 | Pending |
