@@ -348,3 +348,115 @@ struct RetentionRow: Codable, Identifiable, Sendable {
         return formatter.date(from: date)
     }
 }
+
+// MARK: - Date Range
+
+struct DateRangeResponse: Codable, Sendable {
+    let startDate: String
+    let endDate: String
+}
+
+// MARK: - Expanded Metrics
+
+struct ExpandedMetricItem: Codable, Identifiable, Sendable {
+    let name: String
+    let pageviews: Int
+    let visitors: Int
+    let visits: Int
+    let bounces: Int
+    let totaltime: Int
+
+    var id: String { name }
+
+    var bounceRate: Double {
+        guard visits > 0 else { return 0 }
+        return Double(bounces) / Double(visits) * 100
+    }
+
+    var avgTime: TimeInterval {
+        guard visits > 0 else { return 0 }
+        return Double(totaltime) / Double(visits)
+    }
+}
+
+// MARK: - Session Stats
+
+struct SessionStatsResponse: Codable, Sendable {
+    let visitors: Int
+    let visits: Int
+    let pageviews: Int
+    let bounces: Int
+    let totaltime: Int
+    let comparison: StatsComparison?
+}
+
+struct WeeklySessionPoint: Codable, Identifiable, Sendable {
+    let day: Int     // 0=Sunday .. 6=Saturday
+    let hour: Int    // 0-23
+    let count: Int
+
+    var id: String { "\(day)-\(hour)" }
+}
+
+// MARK: - Session Properties
+
+struct SessionPropertyItem: Codable, Identifiable, Sendable {
+    let propertyName: String
+    let dataType: Int
+    let value: String
+    let total: Int
+
+    var id: String { "\(propertyName)-\(value)" }
+}
+
+struct SessionDataProperty: Codable, Identifiable, Sendable {
+    let propertyName: String
+    let dataType: Int
+    let total: Int
+
+    var id: String { propertyName }
+}
+
+struct SessionDataValue: Codable, Identifiable, Sendable {
+    let value: String
+    let total: Int
+
+    var id: String { value }
+}
+
+// MARK: - Events (website-level)
+
+struct EventsResponse: Codable, Sendable {
+    let data: [EventDetail]
+    let count: Int
+    let page: Int
+    let pageSize: Int
+}
+
+struct EventDetail: Codable, Identifiable, Sendable {
+    let id: String
+    let websiteId: String
+    let sessionId: String
+    let eventName: String?
+    let urlPath: String?
+    let createdAt: String
+
+    var createdDate: Date {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: createdAt) ?? Date()
+    }
+}
+
+struct EventStatsResponse: Codable, Sendable {
+    let events: Int
+    let properties: Int
+    let records: Int
+    let comparison: EventStatsComparison?
+}
+
+struct EventStatsComparison: Codable, Sendable {
+    let events: Int
+    let properties: Int
+    let records: Int
+}
