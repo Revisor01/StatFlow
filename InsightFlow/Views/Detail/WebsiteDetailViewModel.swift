@@ -3,6 +3,7 @@ import Foundation
 @MainActor
 class WebsiteDetailViewModel: ObservableObject {
     let websiteId: String
+    let domain: String
 
     @Published var stats: WebsiteStats?
     @Published var activeVisitors: Int = 0
@@ -22,11 +23,15 @@ class WebsiteDetailViewModel: ObservableObject {
     @Published var languages: [MetricItem] = []
     @Published var screens: [MetricItem] = []
     @Published var events: [MetricItem] = []
+    @Published var goals: [GoalConversion] = []
+    @Published var totalVisitors: Int = 0
+    @Published var activeFilters: [PlausibleQueryFilter] = []
     @Published var isLoading = false
     @Published var error: String?
 
-    init(websiteId: String) {
+    init(websiteId: String, domain: String = "") {
         self.websiteId = websiteId
+        self.domain = domain
     }
 
     func loadData(dateRange: DateRange) async {
@@ -51,6 +56,7 @@ class WebsiteDetailViewModel: ObservableObject {
             group.addTask { await self.loadEvents(dateRange: dateRange) }
             group.addTask { await self.loadEntryPages(dateRange: dateRange) }
             group.addTask { await self.loadExitPages(dateRange: dateRange) }
+            group.addTask { await self.loadGoals(dateRange: dateRange) }
         }
     }
 
@@ -58,7 +64,9 @@ class WebsiteDetailViewModel: ObservableObject {
         guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
             let analyticsStats = try await provider.getAnalyticsStats(websiteId: websiteId, dateRange: dateRange)
-            stats = analyticsStats.toWebsiteStats()
+            let websiteStats = analyticsStats.toWebsiteStats()
+            stats = websiteStats
+            totalVisitors = websiteStats.visitors.value
         } catch {
             self.error = error.localizedDescription
         }
@@ -310,7 +318,7 @@ class WebsiteDetailViewModel: ObservableObject {
         guard let provider = AnalyticsManager.shared.currentProvider,
               let plausible = provider as? PlausibleAPI else { return }
         do {
-            let items = try await plausible.getEntryPages(websiteId: websiteId, dateRange: dateRange)
+            let items = try await plausible.getEntryPages(websiteId: websiteId, dateRange: dateRange, filters: activeFilters)
             entryPages = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
@@ -323,12 +331,35 @@ class WebsiteDetailViewModel: ObservableObject {
         guard let provider = AnalyticsManager.shared.currentProvider,
               let plausible = provider as? PlausibleAPI else { return }
         do {
-            let items = try await plausible.getExitPages(websiteId: websiteId, dateRange: dateRange)
+            let items = try await plausible.getExitPages(websiteId: websiteId, dateRange: dateRange, filters: activeFilters)
             exitPages = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load exit pages: \(error)")
             #endif
         }
+    }
+
+    private func loadGoals(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider,
+              let plausible = provider as? PlausibleAPI else { return }
+        do {
+            let conversions = try await plausible.getGoalConversions(websiteId: websiteId, dateRange: dateRange, filters: activeFilters)
+            goals = conversions
+        } catch {
+            #if DEBUG
+            print("Failed to load goals: \(error)")
+            #endif
+        }
+    }
+
+    func applyFilter(_ filter: PlausibleQueryFilter) {
+        // Remove any existing filter for this dimension before adding new one
+        activeFilters.removeAll { $0.dimension == filter.dimension }
+        activeFilters.append(filter)
+    }
+
+    func removeFilter(dimension: String) {
+        activeFilters.removeAll { $0.dimension == dimension }
     }
 }

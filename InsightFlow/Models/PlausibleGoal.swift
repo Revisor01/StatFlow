@@ -40,6 +40,15 @@ enum PlausibleFilterOperator: String, Sendable {
     case matchesNot = "matches_not"
 }
 
+// MARK: - Goal Conversion
+
+struct GoalConversion: Identifiable, Sendable {
+    let id = UUID()
+    let goalName: String
+    let visitors: Int
+    let events: Int
+}
+
 struct PlausibleQueryFilter: Sendable {
     let dimension: String
     let operator_: PlausibleFilterOperator
