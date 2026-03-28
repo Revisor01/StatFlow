@@ -237,6 +237,29 @@ actor UmamiAPI: AnalyticsProvider {
         return try await getActiveVisitors(websiteId: websiteId)
     }
 
+    // MARK: - Me
+
+    func getMe() async throws -> MeResponse {
+        let data = try await request(endpoint: "api/me")
+        return try decoder.decode(MeResponse.self, from: data)
+    }
+
+    func getMyTeams() async throws -> [Team] {
+        let data = try await request(endpoint: "api/me/teams")
+        let response = try decoder.decode(TeamsResponse.self, from: data)
+        return response.data
+    }
+
+    func getMyWebsites(includeTeams: Bool = false) async throws -> [Website] {
+        var queryItems: [URLQueryItem] = []
+        if includeTeams {
+            queryItems.append(URLQueryItem(name: "includeTeams", value: "true"))
+        }
+        let data = try await request(endpoint: "api/me/websites", queryItems: queryItems)
+        let response = try decoder.decode(WebsiteResponse.self, from: data)
+        return response.websites
+    }
+
     // MARK: - Authentication
 
     nonisolated func login(baseURL: URL, username: String, password: String) async throws -> String {
@@ -280,6 +303,11 @@ actor UmamiAPI: AnalyticsProvider {
         let data = try await request(endpoint: "api/websites")
         let response = try decoder.decode(WebsiteResponse.self, from: data)
         return response.websites
+    }
+
+    func getWebsite(websiteId: String) async throws -> Website {
+        let data = try await request(endpoint: "api/websites/\(websiteId)")
+        return try decoder.decode(Website.self, from: data)
     }
 
     // MARK: - Stats
@@ -327,6 +355,79 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode(RealtimeData.self, from: data)
     }
 
+    func getDateRange(websiteId: String) async throws -> DateRangeResponse {
+        let data = try await request(endpoint: "api/websites/\(websiteId)/daterange")
+        return try decoder.decode(DateRangeResponse.self, from: data)
+    }
+
+    func getEventsSeries(websiteId: String, dateRange: DateRange, timezone: String = "Europe/Berlin") async throws -> [EventData] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/events/series",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                URLQueryItem(name: "unit", value: dateRange.unit),
+                URLQueryItem(name: "timezone", value: timezone)
+            ]
+        )
+        return try decoder.decode([EventData].self, from: data)
+    }
+
+    func getExpandedMetrics(websiteId: String, dateRange: DateRange, type: MetricType, limit: Int = 10) async throws -> [ExpandedMetricItem] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/metrics/expanded",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                URLQueryItem(name: "type", value: type.rawValue),
+                URLQueryItem(name: "limit", value: String(limit))
+            ]
+        )
+        return try decoder.decode([ExpandedMetricItem].self, from: data)
+    }
+
+    // MARK: - Events
+
+    func getEventsDetail(websiteId: String, dateRange: DateRange, page: Int = 1, pageSize: Int = 20) async throws -> EventsResponse {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/events",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "pageSize", value: String(pageSize))
+            ]
+        )
+        return try decoder.decode(EventsResponse.self, from: data)
+    }
+
+    func getEventsStats(websiteId: String, dateRange: DateRange) async throws -> EventStatsResponse {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/events/stats",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt))
+            ]
+        )
+        return try decoder.decode(EventStatsResponse.self, from: data)
+    }
+
     // MARK: - Sessions
 
     func getSessions(websiteId: String, dateRange: DateRange, page: Int = 1, pageSize: Int = 20) async throws -> SessionsResponse {
@@ -359,6 +460,78 @@ actor UmamiAPI: AnalyticsProvider {
             ]
         )
         return try decoder.decode([SessionActivity].self, from: data)
+    }
+
+    func getSessionStats(websiteId: String, dateRange: DateRange) async throws -> SessionStatsResponse {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/sessions/stats",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt))
+            ]
+        )
+        return try decoder.decode(SessionStatsResponse.self, from: data)
+    }
+
+    func getSessionsWeekly(websiteId: String, dateRange: DateRange, timezone: String = "Europe/Berlin") async throws -> [WeeklySessionPoint] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/sessions/weekly",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                URLQueryItem(name: "timezone", value: timezone)
+            ]
+        )
+        return try decoder.decode([WeeklySessionPoint].self, from: data)
+    }
+
+    func getSession(websiteId: String, sessionId: String) async throws -> Session {
+        let data = try await request(endpoint: "api/websites/\(websiteId)/sessions/\(sessionId)")
+        return try decoder.decode(Session.self, from: data)
+    }
+
+    func getSessionProperties(websiteId: String, sessionId: String) async throws -> [SessionPropertyItem] {
+        let data = try await request(endpoint: "api/websites/\(websiteId)/sessions/\(sessionId)/properties")
+        return try decoder.decode([SessionPropertyItem].self, from: data)
+    }
+
+    func getSessionDataProperties(websiteId: String, dateRange: DateRange) async throws -> [SessionDataProperty] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/session-data/properties",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt))
+            ]
+        )
+        return try decoder.decode([SessionDataProperty].self, from: data)
+    }
+
+    func getSessionDataValues(websiteId: String, dateRange: DateRange, propertyName: String) async throws -> [SessionDataValue] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/session-data/values",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                URLQueryItem(name: "propertyName", value: propertyName)
+            ]
+        )
+        return try decoder.decode([SessionDataValue].self, from: data)
     }
 
     // MARK: - Website Management
