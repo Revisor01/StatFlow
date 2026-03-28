@@ -261,21 +261,12 @@ struct SettingsView: View {
                 }
             }
 
-            ForEach(viewModel.websites) { website in
-                NotificationSettingRow(
-                    website: website,
-                    setting: notificationManager.getSetting(for: website.id)
-                ) { newSetting in
-                    Task {
-                        if newSetting != .disabled {
-                            let granted = await notificationManager.requestPermission()
-                            if !granted {
-                                return
-                            }
-                        }
-                        notificationManager.updateSetting(for: website.id, setting: newSetting)
-                    }
-                }
+            ForEach(viewModel.websitesByAccount, id: \.account.id) { entry in
+                AccountNotificationSection(
+                    account: entry.account,
+                    websites: entry.websites,
+                    notificationManager: notificationManager
+                )
             }
         } header: {
             Text("settings.notifications")
@@ -440,6 +431,96 @@ struct AccountSettingsRow: View {
     }
 }
 
+// MARK: - Account Notification Section
+
+private struct AccountNotificationSection: View {
+    let account: AnalyticsAccount
+    let websites: [Website]
+    @ObservedObject var notificationManager: NotificationManager
+    @State private var isExpanded: Bool
+
+    init(account: AnalyticsAccount, websites: [Website], notificationManager: NotificationManager) {
+        self.account = account
+        self.websites = websites
+        self.notificationManager = notificationManager
+        _isExpanded = State(initialValue: websites.count <= 5)
+    }
+
+    private var websiteIds: [String] {
+        websites.map { $0.id }
+    }
+
+    private var enabledCount: Int {
+        websiteIds.filter { notificationManager.getSetting(for: $0) != .disabled }.count
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Account-Header mit Icon und Alle-Toggle
+            HStack(spacing: 10) {
+                Image(systemName: account.icon)
+                    .font(.system(size: 16))
+                    .foregroundStyle(account.providerType == .umami ? .orange : .blue)
+                    .frame(width: 28, height: 28)
+                    .background(
+                        (account.providerType == .umami ? Color.orange : Color.blue).opacity(0.12)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                Text(account.displayName)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+
+                Spacer()
+
+                Toggle("", isOn: Binding(
+                    get: { notificationManager.allEnabled(for: websiteIds) },
+                    set: { isOn in
+                        Task {
+                            if isOn {
+                                let granted = await notificationManager.requestPermission()
+                                if !granted { return }
+                                notificationManager.updateAllSettings(for: websiteIds, setting: .daily)
+                            } else {
+                                notificationManager.updateAllSettings(for: websiteIds, setting: .disabled)
+                            }
+                        }
+                    }
+                ))
+                .labelsHidden()
+            }
+            .padding(.vertical, 4)
+
+            // DisclosureGroup fuer Website-Liste
+            DisclosureGroup(
+                isExpanded: $isExpanded,
+                content: {
+                    ForEach(websites) { website in
+                        NotificationSettingRow(
+                            website: website,
+                            setting: notificationManager.getSetting(for: website.id)
+                        ) { newSetting in
+                            Task {
+                                if newSetting != .disabled {
+                                    let granted = await notificationManager.requestPermission()
+                                    if !granted { return }
+                                }
+                                notificationManager.updateSetting(for: website.id, setting: newSetting)
+                            }
+                        }
+                        .padding(.leading, 4)
+                    }
+                },
+                label: {
+                    Text("\(enabledCount) von \(websites.count) aktiv")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            )
+        }
+    }
+}
+
 struct NotificationSettingRow: View {
     let website: Website
     let setting: NotificationSetting
@@ -497,29 +578,50 @@ struct NotificationSettingRow: View {
 @MainActor
 class SettingsViewModel: ObservableObject {
     @Published var websites: [Website] = []
+    @Published var websitesByAccount: [(account: AnalyticsAccount, websites: [Website])] = []
 
     private let umamiAPI = UmamiAPI.shared
     private let plausibleAPI = PlausibleAPI.shared
 
-    private var isPlausible: Bool {
-        AnalyticsManager.shared.providerType == .plausible
-    }
-
     func loadWebsites() async {
-        do {
-            if isPlausible {
-                let sites = try await plausibleAPI.getAnalyticsWebsites()
-                websites = sites.map { site in
-                    Website(id: site.id, name: site.name, domain: site.domain, shareId: nil, teamId: nil, resetAt: nil, createdAt: nil)
+        var result: [(account: AnalyticsAccount, websites: [Website])] = []
+        let accounts = AccountManager.shared.accounts
+
+        for account in accounts {
+            var accountWebsites: [Website] = []
+            do {
+                switch account.providerType {
+                case .umami:
+                    guard let token = account.credentials.token,
+                          let url = URL(string: account.serverURL) else { continue }
+                    await umamiAPI.configure(baseURL: url, token: token)
+                    accountWebsites = try await umamiAPI.getWebsites()
+
+                case .plausible:
+                    guard let sites = account.sites, !sites.isEmpty else { continue }
+                    guard let apiKey = account.credentials.apiKey else { continue }
+                    try? KeychainService.save(account.serverURL, for: .serverURL)
+                    try? KeychainService.save(apiKey, for: .apiKey)
+                    await plausibleAPI.reconfigureFromKeychain()
+                    let plausibleSites = try await plausibleAPI.getAnalyticsWebsites()
+                    accountWebsites = plausibleSites.map { site in
+                        Website(id: site.id, name: site.name, domain: site.domain, shareId: nil, teamId: nil, resetAt: nil, createdAt: nil)
+                    }
                 }
-            } else {
-                websites = try await umamiAPI.getWebsites()
+            } catch {
+                #if DEBUG
+                print("Failed to load websites for account \(account.displayName): \(error)")
+                #endif
             }
-        } catch {
-            #if DEBUG
-            print("Failed to load websites: \(error)")
-            #endif
+
+            if !accountWebsites.isEmpty {
+                result.append((account: account, websites: accountWebsites))
+            }
         }
+
+        websitesByAccount = result
+        // Flat-Liste fuer Kompatibilitaet
+        websites = result.flatMap { $0.websites }
     }
 }
 
