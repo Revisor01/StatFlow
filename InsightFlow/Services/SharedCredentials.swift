@@ -243,4 +243,53 @@ enum SharedCredentials {
         print("SharedCredentials: Deleted")
         #endif
     }
+
+    // MARK: - Widget Accounts (Encrypted)
+
+    private static let widgetAccountsFileName = "widget_accounts.encrypted"
+    private static let legacyWidgetAccountsFileName = "widget_accounts.json"
+
+    /// Speichert Widget-Accounts verschluesselt im App Group Container
+    @discardableResult
+    static func saveWidgetAccounts(_ accountsData: Data) -> Bool {
+        guard let url = containerURL?.appendingPathComponent(widgetAccountsFileName) else {
+            return false
+        }
+        do {
+            let encrypted = try encrypt(accountsData)
+            try encrypted.write(to: url, options: [.atomic, .completeFileProtection])
+            // Legacy-Datei loeschen falls vorhanden
+            if let legacyURL = containerURL?.appendingPathComponent(legacyWidgetAccountsFileName) {
+                try? FileManager.default.removeItem(at: legacyURL)
+            }
+            return true
+        } catch {
+            #if DEBUG
+            print("SharedCredentials: Failed to save widget accounts - \(error)")
+            #endif
+            return false
+        }
+    }
+
+    /// Laedt und entschluesselt Widget-Accounts (fuer App-seitigen Zugriff)
+    static func loadWidgetAccounts() -> Data? {
+        guard let url = containerURL?.appendingPathComponent(widgetAccountsFileName),
+              FileManager.default.fileExists(atPath: url.path) else {
+            // Fallback auf Legacy-Plaintext
+            guard let legacyURL = containerURL?.appendingPathComponent(legacyWidgetAccountsFileName),
+                  FileManager.default.fileExists(atPath: legacyURL.path) else {
+                return nil
+            }
+            return try? Data(contentsOf: legacyURL)
+        }
+        do {
+            let encrypted = try Data(contentsOf: url)
+            return try decrypt(encrypted)
+        } catch {
+            #if DEBUG
+            print("SharedCredentials: Failed to load widget accounts - \(error)")
+            #endif
+            return nil
+        }
+    }
 }
