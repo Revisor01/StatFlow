@@ -208,7 +208,7 @@ struct DashboardView: View {
             // Only reload when NOT in all-accounts mode (avoid disrupting combined view)
             if !showAllAccounts {
                 Task {
-                    await viewModel.loadData(dateRange: selectedDateRange)
+                    await viewModel.loadData(dateRange: selectedDateRange, clearFirst: true)
                 }
             }
         }
@@ -870,7 +870,13 @@ class DashboardViewModel: ObservableObject {
         return accountMap
     }
 
-    func loadData(dateRange: DateRange) async {
+    func loadData(dateRange: DateRange, clearFirst: Bool = false) async {
+        if clearFirst {
+            websites = []
+            stats = [:]
+            sparklineData = [:]
+            activeVisitors = [:]
+        }
         isLoading = true
         currentDateRange = dateRange
         isOffline = false
