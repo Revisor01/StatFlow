@@ -224,6 +224,7 @@
 // MARK: - Support
 "settings.support.title" = "Entwicklung unterstützen";
 "settings.support.subtitle" = "Hilf uns, PrivacyFlow zu verbessern";
+"settings.branding.subtitle" = "Ein Pastorenprojekt";
 
 "settings.logout" = "Abmelden";
 "settings.logout.confirm" = "Möchtest du dich wirklich abmelden?";
