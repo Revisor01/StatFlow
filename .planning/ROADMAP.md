@@ -80,4 +80,4 @@ Plans:
 | 04. Support & Branding | v2.2 | 1/1 | Complete    | 2026-03-28 |
 | 05. Umami API Coverage | v2.2 | 2/4 | Complete    | 2026-03-28 |
 | 06. Plausible API Coverage | v2.2 | 2/2 | Complete    | 2026-03-28 |
-| 07. Push-Benachrichtigungen | v2.2 | 1/1 | Complete   | 2026-03-28 |
+| 07. Push-Benachrichtigungen | v2.2 | 1/1 | Complete    | 2026-03-28 |
