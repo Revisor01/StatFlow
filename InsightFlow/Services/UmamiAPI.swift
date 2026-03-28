@@ -556,6 +556,105 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode([MetricItem].self, from: data)
     }
 
+    // MARK: - Report List
+
+    func getReports(websiteId: String, page: Int = 1, pageSize: Int = 20) async throws -> ReportListResponse {
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/reports",
+            queryItems: [
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "pageSize", value: String(pageSize))
+            ]
+        )
+        return try decoder.decode(ReportListResponse.self, from: data)
+    }
+
+    // MARK: - Funnel Report
+
+    func getFunnelReport(websiteId: String, dateRange: DateRange, steps: [[String: String]]) async throws -> [FunnelStep] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "funnel",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end),
+                "steps": steps
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/funnel", body: body)
+        return try decoder.decode([FunnelStep].self, from: data)
+    }
+
+    // MARK: - UTM Report
+
+    func getUTMReport(websiteId: String, dateRange: DateRange) async throws -> [UTMReportItem] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "utm",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end)
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/utm", body: body)
+        return try decoder.decode([UTMReportItem].self, from: data)
+    }
+
+    // MARK: - Goal Report
+
+    func getGoalReport(websiteId: String, dateRange: DateRange, goals: [[String: Any]]) async throws -> [GoalReportItem] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "goals",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end),
+                "goals": goals
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/goals", body: body)
+        return try decoder.decode([GoalReportItem].self, from: data)
+    }
+
+    // MARK: - Attribution Report
+
+    func getAttributionReport(websiteId: String, dateRange: DateRange) async throws -> [AttributionItem] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "attribution",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end)
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/attribution", body: body)
+        return try decoder.decode([AttributionItem].self, from: data)
+    }
+
     // MARK: - Private
 
     private func request(endpoint: String, queryItems: [URLQueryItem] = []) async throws -> Data {
