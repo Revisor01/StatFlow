@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Support & API Coverage
 status: executing
-stopped_at: Completed 05-04-PLAN.md (Remaining API Endpoints)
-last_updated: "2026-03-28T18:42:21.808Z"
+stopped_at: Completed 06-01-PLAN.md (Sites-Liste, Goals-API und Filter-Infrastruktur)
+last_updated: "2026-03-28T18:50:56.033Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Phase 05 — umami-api-coverage
+**Current focus:** Phase 06 — plausible-api-coverage
 
 ## Current Position
 
-Phase: 06
-Plan: Not started
+Phase: 06 (plausible-api-coverage) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
 Last activity: 2026-03-28
 
@@ -53,6 +53,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 05-umami-api-coverage]: Identifiable nur wo SwiftUI-Listen-Verwendung sinnvoll (nicht bei reinen Wrapper-Responses)
 - [Phase 05-umami-api-coverage]: TeamWebsitesResponse/UserWebsitesResponse/UserTeamsResponse als separate Structs fuer paginierte API-Antworten
 - [Phase 05-umami-api-coverage]: getUserTeams (non-admin, GET /api/teams) und getTeams (admin, GET /api/admin/teams) co-existieren — unterschiedliche Endpunkte
+- [Phase 06]: PlausibleQueryFilter als Sendable struct mit toQueryParam() — einfacher zu konstruieren als Enum, serialisiert direkt zu [Any] fuer JSONSerialization
+- [Phase 06]: buildQueryBody zentralisiert v2 Query-Bau in PlausibleAPI — getBreakdown erhaelt optionalen filters-Parameter ohne Breaking Change
+- [Phase 06]: Goals CodingKeys explizit (nicht convertFromSnakeCase) — goal_type/event_name/page_path sind non-obvious, explizite Keys verbessern Lesbarkeit
 
 ### Pending Todos
 
@@ -64,7 +67,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:36:02.426Z
-Stopped at: Completed 05-04-PLAN.md (Remaining API Endpoints)
+Last session: 2026-03-28T18:50:56.031Z
+Stopped at: Completed 06-01-PLAN.md (Sites-Liste, Goals-API und Filter-Infrastruktur)
 Resume file: None
 Next action: Execute 05-04-PLAN.md

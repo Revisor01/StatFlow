@@ -58,7 +58,7 @@ Plans:
   3. Keine relevanten Plausible-Datenpunkte fehlen im Vergleich zur Plausible-Weboberfläche
 **Plans**: 2 plans
 Plans:
-- [ ] 06-01-PLAN.md — Sites-Liste, Goals-API und Filter-Infrastruktur
+- [x] 06-01-PLAN.md — Sites-Liste, Goals-API und Filter-Infrastruktur
 - [ ] 06-02-PLAN.md — Fehlende Dimensionen und AnalyticsProvider-Methoden
 
 ### Phase 07: Push-Benachrichtigungen
