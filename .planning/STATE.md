@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Support & API Coverage
 status: executing
-stopped_at: Completed 05-01-PLAN.md (Umami API Response Models)
-last_updated: "2026-03-28T18:24:03.095Z"
+stopped_at: Completed 05-umami-api-coverage 05-02-PLAN.md
+last_updated: "2026-03-28T18:30:00.706Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 5
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 05 (umami-api-coverage) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-03-28
 
@@ -51,6 +51,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 04-support-branding]: tierColor als eigene Product-Extension — View bleibt schlank, ValetudiOS kann direkt nutzen
 - [Phase 05-umami-api-coverage]: Alle neuen Modelle Codable+Sendable — actor-API-Clients erfordern Sendable
 - [Phase 05-umami-api-coverage]: Identifiable nur wo SwiftUI-Listen-Verwendung sinnvoll (nicht bei reinen Wrapper-Responses)
+- [Phase 05-umami-api-coverage]: Event-Data-Endpunkte in eigene MARK: Event Data Section — trennt event-data/* von website-events/* fuer Klarheit
 
 ### Pending Todos
 
@@ -62,7 +63,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:24:03.093Z
-Stopped at: Completed 05-01-PLAN.md (Umami API Response Models)
+Last session: 2026-03-28T18:30:00.703Z
+Stopped at: Completed 05-umami-api-coverage 05-02-PLAN.md
 Resume file: None
 Next action: `/gsd:plan-phase 04`
