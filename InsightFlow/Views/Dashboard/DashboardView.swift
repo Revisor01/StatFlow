@@ -5,7 +5,6 @@ struct DashboardView: View {
     @ObservedObject private var accountManager = AccountManager.shared
     @ObservedObject private var settingsManager = DashboardSettingsManager.shared
     @EnvironmentObject private var quickActionManager: QuickActionManager
-    @EnvironmentObject private var authManager: AuthManager
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedWebsite: Website?
     @State private var selectedDateRange: DateRange = .today
@@ -219,7 +218,7 @@ struct DashboardView: View {
             Text("dashboard.empty.title")
                 .font(.headline)
 
-            if authManager.currentProvider == .plausible {
+            if accountManager.activeAccount?.providerType == .plausible {
                 Text("dashboard.empty.plausible")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -1065,5 +1064,4 @@ class DashboardViewModel: ObservableObject {
 
 #Preview {
     DashboardView()
-        .environmentObject(AuthManager())
 }

@@ -1,7 +1,6 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var authManager: AuthManager
     @EnvironmentObject var notificationManager: NotificationManager
 
     @StateObject private var viewModel = SettingsViewModel()
@@ -36,7 +35,7 @@ struct SettingsView: View {
             .alert("settings.logout", isPresented: $showLogoutConfirmation) {
                 Button("button.cancel", role: .cancel) { }
                 Button("settings.logout", role: .destructive) {
-                    authManager.logout()
+                    accountManager.clearActiveAccount()
                 }
             } message: {
                 Text("settings.logout.confirm")
@@ -96,9 +95,11 @@ struct SettingsView: View {
 
     private var accountsSection: some View {
         Section {
-            // Zeige aktuellen Account wenn AccountManager leer ist (normaler Login)
+            // Zeige aktuellen Account wenn kein activeAccount gesetzt ist und Accounts vorhanden
             if accountManager.accounts.isEmpty {
-                currentAccountRow
+                if let active = accountManager.activeAccount {
+                    currentAccountRow(active)
+                }
             } else {
                 // Alle Accounts anzeigen
                 ForEach(accountManager.accounts) { account in
@@ -144,23 +145,23 @@ struct SettingsView: View {
         }
     }
 
-    private var currentAccountRow: some View {
+    private func currentAccountRow(_ account: AnalyticsAccount) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: authManager.currentProvider == .umami ? "chart.bar.xaxis" : "chart.line.uptrend.xyaxis")
+            Image(systemName: account.providerType == .umami ? "chart.bar.xaxis" : "chart.line.uptrend.xyaxis")
                 .font(.system(size: 24))
-                .foregroundStyle(authManager.currentProvider == .umami ? .orange : .blue)
+                .foregroundStyle(account.providerType == .umami ? .orange : .blue)
                 .frame(width: 36, height: 36)
                 .background(
-                    (authManager.currentProvider == .umami ? Color.orange : Color.blue).opacity(0.12)
+                    (account.providerType == .umami ? Color.orange : Color.blue).opacity(0.12)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(authManager.currentProvider == .umami ? authManager.username : "Plausible")
+                Text(account.displayName)
                     .font(.subheadline)
                     .fontWeight(.medium)
 
-                Text(authManager.serverURL
+                Text(account.serverURL
                     .replacingOccurrences(of: "https://", with: "")
                     .replacingOccurrences(of: "http://", with: ""))
                     .font(.caption)
@@ -617,6 +618,5 @@ struct EditAccountView: View {
 
 #Preview {
     SettingsView()
-        .environmentObject(AuthManager())
         .environmentObject(NotificationManager())
 }

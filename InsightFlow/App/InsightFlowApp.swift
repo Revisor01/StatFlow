@@ -5,7 +5,6 @@ import UserNotifications
 @main
 struct PrivacyFlowApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var authManager = AuthManager()
     @StateObject private var notificationManager = NotificationManager()
     @ObservedObject private var quickActionManager = QuickActionManager.shared
 
@@ -16,7 +15,6 @@ struct PrivacyFlowApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(authManager)
                 .environmentObject(notificationManager)
                 .environmentObject(quickActionManager)
                 .onOpenURL { url in

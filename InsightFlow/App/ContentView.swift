@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var authManager: AuthManager
+    @ObservedObject private var accountManager = AccountManager.shared
     @AppStorage("colorScheme") private var colorScheme: String = "system"
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var showOnboarding = false
@@ -16,14 +16,14 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if authManager.isAuthenticated {
+            if accountManager.activeAccount != nil {
                 MainTabView()
                     .supportReminder()
             } else {
                 LoginView()
             }
         }
-        .animation(.smooth, value: authManager.isAuthenticated)
+        .animation(.smooth, value: accountManager.activeAccount != nil)
         .preferredColorScheme(preferredColorScheme)
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView(isPresented: $showOnboarding)
@@ -38,6 +38,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
-        .environmentObject(AuthManager())
         .environmentObject(NotificationManager())
 }

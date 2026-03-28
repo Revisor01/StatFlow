@@ -80,7 +80,7 @@ enum ServerType: CaseIterable {
 // MARK: - Login View
 
 struct LoginView: View {
-    @EnvironmentObject var authManager: AuthManager
+    @StateObject private var viewModel = LoginViewModel()
 
     @State private var step: LoginStep = .provider
     @State private var selectedProvider: LoginProvider = .umami
@@ -115,7 +115,7 @@ struct LoginView: View {
                         credentialsSection
                     }
 
-                    if let error = authManager.errorMessage {
+                    if let error = viewModel.errorMessage {
                         errorView(error)
                     }
                 }
@@ -338,14 +338,14 @@ struct LoginView: View {
         Button {
             Task {
                 if selectedProvider == .umami {
-                    await authManager.login(
+                    await viewModel.login(
                         serverURL: serverURL,
                         username: username,
                         password: password,
                         accountName: accountName
                     )
                 } else {
-                    await authManager.loginWithPlausible(
+                    await viewModel.loginWithPlausible(
                         serverURL: serverURL,
                         apiKey: apiKey,
                         accountName: accountName
@@ -354,7 +354,7 @@ struct LoginView: View {
             }
         } label: {
             HStack(spacing: 12) {
-                if authManager.isLoading {
+                if viewModel.isLoading {
                     ProgressView()
                         .tint(.white)
                 } else {
@@ -369,7 +369,7 @@ struct LoginView: View {
             .foregroundColor(.white)
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
-        .disabled(authManager.isLoading || !isFormValid)
+        .disabled(viewModel.isLoading || !isFormValid)
         .opacity(isFormValid ? 1 : 0.6)
     }
 
@@ -526,5 +526,4 @@ struct GlassTextField: View {
 
 #Preview {
     LoginView()
-        .environmentObject(AuthManager())
 }
