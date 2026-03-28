@@ -538,6 +538,186 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode([RetentionRow].self, from: data)
     }
 
+    func getReports(websiteId: String, page: Int = 1, pageSize: Int = 20) async throws -> ReportListResponse {
+        let data = try await request(
+            endpoint: "api/reports",
+            queryItems: [
+                URLQueryItem(name: "websiteId", value: websiteId),
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "pageSize", value: String(pageSize))
+            ]
+        )
+        return try decoder.decode(ReportListResponse.self, from: data)
+    }
+
+    func createReport(websiteId: String, type: String, name: String, description: String? = nil, parameters: [String: Any] = [:]) async throws -> Report {
+        var body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": type,
+            "name": name
+        ]
+        if let description = description { body["description"] = description }
+        if !parameters.isEmpty { body["parameters"] = parameters }
+
+        let data = try await postRequest(endpoint: "api/reports", body: body)
+        return try decoder.decode(Report.self, from: data)
+    }
+
+    func getReport(reportId: String) async throws -> Report {
+        let data = try await request(endpoint: "api/reports/\(reportId)")
+        return try decoder.decode(Report.self, from: data)
+    }
+
+    func updateReport(reportId: String, name: String? = nil, description: String? = nil, parameters: [String: Any]? = nil) async throws -> Report {
+        var body: [String: Any] = [:]
+        if let name = name { body["name"] = name }
+        if let description = description { body["description"] = description }
+        if let parameters = parameters { body["parameters"] = parameters }
+
+        let data = try await postRequest(endpoint: "api/reports/\(reportId)", body: body)
+        return try decoder.decode(Report.self, from: data)
+    }
+
+    func deleteReport(reportId: String) async throws {
+        _ = try await deleteRequest(endpoint: "api/reports/\(reportId)")
+    }
+
+    func getFunnelReport(websiteId: String, dateRange: DateRange, steps: [[String: String]]) async throws -> [FunnelStep] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "funnel",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end),
+                "steps": steps
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/funnel", body: body)
+        return try decoder.decode([FunnelStep].self, from: data)
+    }
+
+    func getUTMReport(websiteId: String, dateRange: DateRange) async throws -> [UTMReportItem] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "utm",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end)
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/utm", body: body)
+        return try decoder.decode([UTMReportItem].self, from: data)
+    }
+
+    func getGoalReport(websiteId: String, dateRange: DateRange, goals: [[String: Any]]) async throws -> [GoalReportItem] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "goal",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end),
+                "goals": goals
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/goal", body: body)
+        return try decoder.decode([GoalReportItem].self, from: data)
+    }
+
+    func getAttributionReport(websiteId: String, dateRange: DateRange) async throws -> [AttributionItem] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "attribution",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end)
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/attribution", body: body)
+        return try decoder.decode([AttributionItem].self, from: data)
+    }
+
+    func getPerformanceReport(websiteId: String, dateRange: DateRange) async throws -> [PerformanceItem] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "performance",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end)
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/performance", body: body)
+        return try decoder.decode([PerformanceItem].self, from: data)
+    }
+
+    func getBreakdownReport(websiteId: String, dateRange: DateRange, property: String) async throws -> [BreakdownItem] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "breakdown",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end),
+                "property": property
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/breakdown", body: body)
+        return try decoder.decode([BreakdownItem].self, from: data)
+    }
+
+    func getRevenueReport(websiteId: String, dateRange: DateRange) async throws -> [RevenueItem] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "revenue",
+            "filters": [:],
+            "parameters": [
+                "startDate": formatter.string(from: dates.start),
+                "endDate": formatter.string(from: dates.end)
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/revenue", body: body)
+        return try decoder.decode([RevenueItem].self, from: data)
+    }
+
     func getMetrics(websiteId: String, dateRange: DateRange, type: MetricType, limit: Int = 10) async throws -> [MetricItem] {
         let dates = dateRange.dates
         let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
