@@ -622,6 +622,19 @@ actor PlausibleAPI: AnalyticsProvider {
         return response.goals
     }
 
+    func getGoalConversions(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [GoalConversion] {
+        let body = buildQueryBody(siteId: websiteId, metrics: ["visitors", "events"], dateRange: dateRange, dimensions: ["event:goal"], filters: filters)
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        return response.results.map { apiResult in
+            let goalName = apiResult.dimensions.first ?? "Unknown"
+            let visitors = apiResult.metrics.count > 0 ? Int(apiResult.metrics[0]) : 0
+            let events = apiResult.metrics.count > 1 ? Int(apiResult.metrics[1]) : 0
+            return GoalConversion(goalName: goalName, visitors: visitors, events: events)
+        }
+    }
+
     func createGoal(domain: String, goalType: PlausibleGoalType, value: String) async throws -> PlausibleGoal {
         guard let apiKey = apiKey else {
             throw PlausibleError.notAuthenticated
