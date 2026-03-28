@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Support & API Coverage
-status: planning
+status: roadmap_created
 stopped_at: null
 last_updated: "2026-03-28T18:00:00.000Z"
 last_activity: 2026-03-28
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Defining requirements for v2.2
+**Current focus:** v2.2 Support & API Coverage — Roadmap erstellt, Phase 04 als nächstes planen
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: Not started (Phase 04 bereit zur Planung)
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-28 — Milestone v2.2 started
+Status: Roadmap erstellt
+Last activity: 2026-03-28 — Roadmap v2.2 erstellt (4 Phasen: 04-07)
 
 ## Performance Metrics
 
@@ -60,5 +60,6 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-28
-Stopped at: Milestone v2.2 initialization
+Stopped at: Roadmap v2.2 erstellt
 Resume file: None
+Next action: `/gsd:plan-phase 04`

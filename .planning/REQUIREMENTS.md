@@ -33,15 +33,15 @@ Requirements für Support & API Coverage. Aus User-Feedback nach v2.1.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SUP-01 | Phase 1 | Pending |
-| SUP-02 | Phase 1 | Pending |
-| API-01 | Phase 2 | Pending |
-| API-02 | Phase 2 | Pending |
-| NOTIF-01 | Phase 3 | Pending |
+| SUP-01 | Phase 04 | Pending |
+| SUP-02 | Phase 04 | Pending |
+| API-01 | Phase 05 | Pending |
+| API-02 | Phase 06 | Pending |
+| NOTIF-01 | Phase 07 | Pending |
 
 **Coverage:**
 - v2.2 requirements: 5 total
-- Mapped to phases: 4
+- Mapped to phases: 5
 - Unmapped: 0 ✓
 
 ---
