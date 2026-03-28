@@ -224,6 +224,7 @@
 // MARK: - Support
 "settings.support.title" = "Support Development";
 "settings.support.subtitle" = "Help us improve PrivacyFlow";
+"settings.branding.subtitle" = "A pastor's project";
 "settings.logout" = "Log Out";
 "settings.logout.confirm" = "Are you sure you want to log out?";
 
