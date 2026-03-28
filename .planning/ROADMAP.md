@@ -60,7 +60,7 @@ Plans:
   3. Account-Switching löst keinen Race Condition aus, der zu inkonsistentem Auth-State führen kann
 **Plans:** 1/2 plans executed
 Plans:
-- [ ] 03-01-PLAN.md — Force Unwraps in API-Clients und Widget-Networking eliminieren (STAB-01)
+- [x] 03-01-PLAN.md — Force Unwraps in API-Clients und Widget-Networking eliminieren (STAB-01)
 - [x] 03-02-PLAN.md — Timing-Hacks in AccountManager und AuthManager entfernen (STAB-02)
 
 ### Phase 4: Architektur
