@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Code Quality & Security Hardening
-status: verifying
-stopped_at: Completed 01-security-hardening-02-PLAN.md
-last_updated: "2026-03-28T02:14:52.431Z"
+status: executing
+stopped_at: Completed 02-quick-wins-widget-split-02-PLAN.md
+last_updated: "2026-03-28T02:48:15.377Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 6
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Phase 01 — Security Hardening
+**Current focus:** Phase 02 — Quick Wins & Widget Split
 
 ## Current Position
 
-Phase: 01 (Security Hardening) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
+Phase: 02 (Quick Wins & Widget Split) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-03-28
 
 Progress: [░░░░░░░░░░] 0%
@@ -49,6 +49,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-security-hardening P01 | 15min | 2 tasks | 2 files |
 | Phase 01-security-hardening P02 | 20min | 2 tasks | 3 files |
+| Phase 02-quick-wins-widget-split P02 | 6min | 2 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,7 @@ Recent decisions affecting current work:
 - [Phase 01-security-hardening]: Migration via credentials_migrated_v2 Flag — einmalig beim App-Start, transparent fuer bestehende Nutzer
 - [Phase 01-security-hardening]: widget_accounts.encrypted statt widget_accounts.json — gleicher AES-GCM Key (widget_credentials.key) wie fuer Credentials
 - [Phase 01-security-hardening]: Widget ist read-only fuer Accounts — saveAccounts() plaintext entfernt, App schreibt verschluesselt
+- [Phase 02-quick-wins-widget-split]: #if DEBUG wrapping fuer alle print()-Calls in Swift — kein Logger-Utility eingefuehrt, reines mechanisches Wrapping
 
 ### Pending Todos
 
@@ -76,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T02:14:52.420Z
-Stopped at: Completed 01-security-hardening-02-PLAN.md
+Last session: 2026-03-28T02:48:15.374Z
+Stopped at: Completed 02-quick-wins-widget-split-02-PLAN.md
 Resume file: None
