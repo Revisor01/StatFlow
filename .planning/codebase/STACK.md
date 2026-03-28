@@ -1,133 +1,110 @@
 # Technology Stack
 
-**Analysis Date:** 2026-03-27
+**Analysis Date:** 2026-03-28
 
 ## Languages
 
 **Primary:**
-- Swift 6.0 - Main app target (`InsightFlow/`)
-- Swift 5.0 - Widget extension target (`InsightFlowWidget/`)
+- Swift 5.10+ - iOS app, widgets, tests
+
+**Secondary:**
+- Objective-C - Minimal use, mostly via Swift interop (Security framework)
 
 ## Runtime
 
 **Environment:**
-- iOS (iPhone + iPad)
-- Xcode project format: objectVersion 77 (Xcode 16+)
+- iOS 18.0+ (deployment target)
+- iPad OS (SwiftUI supports universal apps)
+- WidgetKit 6.0+ (for iOS 17+/18+)
 
-**Deployment Targets:**
-- Main app: iOS 18.0
-- Widget extension: iOS 26.1
-
-**Bundle Identifier:**
-- App: `de.godsapp.PrivacyFlow`
-- Widget: `de.godsapp.PrivacyFlow.InsightFlowWidget`
-
-**Marketing Version:** 1.3
+**Build System:**
+- Xcode 15.x+ (Swift 5.10 support)
+- Apple Clang compiler
 
 ## Frameworks
 
-**Core (Apple System Frameworks):**
+**Core (Apple):**
+- SwiftUI - UI layer, all views and navigation
+- Foundation - Standard library, networking, data handling
+- Combine - Reactive programming for state management
+- UserNotifications - Local and push notifications
+- BackgroundTasks - App refresh scheduling (BGAppRefreshTask)
+- Security - Keychain access (SecItem APIs)
+- WidgetKit - Native iOS widget extension
 
-| Name | Purpose |
-|------|---------|
-| SwiftUI | All UI, app lifecycle (`@main struct PrivacyFlowApp: App`) |
-| WidgetKit | Home screen widgets with timeline-based updates |
-| Foundation | Networking (`URLSession`), JSON coding, file management |
-| Security | Keychain Services for credential storage |
-| CryptoKit | AES-GCM encryption for shared credentials between app and widget |
-| BackgroundTasks | `BGAppRefreshTask` for scheduled notification delivery |
-| UserNotifications | Local push notifications for daily/weekly stats summaries |
-| StoreKit | In-app purchases (tip jar / support the developer) |
-| Combine | Reactive bindings in `AuthManager` (notification subscriptions) |
-| AppIntents | Widget configuration intents |
+**Networking:**
+- URLSession - HTTP networking, default Apple framework
+- No third-party HTTP clients or libraries
 
-**No third-party dependencies.** The project uses zero external packages -- no SPM, CocoaPods, or Carthage. All networking, JSON parsing, caching, and encryption use Apple frameworks only.
+**Data Storage:**
+- Keychain Services - Secure credential storage (via Security framework)
+- FileManager - App group container for cache storage
+- UserDefaults - User preferences and settings
+- JSON Codable - Data serialization/deserialization
 
-## Build System
+**Localization:**
+- Strings files (localized resources)
+- String(localized:) for runtime localization
 
-**Build Tool:** Xcode (native `.xcodeproj`, no workspace)
-- Project file: `InsightFlow.xcodeproj/project.pbxproj`
-- Uses `PBXFileSystemSynchronizedRootGroup` (Xcode 16+ file sync feature)
+**Testing:**
+- XCTest - Unit testing framework
+- No third-party test frameworks
 
-**Package Manager:** None -- no `Package.swift`, no `Podfile`, no `Cartfile`
+## Key Dependencies
 
-**Targets:**
-1. `InsightFlow` - Main iOS app (Swift 6.0, iOS 18.0)
-2. `InsightFlowWidgetExtension` - Widget extension (Swift 5.0, iOS 26.1)
+**Critical:**
+- URLSession - HTTP client for Umami and Plausible API calls
+- Keychain Services - Stores authentication tokens (umami), API keys (plausible), credentials per account
+- WidgetKit - Enables iOS lock screen and home screen widgets
 
-**Key Build Settings:**
-- `SWIFT_VERSION = 6.0` (main app), `5.0` (widget)
-- `IPHONEOS_DEPLOYMENT_TARGET = 18.0` (main app), `26.1` (widget)
-- `INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO`
-- `INFOPLIST_KEY_LSApplicationCategoryType = public.app-category.utilities`
-- Portrait only on iPhone, all orientations on iPad
+**Data Processing:**
+- JSONDecoder/JSONEncoder - Custom date formatting for ISO8601 with fractional seconds
+- AnalyticsCacheService - Custom caching with app group container support
+
+**Actor-Based Concurrency:**
+- UmamiAPI (actor) - Thread-safe Umami API client
+- PlausibleAPI (actor) - Thread-safe Plausible API client
+- AccountManager (@MainActor) - Multi-account management on main thread
+- NotificationManager (@MainActor) - Notification scheduling on main thread
+- QuickActionManager (@MainActor) - Deep link handling
 
 ## Configuration
 
-**App Groups:**
-- `group.de.godsapp.PrivacyFlow` - Shared container for app-widget communication
-- Used by: `SharedCredentials`, `AnalyticsCacheService`, `AccountManager.syncAccountsToWidget()`
+**Environment:**
+- Bundle identifier: `de.godsapp.statflow`
+- App groups: `group.de.godsapp.statflow` (shared with widget)
+- Keychain service: `de.godsapp.statflow`
+- Widget identifier: `PrivacyFlowWidget`
+- Widget supported sizes: `.systemSmall`, `.systemMedium`
 
-**Entitlements (App - `InsightFlow/InsightFlow.entitlements`):**
-- `aps-environment`: Push notification entitlement (development)
-- `com.apple.security.application-groups`: App Group for widget data sharing
+**Build Targets:**
+- InsightFlow (main app)
+- InsightFlowWidgetExtension (widget app extension)
+- InsightFlowTests (unit tests)
 
-**Entitlements (Widget - `InsightFlowWidgetExtension.entitlements`):**
-- `com.apple.security.application-groups`: Same App Group
+**File Organization:**
+- `InsightFlow/` - Main app source
+- `InsightFlowWidget/` - Widget extension (separate bundle)
+- `InsightFlowTests/` - XCTest unit tests
+- `build/` - Build artifacts
 
-**Info.plist (`InsightFlow/Info.plist`):**
-- `BGTaskSchedulerPermittedIdentifiers`: `de.godsapp.PrivacyFlow.refresh`
-- `CFBundleLocalizations`: `en`, `de`
-- `CFBundleURLSchemes`: `privacyflow` (deep linking)
-- `UIBackgroundModes`: `fetch`, `processing`
-
-**Localization:**
-- Two languages: English (`en`) and German (`de`)
-- Localization files: `InsightFlow/Resources/{en,de}.lproj/Localizable.strings`
-- Widget localization: `InsightFlowWidget/Resources/{en,de}.lproj/Localizable.strings`
-- Uses `String(localized:)` API throughout (modern Swift localization)
-
-## Data Storage
-
-**Keychain (`InsightFlow/Services/KeychainService.swift`):**
-- Service identifier: `de.godsapp.PrivacyFlow`
-- Keys: `serverURL`, `authToken`, `username`, `providerType`, `serverType`, `apiKey`, `plausibleSiteId`
-- Accessibility: `kSecAttrAccessibleAfterFirstUnlock`
-
-**UserDefaults:**
-- Account list: `analytics_accounts` (JSON-encoded `[AnalyticsAccount]`)
-- Active account: `active_account_id`
-- Notification settings: `notificationSettings`, `notificationTime`, `notificationDataSource`
-- Dashboard settings: `dashboard_enabled_metrics`, `dashboard_show_graph`, `dashboard_chart_style`, `dashboard_show_date_range_picker`
-- Plausible sites: `plausible_sites`
-- Support tracking: `supportReminderShown`, `hasSupported`, `appLaunchCount`
-
-**App Group Container (file-based):**
-- `widget_credentials.encrypted` - AES-GCM encrypted credentials for widget
-- `widget_credentials.key` - Symmetric encryption key
-- `widget_accounts.json` - Multi-account data for widget
-- `analytics_cache/` - JSON cache files with TTL (1h default, 15min sparklines)
-
-## In-App Purchases
-
-**Product IDs (`InsightFlow/Services/SupportManager.swift`):**
-- `de.godsapp.insightflow.support.small` (small tip)
-- `de.godsapp.insightflow.support.medium` (medium tip)
-- `de.godsapp.insightflow.support.large` (large tip)
-
-Uses StoreKit 2 API (`Product.products(for:)`, `product.purchase()`).
+**Background Task:**
+- Task identifier: `de.godsapp.statflow.refresh` (for app refresh notifications)
+- Earliest begin date: Configurable notification time (default 9:00 AM)
 
 ## Platform Requirements
 
 **Development:**
-- Xcode 16+ (required for `PBXFileSystemSynchronizedRootGroup` and Swift 6.0)
-- macOS (Xcode development)
-- Apple Developer account (for App Groups, push notifications, StoreKit)
+- Xcode 15+ with iOS 18 SDK
+- macOS 13.0+ (for running Xcode)
+- Swift 5.10+
 
 **Production:**
-- iOS 18.0+ devices
-- Network access required (connects to user-provided analytics server URLs)
+- Deployment target: iOS 18.0+
+- Code signing: Required for App Store
+- Push notifications entitlements: Not required (local only)
+- Keychain Sharing capability: Enabled for secure storage
 
 ---
 
-*Stack analysis: 2026-03-27*
+*Stack analysis: 2026-03-28*

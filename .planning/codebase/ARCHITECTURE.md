@@ -1,208 +1,165 @@
 # Architecture
 
-**Analysis Date:** 2026-03-27
+**Analysis Date:** 2026-03-28
 
 ## Pattern Overview
 
-**Overall:** MVVM (Model-View-ViewModel) with Service Layer and Provider Protocol Abstraction
+**Overall:** Multi-provider analytics dashboard using MVVM with dependency injection and layer separation.
 
 **Key Characteristics:**
-- Protocol-based analytics provider abstraction (`AnalyticsProvider`) unifies Umami and Plausible backends
-- Singleton service managers (`AnalyticsManager.shared`, `AccountManager.shared`, `PlausibleSitesManager.shared`, etc.)
-- `@MainActor` isolation for all ObservableObject classes
-- Multi-account support with account switching at runtime
-- App Group container for sharing data between main app and widget extension
-- SwiftUI `@EnvironmentObject` for dependency injection of `AuthManager` and `NotificationManager`
-
-## Layer Diagram
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    App Entry Point                       │
-│  InsightFlowApp.swift → ContentView → MainTabView       │
-│  (Auth gate, deep links, background tasks)              │
-└──────────────┬──────────────────────────────────────────┘
-               │
-┌──────────────▼──────────────────────────────────────────┐
-│                     Views Layer                          │
-│  Dashboard │ Detail │ Admin │ Settings │ Realtime │ etc. │
-│  (SwiftUI Views + ViewModels where needed)              │
-└──────────────┬──────────────────────────────────────────┘
-               │
-┌──────────────▼──────────────────────────────────────────┐
-│                   Services Layer                         │
-│  AuthManager │ AccountManager │ AnalyticsManager         │
-│  NotificationManager │ DashboardSettingsManager          │
-│  SupportManager │ AnalyticsCacheService                  │
-└──────────────┬──────────────────────────────────────────┘
-               │
-┌──────────────▼──────────────────────────────────────────┐
-│              Analytics Provider Protocol                  │
-│  ┌──────────────────┐  ┌──────────────────────┐         │
-│  │    UmamiAPI       │  │    PlausibleAPI       │        │
-│  │  (actor, shared)  │  │  (@MainActor, shared) │        │
-│  └──────────────────┘  └──────────────────────┘         │
-└──────────────┬──────────────────────────────────────────┘
-               │
-┌──────────────▼──────────────────────────────────────────┐
-│                Infrastructure Layer                      │
-│  KeychainService │ SharedCredentials │ UserDefaults       │
-│  URLSession (networking) │ App Group file I/O            │
-└─────────────────────────────────────────────────────────┘
-```
+- Unified provider abstraction supporting Umami and Plausible analytics
+- Account-based multi-provider switching with keychain credential isolation
+- Observable-based reactive UI state management (ObservableObject/Published)
+- Actor-based API clients for thread-safety and concurrency isolation
+- Deep linking and notification-driven navigation
 
 ## Layers
 
-**App Layer:**
-- Purpose: Application lifecycle, entry point, deep link handling, background task registration
-- Location: `InsightFlow/App/`
-- Contains: `InsightFlowApp.swift`, `ContentView.swift`, `MainTabView.swift`
-- Depends on: AuthManager, NotificationManager, QuickActionManager
-- Used by: iOS system (app launch)
-
-**Views Layer:**
-- Purpose: UI presentation and user interaction
+**Presentation Layer:**
+- Purpose: SwiftUI views and view models handling user interaction
 - Location: `InsightFlow/Views/`
-- Contains: SwiftUI views organized by feature (Dashboard, Detail, Admin, Settings, Auth, Realtime, Sessions, Reports, Onboarding)
-- Depends on: Services layer, Models
-- Used by: App layer (navigation)
+- Contains: View hierarchies organized by feature (Dashboard, Detail, Admin, Settings, etc.), ViewModels with @Published properties
+- Depends on: Models, Services, Extensions
+- Used by: SwiftUI runtime
 
-**Services Layer:**
-- Purpose: Business logic, state management, API communication, persistence
+**Service Layer:**
+- Purpose: Core business logic, API communication, state management, and credential handling
 - Location: `InsightFlow/Services/`
-- Contains: Manager classes (singletons), API clients, caching, credential storage
-- Depends on: Models, Infrastructure (Keychain, URLSession)
-- Used by: Views layer
+- Contains: API clients (UmamiAPI, PlausibleAPI), managers (AccountManager, AnalyticsManager, NotificationManager, DashboardSettingsManager)
+- Depends on: Models, Keychain framework
+- Used by: ViewModels and Views via dependency injection
 
-**Models Layer:**
-- Purpose: Data structures for API responses and domain objects
+**Model Layer:**
+- Purpose: Data structures representing API responses and domain models
 - Location: `InsightFlow/Models/`
-- Contains: Codable structs for websites, stats, sessions, admin entities, date ranges
-- Depends on: Foundation only
-- Used by: Services and Views layers
+- Contains: Codable structs for API responses (Website, Stats, Events, Sessions, etc.) and domain models (DateRange, Reports, Share)
+- Depends on: Foundation
+- Used by: Services and ViewModels
 
-**Widget Extension:**
-- Purpose: Home screen widgets showing analytics data
-- Location: `InsightFlowWidget/`
-- Contains: Widget timeline provider, widget views, Live Activity
-- Depends on: SharedCredentials (via App Group), URLSession
-- Note: Shares code concepts but NOT source files with main app; duplicates some API logic
+**Infrastructure Layer:**
+- Purpose: Security, encryption, and system integration
+- Location: `InsightFlow/Services/` (KeychainService) and App delegate in `InsightFlow/App/`
+- Contains: Keychain credential management, notification handling, background task scheduling, deep linking
+- Depends on: Security framework, UserNotifications, BackgroundTasks
+- Used by: AccountManager, AppDelegate
 
 ## Data Flow
 
-**Primary Flow - Dashboard Load:**
+**Authentication & Account Management:**
 
-1. `ContentView` checks `authManager.isAuthenticated` to show `LoginView` or `MainTabView`
-2. `DashboardView` reads active account from `AccountManager.shared`
-3. Uses `AnalyticsManager.shared.currentProvider` (which conforms to `AnalyticsProvider` protocol) to fetch websites
-4. For each website, `WebsiteCard` fetches stats via the provider protocol
-5. Provider (`UmamiAPI` or `PlausibleAPI`) makes HTTP requests to the analytics backend
-6. Results are mapped from provider-specific models to unified `AnalyticsStats`/`AnalyticsWebsite` models
-7. `AnalyticsCacheService` stores results in App Group container for offline access
+1. User enters credentials in LoginView → LoginViewModel.login()
+2. LoginViewModel calls UmamiAPI.shared.authenticate() or PlausibleAPI.shared.authenticate()
+3. API client validates credentials and stores token/apiKey in Keychain
+4. LoginViewModel creates AnalyticsAccount and calls AccountManager.shared.addAccount()
+5. AccountManager saves account metadata to UserDefaults (credentials stripped)
+6. AccountManager calls applyAccountCredentials() to configure API services
+7. AccountManager updates widget via SharedCredentials
+8. AnalyticsManager.setProvider() activates the appropriate API client
 
-**Account Switching Flow:**
+**Dashboard Data Loading:**
 
-1. User selects account in Settings
-2. `AccountManager.shared.setActiveAccount()` is called
-3. Credentials are written to Keychain via `KeychainService`
-4. Provider API (`UmamiAPI` or `PlausibleAPI`) is reconfigured from Keychain
-5. `AnalyticsManager.shared.setProvider()` updates the active provider
-6. `NotificationCenter.default.post(name: .accountDidChange)` triggers view refresh
-7. Widget credentials are synced via `SharedCredentials` and `widget_accounts.json`
+1. DashboardView loads websites from active account
+2. DashboardViewModel queries currentProvider.getAnalyticsWebsites()
+3. UmamiAPI/PlausibleAPI fetch from respective backends
+4. Websites displayed as WebsiteCard with stats and sparkline data
+5. Stats fetched lazily per website: activeVisitors (realtime), stats (comparison), sparklines
 
-**Authentication Flow (Umami):**
+**Detail View Data Flow:**
 
-1. `LoginView` collects serverURL, username, password
-2. `AuthManager.login()` calls `UmamiAPI.shared.login()` which POSTs to `{serverURL}/api/auth/login`
-3. JWT token is returned and saved to Keychain (`KeychainService.save()`)
-4. Token is also saved to `SharedCredentials` (encrypted AES-GCM) for widget access
-5. `AnalyticsAccount` is created and stored in `AccountManager`
-6. `authManager.isAuthenticated = true` triggers UI transition
-
-**Authentication Flow (Plausible):**
-
-1. `LoginView` collects serverURL and API key
-2. `AuthManager.loginWithPlausible()` calls `PlausibleAPI.authenticate()` which validates the key by POSTing to `{serverURL}/api/v2/query`
-3. API key is saved to Keychain
-4. Sites are stored locally via `PlausibleSitesManager` (Plausible has no list-sites API in v2)
-5. Account created in `AccountManager`
+1. User taps WebsiteCard → navigates to WebsiteDetailView
+2. WebsiteDetailView instantiates WebsiteDetailViewModel(websiteId, domain)
+3. ViewModel uses withTaskGroup() to load data concurrently:
+   - loadStats() → provider.getAnalyticsStats()
+   - loadPageviews() → provider.getPageviewsData() + provider.getVisitorsData()
+   - loadMetrics() → provider.getPages/Referrers/Countries/etc.
+   - fillMissingTimeSlots() fills chart gaps based on DateRange
+4. Published @Published properties trigger view redraws
+5. Chart selection (date range, metric type) reloads data via onChange
 
 **State Management:**
-- `@StateObject` / `@EnvironmentObject` for `AuthManager`, `NotificationManager` at app root
-- Singleton `@Published` properties for `AccountManager`, `AnalyticsManager`, `DashboardSettingsManager`
-- `UserDefaults` for settings (dashboard metrics, chart style, notification preferences, accounts list)
-- `Keychain` for secrets (tokens, API keys, server URLs)
-- `App Group file container` for widget-shared data (encrypted credentials, cache, multi-account JSON)
+
+- **AppState:** AccountManager.activeAccount controls root routing (LoginView vs MainTabView)
+- **Notification State:** NotificationManager (@Published notificationSettings, notificationTime) persists to UserDefaults
+- **Dashboard Settings:** DashboardSettingsManager (@Published showDateRangePicker, cardOrder) persists ordering
+- **Deep Links:** QuickActionManager stores pendingDeepLink, selectedWebsiteId; processed after account switch completes
 
 ## Key Abstractions
 
 **AnalyticsProvider Protocol:**
-- Purpose: Unifies Umami and Plausible APIs behind a single interface
-- Defined in: `InsightFlow/Services/AnalyticsProvider.swift`
-- Implementations: `InsightFlow/Services/UmamiAPI.swift` (actor), `InsightFlow/Services/PlausibleAPI.swift` (@MainActor class)
-- Pattern: Strategy pattern - the active provider is selected at runtime via `AnalyticsManager.currentProvider`
-- Methods: `authenticate()`, `getAnalyticsWebsites()`, `getAnalyticsStats()`, `getPageviewsData()`, `getActiveVisitors()`, `getRealtimeData()`, `getPages()`, `getReferrers()`, `getCountries()`, `getDevices()`, `getBrowsers()`, `getOS()`
+- Purpose: Unified interface abstracting Umami and Plausible differences
+- Examples: `UmamiAPI`, `PlausibleAPI` (both actor-based)
+- Pattern: Each provider implements getAnalyticsWebsites(), getAnalyticsStats(), getPages(), etc., returning unified AnalyticsWebsite, AnalyticsStats, AnalyticsMetricItem types
 
-**AnalyticsAccount:**
-- Purpose: Represents a saved analytics account (supports multiple accounts)
-- Defined in: `InsightFlow/Services/AccountManager.swift`
-- Contains: UUID, name, serverURL, providerType, credentials, optional Plausible sites
-- Persisted via: `UserDefaults` (JSON-encoded array)
+**Account/Credential Separation:**
+- Purpose: Support multiple accounts with isolated credentials
+- Examples: `AnalyticsAccount` (metadata + empty credentials), `AccountCredentials` (token/apiKey scoped by account UUID)
+- Pattern: Credentials stored in Keychain per account ID; UserDefaults stores account metadata only; loadAccounts() hydrates credentials on app start
 
 **DateRange:**
-- Purpose: Encapsulates date range presets and custom ranges for API queries
-- Defined in: `InsightFlow/Models/DateRange.swift`
-- Converts to provider-specific formats (Umami: millisecond timestamps, Plausible: string shortcuts like "7d")
+- Purpose: Abstract date filtering across providers
+- Location: `InsightFlow/Models/DateRange.swift`
+- Pattern: Enum with associated values (today, yesterday, last7Days, custom(start, end)); converted to provider-specific query params
 
-**WebsiteDetailViewModel:**
-- Purpose: Only dedicated ViewModel in the codebase; loads all detail metrics in parallel
-- Defined in: `InsightFlow/Views/Detail/WebsiteDetailViewModel.swift`
-- Uses `withTaskGroup` to fetch 15 data types concurrently
-- Checks `isPlausible` flag to route to correct API
+**AnalyticsChartPoint / AnalyticsStats / AnalyticsMetricItem:**
+- Purpose: Unified response models allowing ViewModels to work with either provider
+- Pattern: ViewModels receive unified types; conversion happens in API client (UmamiAPI/PlausibleAPI map provider responses)
 
 ## Entry Points
 
-**App Entry (`@main`):**
-- Location: `InsightFlow/App/InsightFlowApp.swift`
-- Struct name: `PrivacyFlowApp` (bundle ID: `de.godsapp.PrivacyFlow`)
-- Triggers: iOS app launch
-- Responsibilities: Creates `AuthManager`, `NotificationManager`, `QuickActionManager`; registers background tasks; handles deep links (`privacyflow://website?id=xxx&provider=umami`)
+**App Launch:**
+- Location: `InsightFlow/App/InsightFlowApp.swift` (PrivacyFlowApp @main struct)
+- Triggers: SwiftUI app initialization
+- Responsibilities: Registers background tasks, initializes AppDelegate for notification handling, environment setup for NotificationManager and QuickActionManager
 
-**Widget Entry (`@main`):**
-- Location: `InsightFlowWidget/InsightFlowWidgetBundle.swift`
-- Struct name: `PrivacyFlowWidgetBundle`
-- Contains: `PrivacyFlowWidget` (timeline widget) + `PrivacyFlowWidgetLiveActivity`
+**Root Navigation:**
+- Location: `InsightFlow/App/ContentView.swift`
+- Triggers: Observes AccountManager.activeAccount
+- Responsibilities: Routes to LoginView (no account) or MainTabView (authenticated)
 
-**Navigation Root:**
-- Location: `InsightFlow/App/MainTabView.swift`
-- 3 tabs: Dashboard (index 0), Admin (index 1), Settings (index 2)
+**Main Dashboard:**
+- Location: `InsightFlow/App/MainTabView.swift` (TabView with Dashboard/Admin/Settings)
+- Triggers: User authenticated
+- Responsibilities: Tab selection state, integration point for three main sections
+
+**Deep Linking:**
+- Location: `InsightFlow/App/InsightFlowApp.swift` (handleDeepLink method)
+- Triggers: `statflow://website?id=xxx&provider=umami` URL scheme
+- Responsibilities: Account switching (if provider differs), website selection via QuickActionManager
 
 ## Error Handling
 
-**Strategy:** Per-method try/catch with `@Published var error: String?` on ViewModels; errors displayed in views.
+**Strategy:** Provider-specific error enums with fallback to localized descriptions
 
 **Patterns:**
-- API errors use typed enums: `APIError` (Umami, in `InsightFlow/Services/UmamiAPI.swift`) and `PlausibleError` (in `InsightFlow/Services/PlausibleAPI.swift`)
-- Both conform to `LocalizedError` with German and localized error descriptions
-- Network errors silently caught in detail views (print in DEBUG only), preventing UI crash on partial data load failure
-- `WebsiteDetailViewModel.loadData()` uses `TaskGroup` - individual metric load failures don't block other metrics
+- LoginViewModel catches `APIError` (Umami) and `PlausibleError` (Plausible), displays errorMessage
+- Detail ViewModels log errors to console in DEBUG builds; guard nil gracefully in production
+- Account switching handles missing accounts/credentials by clearing active state (clearActiveAccount)
+- Network timeouts default to offline state (isOffline flag in Dashboard)
 
 ## Cross-Cutting Concerns
 
-**Logging:** `print()` statements throughout, many wrapped in `#if DEBUG`. No structured logging framework.
+**Logging:** Console output in DEBUG builds only (`#if DEBUG print()`)
 
-**Validation:** URL validation in `AuthManager` and `PlausibleAPI` (scheme normalization, trailing slash removal). Domain normalization in `PlausibleAPI.normalizeDomain()`.
+**Validation:**
+- LoginView validates server URLs via UmamiAPI/PlausibleAPI.authenticate()
+- DateRange bounds validated at query time
+- Credential emptiness checked via AccountCredentials.isEmpty
 
-**Authentication:** Keychain-based token/API-key storage via `InsightFlow/Services/KeychainService.swift`. Shared with widget via AES-GCM encrypted file in App Group container (`InsightFlow/Services/SharedCredentials.swift`).
+**Authentication:**
+- Stored in Keychain per account (KSecAttrAccessibleAfterFirstUnlock)
+- Migrated from UserDefaults to Keychain on first app launch (migrateCredentialsToKeychain)
+- Cleared on logout via clearActiveAccount() → KeychainService.deleteAll()
 
-**Caching:** File-based JSON cache in App Group container with configurable TTL (1h default, 15min for sparklines). Implemented in `InsightFlow/Services/AnalyticsCacheService.swift`.
+**Multi-Provider Support:**
+- AnalyticsManager.setProvider() switches active provider
+- ViewModels check AnalyticsManager.providerType to conditionally show Plausible-specific features
+- Account switching via AccountManager.setActiveAccount() reconfigures API clients
 
-**Localization:** German (primary) and English. String catalogs at `InsightFlow/Resources/{de,en}.lproj/Localizable.strings`. Uses `String(localized:)` API.
-
-**Notifications:** Local push notifications for daily/weekly stats summaries. Background refresh via `BGAppRefreshTask`. Managed by `InsightFlow/Services/NotificationManager.swift`.
-
-**In-App Purchases:** Tip jar support via StoreKit 2 in `InsightFlow/Services/SupportManager.swift`. Three tiers (small/medium/large).
+**Notifications:**
+- Background task scheduled via BGTaskScheduler (15-minute minimum interval)
+- NotificationManager loads websites from current account, fetches stats, sends UNUserNotifications
+- Time configuration persisted to UserDefaults, reconfigured on app launch
 
 ---
 
-*Architecture analysis: 2026-03-27*
+*Architecture analysis: 2026-03-28*

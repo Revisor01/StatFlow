@@ -1,222 +1,224 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-03-27
+**Analysis Date:** 2026-03-28
 
 ## Directory Layout
 
 ```
-InsightFlow/                          # Main app target
-├── App/                              # App entry point and root navigation
-│   ├── InsightFlowApp.swift          # @main, lifecycle, deep links, background tasks
-│   ├── ContentView.swift             # Auth gate (Login vs MainTabView)
-│   └── MainTabView.swift             # Tab bar (Dashboard, Admin, Settings)
-├── Models/                           # Data models (Codable structs/enums)
-│   ├── Website.swift                 # Website, WebsiteResponse
-│   ├── Stats.swift                   # WebsiteStats, StatValue, PageviewsData, MetricItem, RealtimeData, Sessions, Retention
-│   ├── DateRange.swift               # DateRangePreset, DateRange
-│   └── Admin.swift                   # Team, TeamMember, UmamiUser, JourneyPath
-├── Services/                         # Business logic, API clients, managers
-│   ├── AnalyticsProvider.swift       # AnalyticsProvider protocol, AnalyticsProviderType, AnalyticsManager, unified models
-│   ├── UmamiAPI.swift                # Umami REST API client (actor)
-│   ├── PlausibleAPI.swift            # Plausible REST API client + PlausibleSitesManager
-│   ├── AuthManager.swift             # Login/logout orchestration
-│   ├── AccountManager.swift          # Multi-account management, AnalyticsAccount model
-│   ├── KeychainService.swift         # iOS Keychain wrapper + StringUtils
-│   ├── SharedCredentials.swift       # AES-GCM encrypted App Group file for widget
-│   ├── AnalyticsCacheService.swift   # File-based JSON cache with TTL
-│   ├── NotificationManager.swift     # Local notifications (daily/weekly stats)
-│   ├── DashboardSettingsManager.swift # Dashboard UI preferences (metrics, chart style)
-│   └── SupportManager.swift          # StoreKit 2 in-app purchases (tip jar)
-├── Views/                            # SwiftUI views organized by feature
-│   ├── Auth/
-│   │   └── LoginView.swift           # Provider selection, server URL, credentials input
-│   ├── Dashboard/
-│   │   ├── DashboardView.swift       # Main dashboard with website list (1067 lines)
-│   │   ├── WebsiteCard.swift         # Individual website stats card (647 lines)
-│   │   ├── AddUmamiSiteView.swift    # Create Umami website form
-│   │   └── AddPlausibleSiteView.swift # Add Plausible site form
-│   ├── Detail/
-│   │   ├── WebsiteDetailView.swift   # Full website analytics detail (1611 lines)
-│   │   ├── WebsiteDetailViewModel.swift # ViewModel: parallel metric loading
-│   │   └── CompareView.swift         # Side-by-side website comparison (1183 lines)
-│   ├── Admin/
-│   │   └── AdminView.swift           # Umami admin: websites, teams, users (1318 lines)
-│   ├── Settings/
-│   │   ├── SettingsView.swift        # App settings, accounts, notifications
+InsightFlow/
+├── App/                          # App initialization, routing, deep linking
+│   ├── InsightFlowApp.swift      # @main app entry, background tasks, deep links
+│   ├── ContentView.swift         # Root router (LoginView vs MainTabView)
+│   └── MainTabView.swift         # Tab navigation (Dashboard/Admin/Settings)
+├── Services/                     # Business logic, API clients, managers
+│   ├── AccountManager.swift      # Multi-account management, credential handling
+│   ├── AnalyticsProvider.swift   # Provider protocol, unified models
+│   ├── UmamiAPI.swift            # Umami API client (actor)
+│   ├── PlausibleAPI.swift        # Plausible API client (actor)
+│   ├── AnalyticsCacheService.swift # Data caching layer
+│   ├── NotificationManager.swift # Push notification scheduling
+│   ├── DashboardSettingsManager.swift # Dashboard UI persistence
+│   ├── KeychainService.swift     # Credential storage abstraction
+│   ├── SharedCredentials.swift   # Widget credential bridge
+│   └── SupportManager.swift      # Support/feedback logic
+├── Models/                       # Codable data structures
+│   ├── Website.swift             # Website domain model
+│   ├── Stats.swift               # Statistics and time-series data
+│   ├── Events.swift              # Event tracking models
+│   ├── Sessions.swift            # Session data models
+│   ├── Admin.swift               # Admin/user management models
+│   ├── Share.swift               # Share link models
+│   ├── Reports.swift             # Report/retention models
+│   ├── DateRange.swift           # Date range filtering abstraction
+│   └── PlausibleGoal.swift       # Plausible-specific goal models
+├── Views/                        # SwiftUI view hierarchy
+│   ├── Auth/                     # Authentication flow
+│   │   ├── LoginView.swift       # Multi-provider login UI
+│   │   └── LoginViewModel.swift  # Login state & validation
+│   ├── Dashboard/                # Website list & cards
+│   │   ├── DashboardView.swift   # Grid with account/date filtering
+│   │   ├── WebsiteCard.swift     # Individual website card component
+│   │   ├── AddUmamiSiteView.swift # Umami site addition
+│   │   └── AddPlausibleSiteView.swift # Plausible site addition
+│   ├── Detail/                   # Website analytics details
+│   │   ├── WebsiteDetailView.swift # Main detail scroll view
+│   │   ├── WebsiteDetailViewModel.swift # Data loading & management
+│   │   ├── WebsiteDetailChartSection.swift # Chart rendering
+│   │   ├── WebsiteDetailMetricsSections.swift # Metric cards
+│   │   ├── WebsiteDetailSupportingViews.swift # Helper views
+│   │   ├── CompareView.swift     # Date range comparison view
+│   │   ├── CompareViewModel.swift # Comparison logic
+│   │   └── CompareHeroCard.swift # Comparison hero card
+│   ├── Realtime/                 # Live visitor data
+│   │   └── RealtimeView.swift    # Active visitors & live events
+│   ├── Events/                   # Event details
+│   │   ├── EventsView.swift      # Event list view
+│   │   └── EventsViewModel.swift # Event data loading
+│   ├── Reports/                  # Analytics reports & insights
+│   │   ├── ReportsHubView.swift  # Report section overview
+│   │   ├── ReportsViewModel.swift # Report data
+│   │   ├── InsightsView.swift    # Insights section
+│   │   ├── PagesView.swift       # Top pages report
+│   │   ├── RetentionView.swift   # Retention/cohort report
+│   │   └── ReportDetailViews.swift # Report detail cards
+│   ├── Sessions/                 # Session browsing (if implemented)
+│   │   └── SessionsView.swift    # Session list/details
+│   ├── Admin/                    # Admin panel
+│   │   ├── AdminView.swift       # Admin section overview
+│   │   ├── AdminCards.swift      # Admin card components
+│   │   └── AdminSheets.swift     # Admin modal sheets
+│   ├── Settings/                 # App settings
+│   │   ├── SettingsView.swift    # Main settings UI
 │   │   ├── DashboardSettingsView.swift # Dashboard customization
-│   │   ├── SupportView.swift         # Tip jar / in-app purchases
-│   │   └── SupportReminderView.swift # Support prompt after N launches
-│   ├── Realtime/
-│   │   └── RealtimeView.swift        # Live visitor tracking (644 lines)
-│   ├── Sessions/
-│   │   └── SessionsView.swift        # Session browser with activity detail (668 lines)
-│   ├── Reports/
-│   │   ├── InsightsView.swift        # Journey/funnel reports
-│   │   ├── PagesView.swift           # Page-level analytics
-│   │   └── RetentionView.swift       # User retention heatmap
-│   ├── Onboarding/
-│   │   └── OnboardingView.swift      # First-launch walkthrough
-│   └── Components/                   # Empty - reusable components (unused)
-├── Extensions/
-│   └── View+Extensions.swift         # glassBackground(), shimmer() modifiers, Color extensions
-└── Resources/
-    ├── Assets.xcassets/              # App icons (4 variants), accent color
-    ├── de.lproj/
-    │   ├── Localizable.strings       # German translations
-    │   └── InfoPlist.strings         # German plist strings
-    └── en.lproj/
-        ├── Localizable.strings       # English translations
-        └── InfoPlist.strings         # English plist strings
-
-InsightFlowWidget/                    # Widget extension target
-├── InsightFlowWidgetBundle.swift     # @main widget bundle
-├── InsightFlowWidget.swift           # Timeline provider + widget views (2004 lines)
-├── InsightFlowWidgetLiveActivity.swift # Live Activity definition
-├── Assets.xcassets/                  # Widget-specific assets
-└── Resources/
-    ├── de.lproj/Localizable.strings  # German widget strings
-    └── en.lproj/Localizable.strings  # English widget strings
-
-InsightFlow.xcodeproj/               # Xcode project file
-InsightFlowWidgetExtension.entitlements # Widget entitlements (App Group)
+│   │   ├── AnalyticsGlossaryView.swift # Term explanations
+│   │   ├── SetupGuideView.swift  # Onboarding/setup
+│   │   ├── SupportView.swift     # Support/feedback
+│   │   └── SupportReminderView.swift # Periodic support prompt
+│   ├── Onboarding/               # Initial setup
+│   │   └── OnboardingView.swift  # First-launch flow
+│   └── Components/               # Reusable UI components (empty dir)
+├── Extensions/                   # SwiftUI & Foundation extensions
+│   └── View+Extensions.swift     # glassBackground(), shimmer() modifiers
+├── Resources/                    # Assets & localization
+│   ├── Assets.xcassets/          # App icons, color assets
+│   ├── en.lproj/                 # English strings (Localizable.strings)
+│   └── de.lproj/                 # German strings (Localizable.strings)
+└── Info.plist / entitlements     # App configuration
 ```
 
 ## Directory Purposes
 
 **`InsightFlow/App/`:**
-- Purpose: Application lifecycle and root-level navigation
-- Contains: 3 files - app entry, auth gate, tab bar
-- Key files: `InsightFlowApp.swift` (165 lines - background tasks, deep links, QuickActionManager)
-
-**`InsightFlow/Models/`:**
-- Purpose: Pure data structures, no business logic
-- Contains: Codable structs for all API response types + domain enums
-- Key files: `Stats.swift` (351 lines - most models live here including realtime, sessions, retention)
+- Purpose: App lifecycle, window setup, routing
+- Contains: @main struct, root ContentView, MainTabView
+- Key files: `InsightFlowApp.swift` (entry point), `ContentView.swift` (auth router)
 
 **`InsightFlow/Services/`:**
-- Purpose: All business logic, API communication, state management, persistence
-- Contains: 11 service files, all using singleton pattern
-- Key files: `AnalyticsProvider.swift` (237 lines - protocol + unified models + AnalyticsManager), `UmamiAPI.swift` (642 lines), `PlausibleAPI.swift` (854 lines), `AccountManager.swift` (351 lines)
+- Purpose: Singleton managers and API clients
+- Contains: AccountManager (multi-account), AnalyticsManager (provider selection), API clients (Umami/Plausible), NotificationManager, KeychainService
+- Key files: `AccountManager.swift` (auth state), `AnalyticsProvider.swift` (protocol), `UmamiAPI.swift` & `PlausibleAPI.swift` (implementations)
+
+**`InsightFlow/Models/`:**
+- Purpose: Data structures and domain models
+- Contains: Codable structs mirroring API schemas, value types for computed properties
+- Key files: `Website.swift` (website domain model), `Stats.swift` (statistics aggregates), `DateRange.swift` (filtering enum)
 
 **`InsightFlow/Views/`:**
-- Purpose: All UI code organized by feature area
-- Contains: 9 subdirectories, 17 view files total
-- Key files: `WebsiteDetailView.swift` (1611 lines - largest view), `DashboardView.swift` (1067 lines), `AdminView.swift` (1318 lines)
+- Purpose: Feature-organized SwiftUI view hierarchy
+- Contains: View structs (UI layout) paired with ViewModels (state/logic)
+- Organization: Subdirectories by feature area (Auth, Dashboard, Detail, etc.)
 
-**`InsightFlowWidget/`:**
-- Purpose: iOS home screen widget extension
-- Contains: Timeline provider, widget views, Live Activity
-- Key files: `InsightFlowWidget.swift` (2004 lines - self-contained with own API logic)
+**`InsightFlow/Views/Detail/`:**
+- Purpose: Deep analytics exploration for individual websites
+- Contains: Primary view (WebsiteDetailView), view model, chart sections, metric sections
+- Key files: `WebsiteDetailView.swift` (layout), `WebsiteDetailViewModel.swift` (concurrent data loading), `WebsiteDetailChartSection.swift` (Charts rendering)
+
+**`InsightFlow/Views/Reports/`:**
+- Purpose: Advanced analytics reports (retention, insights, pages breakdown)
+- Contains: Report type views, shared detail components
+- Key files: `ReportsHubView.swift` (hub), `RetentionView.swift` (cohort analysis), `ReportsViewModel.swift` (data)
+
+**`InsightFlow/Extensions/`:**
+- Purpose: Reusable modifiers and helper methods
+- Contains: View+Extensions for UI chrome (glassBackground, shimmer)
+
+**`InsightFlow/Resources/`:**
+- Purpose: Localizable strings, app icons, color assets
+- Contains: `en.lproj/Localizable.strings`, `de.lproj/Localizable.strings`, Assets.xcassets
+- Key: Uses String(localized: "key") for i18n
 
 ## Key File Locations
 
 **Entry Points:**
-- `InsightFlow/App/InsightFlowApp.swift`: Main app entry, struct `PrivacyFlowApp`
-- `InsightFlowWidget/InsightFlowWidgetBundle.swift`: Widget entry, struct `PrivacyFlowWidgetBundle`
+- `InsightFlow/App/InsightFlowApp.swift`: Application @main; registers background tasks, initializes AppDelegate
+- `InsightFlow/App/ContentView.swift`: Root view controller; routes based on AccountManager.activeAccount
+- `InsightFlow/App/MainTabView.swift`: Tab-based navigation for authenticated users
 
 **Configuration:**
-- `InsightFlow.xcodeproj/project.pbxproj`: Xcode project configuration
-- `InsightFlowWidgetExtension.entitlements`: Widget App Group entitlement
-- `.gitignore`: Standard Xcode gitignore
+- `InsightFlow/Services/AccountManager.swift`: Credentials, account persistence (UserDefaults + Keychain)
+- `InsightFlow/Services/DashboardSettingsManager.swift`: Dashboard ordering, date range visibility
+- `InsightFlow/Resources/Info.plist`: URL schemes (statflow://), app metadata
 
 **Core Logic:**
-- `InsightFlow/Services/AnalyticsProvider.swift`: The central protocol that all analytics operations go through
-- `InsightFlow/Services/UmamiAPI.swift`: Complete Umami v2 REST API client
-- `InsightFlow/Services/PlausibleAPI.swift`: Plausible Stats API v2 client + Sites Manager
-- `InsightFlow/Services/AuthManager.swift`: Authentication orchestration for both providers
-- `InsightFlow/Services/AccountManager.swift`: Multi-account persistence and switching
-
-**Credential Storage:**
-- `InsightFlow/Services/KeychainService.swift`: iOS Keychain CRUD wrapper
-- `InsightFlow/Services/SharedCredentials.swift`: AES-GCM encrypted file in App Group for widget
+- `InsightFlow/Services/AnalyticsProvider.swift`: Protocol defining unified API, provider types
+- `InsightFlow/Services/UmamiAPI.swift`: Umami API client (actor-based, thread-safe)
+- `InsightFlow/Services/PlausibleAPI.swift`: Plausible API client (actor-based, thread-safe)
+- `InsightFlow/Services/NotificationManager.swift`: Background notification scheduling
 
 **Testing:**
-- No test files exist in the project
+- No dedicated test directory; test targets would live in separate Xcode build phases
+- View previews use #Preview in-file
 
 ## Naming Conventions
 
 **Files:**
-- Views: `{Feature}View.swift` (e.g., `DashboardView.swift`, `LoginView.swift`)
-- ViewModels: `{Feature}ViewModel.swift` (only `WebsiteDetailViewModel.swift` exists)
-- Services/Managers: `{Purpose}Manager.swift` or `{Provider}API.swift`
-- Models: Named by domain concept (e.g., `Website.swift`, `Stats.swift`, `Admin.swift`)
+- Views: `FeatureNameView.swift` (e.g., DashboardView, WebsiteDetailView)
+- ViewModels: `FeatureNameViewModel.swift` (e.g., LoginViewModel, WebsiteDetailViewModel)
+- Services: `ServiceNameManager.swift` or `ServiceNameAPI.swift` (e.g., AccountManager, UmamiAPI)
+- Models: Domain name only (e.g., Website.swift, Stats.swift)
+- Extensions: `BaseType+Purpose.swift` (e.g., View+Extensions.swift)
 
-**Directories:**
-- Feature-based grouping under `Views/` (e.g., `Dashboard/`, `Detail/`, `Admin/`)
-- Flat structure for `Models/`, `Services/`, `Extensions/`
+**Types (Classes/Structs):**
+- Views: PascalCase + "View" suffix (DashboardView, WebsiteCard)
+- ViewModels: PascalCase + "ViewModel" suffix (@MainActor class)
+- Services: PascalCase + "Manager" or "API" suffix (@MainActor class, actor)
+- Models: PascalCase struct (Website, WebsiteStats)
+- Enums: PascalCase (DateRange, AnalyticsProviderType, ChartMetric)
+
+**Functions/Methods:**
+- camelCase, verb-first: loadData(), refreshWebsites(), updateAccountSites()
+- Initializers: init(explicit param names, no abbreviations)
+
+**Properties:**
+- camelCase: @Published var websites, let serverURL
+- Private: _prefixed for underscore-exposed actor properties (e.g., _baseURL, _token in UmamiAPI)
+- Boolean: isPrefixed or hasPrefixed (isLoading, hasMultipleAccounts)
+
+**Constants:**
+- UPPER_SNAKE_CASE for config constants (not used extensively; most stored in UserDefaults/Keychain)
+- String keys: lowercase with dot notation for Keychain (e.g., "analytics_accounts")
 
 ## Where to Add New Code
 
-**New View / Screen:**
-- Create file in `InsightFlow/Views/{FeatureName}/{FeatureName}View.swift`
-- If complex state needed, add `InsightFlow/Views/{FeatureName}/{FeatureName}ViewModel.swift`
-- Wire into `MainTabView.swift` (new tab) or existing navigation (push from existing view)
+**New Feature View:**
+- Primary code: `InsightFlow/Views/{FeatureName}/{FeatureName}View.swift`
+- ViewModel: `InsightFlow/Views/{FeatureName}/{FeatureName}ViewModel.swift`
+- Models: Add structs to `InsightFlow/Models/` if new API response types needed
 
-**New Analytics Feature (works for both providers):**
-- Add method to `AnalyticsProvider` protocol in `InsightFlow/Services/AnalyticsProvider.swift`
-- Implement in `InsightFlow/Services/UmamiAPI.swift` and `InsightFlow/Services/PlausibleAPI.swift`
-- Add unified model structs in `InsightFlow/Services/AnalyticsProvider.swift` (unified models section)
+**New Feature Service:**
+- Implementation: `InsightFlow/Services/{ServiceName}Manager.swift` or `{ServiceName}API.swift`
+- If multi-provider: implement AnalyticsProvider protocol in both UmamiAPI and PlausibleAPI
 
-**New API Endpoint (provider-specific):**
-- Umami: Add method to `InsightFlow/Services/UmamiAPI.swift`
-- Plausible: Add method to `InsightFlow/Services/PlausibleAPI.swift`
-- Response models go in `InsightFlow/Models/Stats.swift` (Umami) or inline in PlausibleAPI.swift (Plausible)
+**New Utility/Extension:**
+- Shared helpers: `InsightFlow/Extensions/Type+Purpose.swift`
+- Swift extensions (string formatters, date helpers): `View+Extensions.swift` or create new `String+Extensions.swift`
 
-**New Model:**
-- Add to existing file in `InsightFlow/Models/` if related (Stats.swift for analytics data, Admin.swift for admin entities)
-- Create new file in `InsightFlow/Models/` only for distinctly new domain concepts
+**Localized Strings:**
+- Add keys to `InsightFlow/Resources/en.lproj/Localizable.strings` and German equivalent
+- Usage: `String(localized: "key")`
 
-**New Service/Manager:**
-- Create `InsightFlow/Services/{Name}Manager.swift`
-- Follow singleton pattern: `static let shared = {Name}Manager()`
-- Mark class `@MainActor` if it has `@Published` properties
-
-**New Reusable UI Component:**
-- `InsightFlow/Views/Components/` exists but is empty - use it for shared components
-- View modifiers go in `InsightFlow/Extensions/View+Extensions.swift`
-
-**New Widget Feature:**
-- All widget code is in `InsightFlowWidget/InsightFlowWidget.swift` (monolithic)
-- Widget reads credentials from `SharedCredentials` and `widget_accounts.json` in App Group
-
-**New Localization Strings:**
-- German: `InsightFlow/Resources/de.lproj/Localizable.strings`
-- English: `InsightFlow/Resources/en.lproj/Localizable.strings`
-- Widget strings: `InsightFlowWidget/Resources/{lang}.lproj/Localizable.strings`
+**New Provider Integration:**
+- Create new `InsightFlow/Services/NewProviderAPI.swift` conforming to AnalyticsProvider
+- Update AccountManager to handle new AnalyticsProviderType case
+- Update LoginView with provider-specific auth flow
 
 ## Special Directories
 
-**`InsightFlow/Resources/Assets.xcassets/`:**
-- Purpose: App icons (4 alternate icons), accent color
-- Generated: No (manually managed)
-- Committed: Yes
-
-**`InsightFlow.xcodeproj/`:**
-- Purpose: Xcode project configuration (build settings, targets, schemes)
-- Generated: Partially (Xcode manages it)
-- Committed: Yes
-
-**`.planning/`:**
-- Purpose: GSD planning and codebase analysis documents
-- Generated: By analysis tools
-- Committed: Yes
+**`InsightFlow/Resources/`:**
+- Purpose: Static assets and localization
+- Generated: No (manually maintained)
+- Committed: Yes (part of source control)
 
 **`InsightFlow/Views/Components/`:**
-- Purpose: Intended for reusable UI components
-- Status: Empty directory - components are currently inlined in feature views
-- Committed: Directory exists but has no files
+- Purpose: Reserved for reusable component library (currently empty)
+- Generated: No
+- Committed: Yes
 
-## App Group & Shared Data
-
-The app and widget share data via App Group `group.de.godsapp.PrivacyFlow`:
-
-| File | Written By | Read By | Purpose |
-|------|-----------|---------|---------|
-| `widget_credentials.encrypted` | Main app (`SharedCredentials`) | Widget | Encrypted API credentials |
-| `widget_credentials.key` | Main app (`SharedCredentials`) | Widget | AES-GCM encryption key |
-| `widget_accounts.json` | Main app (`AccountManager`) | Widget | All accounts for multi-account widget |
-| `analytics_cache/*.json` | Main app (`AnalyticsCacheService`) | Widget (potentially) | Cached analytics data with TTL |
+**Asset Catalog (`Assets.xcassets`):**
+- Purpose: App icons, color sets, images
+- Generated: Partially (Xcode generates derived data)
+- Committed: Yes (source files, not derived)
 
 ---
 
-*Structure analysis: 2026-03-27*
+*Structure analysis: 2026-03-28*
