@@ -5,7 +5,7 @@ import Foundation
 final class AnalyticsCacheService: @unchecked Sendable {
     static let shared = AnalyticsCacheService()
 
-    private let appGroupID = "group.de.godsapp.PrivacyFlow"
+    private let appGroupID = "group.de.godsapp.statflow"
     private let cacheFolder = "analytics_cache"
 
     // Cache TTL (Time-To-Live) in Sekunden

@@ -18,9 +18,9 @@ class SupportManager: ObservableObject {
 
     // Product IDs - diese müssen in App Store Connect erstellt werden
     private let productIds = [
-        "de.godsapp.insightflow.support.small",   // 0,99€
-        "de.godsapp.insightflow.support.medium",  // 2,99€
-        "de.godsapp.insightflow.support.large"    // 5,99€
+        "de.godsapp.statflow.support.small",   // 0,99€
+        "de.godsapp.statflow.support.medium",  // 2,99€
+        "de.godsapp.statflow.support.large"    // 5,99€
     ]
 
     private init() {}
@@ -91,29 +91,29 @@ class SupportManager: ObservableObject {
 extension Product {
     var symbolName: String {
         switch id {
-        case "de.godsapp.insightflow.support.small": return "cup.and.saucer.fill"
-        case "de.godsapp.insightflow.support.medium": return "gift.fill"
-        case "de.godsapp.insightflow.support.large": return "sparkles"
+        case "de.godsapp.statflow.support.small": return "cup.and.saucer.fill"
+        case "de.godsapp.statflow.support.medium": return "gift.fill"
+        case "de.godsapp.statflow.support.large": return "sparkles"
         default: return "heart.fill"
         }
     }
 
     var tierColor: Color {
         switch id {
-        case "de.godsapp.insightflow.support.small": return .blue
-        case "de.godsapp.insightflow.support.medium": return .purple
-        case "de.godsapp.insightflow.support.large": return .orange
+        case "de.godsapp.statflow.support.small": return .blue
+        case "de.godsapp.statflow.support.medium": return .purple
+        case "de.godsapp.statflow.support.large": return .orange
         default: return .accentColor
         }
     }
 
     var supportName: String {
         switch id {
-        case "de.godsapp.insightflow.support.small":
+        case "de.godsapp.statflow.support.small":
             return String(localized: "support.small")
-        case "de.godsapp.insightflow.support.medium":
+        case "de.godsapp.statflow.support.medium":
             return String(localized: "support.medium")
-        case "de.godsapp.insightflow.support.large":
+        case "de.godsapp.statflow.support.large":
             return String(localized: "support.large")
         default:
             return displayName

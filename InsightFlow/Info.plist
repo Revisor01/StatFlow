@@ -4,7 +4,7 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>de.godsapp.PrivacyFlow.refresh</string>
+		<string>de.godsapp.statflow.refresh</string>
 	</array>
 	<key>CFBundleLocalizations</key>
 	<array>
@@ -15,10 +15,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>de.godsapp.PrivacyFlow</string>
+			<string>de.godsapp.statflow</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>privacyflow</string>
+				<string>statflow</string>
 			</array>
 		</dict>
 	</array>

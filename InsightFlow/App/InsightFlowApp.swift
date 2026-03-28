@@ -24,8 +24,8 @@ struct PrivacyFlowApp: App {
     }
 
     private func handleDeepLink(_ url: URL) {
-        // Format: privacyflow://website?id=xxx&provider=umami
-        guard url.scheme == "privacyflow",
+        // Format: statflow://website?id=xxx&provider=umami
+        guard url.scheme == "statflow",
               url.host == "website",
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let queryItems = components.queryItems else {
@@ -59,7 +59,7 @@ struct PrivacyFlowApp: App {
 
     private func registerBackgroundTasks() {
         BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: "de.godsapp.PrivacyFlow.refresh",
+            forTaskWithIdentifier: "de.godsapp.statflow.refresh",
             using: nil
         ) { task in
             Self.handleAppRefresh(task: task as! BGAppRefreshTask)
@@ -85,7 +85,7 @@ struct PrivacyFlowApp: App {
     }
 
     private static func scheduleAppRefresh() {
-        let request = BGAppRefreshTaskRequest(identifier: "de.godsapp.PrivacyFlow.refresh")
+        let request = BGAppRefreshTaskRequest(identifier: "de.godsapp.statflow.refresh")
 
         // Lade konfigurierte Zeit oder Standard 9:00 Uhr
         let savedTime = UserDefaults.standard.object(forKey: "notificationTime") as? Date

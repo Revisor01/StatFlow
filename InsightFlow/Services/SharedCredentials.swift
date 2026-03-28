@@ -5,7 +5,7 @@ import CryptoKit
 /// This avoids UserDefaults issues with "System Containers" error
 /// Credentials are encrypted using AES-GCM for security
 enum SharedCredentials {
-    private static let appGroupID = "group.de.godsapp.PrivacyFlow"
+    private static let appGroupID = "group.de.godsapp.statflow"
     private static let fileName = "widget_credentials.encrypted"
     private static let keyFileName = "widget_credentials.key"
 

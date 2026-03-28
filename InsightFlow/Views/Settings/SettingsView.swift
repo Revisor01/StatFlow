@@ -393,7 +393,7 @@ struct SettingsView: View {
             }
         } footer: {
             VStack(spacing: 4) {
-                Text("PrivacyFlow v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")")
+                Text("StatFlow v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")")
                 HStack(spacing: 4) {
                     Text("Made with")
                     Image(systemName: "dove.fill")

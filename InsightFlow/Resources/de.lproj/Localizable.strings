@@ -4,7 +4,7 @@
 */
 
 // MARK: - General
-"app.name" = "PrivacyFlow";
+"app.name" = "StatFlow";
 "button.cancel" = "Abbrechen";
 "button.done" = "Fertig";
 "button.save" = "Speichern";
@@ -225,7 +225,7 @@
 
 // MARK: - Support
 "settings.support.title" = "Entwicklung unterstützen";
-"settings.support.subtitle" = "Hilf uns, PrivacyFlow zu verbessern";
+"settings.support.subtitle" = "Hilf uns, StatFlow zu verbessern";
 "settings.branding.subtitle" = "Ein Pastorenprojekt";
 
 "settings.logout" = "Abmelden";
@@ -243,7 +243,7 @@
 
 // MARK: - Support / Donation
 "support.title" = "Unterstützen";
-"support.header" = "Unterstütze PrivacyFlow";
+"support.header" = "Unterstütze StatFlow";
 "support.message" = "Software sollte frei sein.\n\nWenn du es dir gerade leisten kannst, freue ich mich über deine Unterstützung. Ansonsten nutze die App einfach gerne – das ist völlig in Ordnung.";
 "support.small" = "Kleine Geste";
 "support.medium" = "Nette Geste";
@@ -258,7 +258,7 @@
 "support.error.pending" = "Kauf wird bearbeitet";
 
 // MARK: - Support Reminder
-"support.reminder.title" = "Dir gefällt PrivacyFlow?";
+"support.reminder.title" = "Dir gefällt StatFlow?";
 "support.reminder.message" = "Diese App ist kostenlos und werbefrei. Sie wurde mit viel Liebe entwickelt.\n\nSoftware sollte frei sein. Wenn du es dir leisten kannst, unterstütze die Entwicklung gerne. Ansonsten nutze die App einfach weiter – das ist völlig okay!";
 "support.reminder.support" = "Gerne unterstützen";
 "support.reminder.already" = "Hab ich schon";
@@ -343,7 +343,7 @@
 "insights.lastMonth" = "Letzter Monat";
 
 // MARK: - Onboarding
-"onboarding.welcome.title" = "Willkommen bei PrivacyFlow";
+"onboarding.welcome.title" = "Willkommen bei StatFlow";
 "onboarding.welcome.subtitle" = "Deine Website-Statistiken immer dabei – datenschutzfreundlich und übersichtlich.";
 "onboarding.welcome.umami" = "Open Source, selbst gehostet";
 "onboarding.welcome.plausible" = "Einfach und datenschutzfreundlich";
@@ -559,7 +559,7 @@
 
 "glossary.title" = "Analytics-Glossar";
 "glossary.settings.link" = "Analytics-Glossar";
-"glossary.intro" = "Einfache Erklärungen zu den Metriken in InsightFlow. Kein Analytics-Vorwissen nötig.";
+"glossary.intro" = "Einfache Erklärungen zu den Metriken in StatFlow. Kein Analytics-Vorwissen nötig.";
 
 "glossary.term.pageviews.title" = "Seitenaufrufe (Pageviews)";
 "glossary.term.pageviews.desc" = "Jedes Mal, wenn eine Seite im Browser geladen wird, zählt das als ein Seitenaufruf. Ein Besucher, der 3 Artikel liest, erzeugt 3 Pageviews.";

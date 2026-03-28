@@ -3,5 +3,5 @@
   Umami Insights
 */
 
-CFBundleDisplayName = "PrivacyFlow";
-CFBundleName = "PrivacyFlow";
+CFBundleDisplayName = "StatFlow";
+CFBundleName = "StatFlow";

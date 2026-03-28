@@ -9,7 +9,7 @@ import Foundation
 
 /// Einfacher Cache für Widget-Daten, der im App Group Container gespeichert wird
 struct WidgetCache {
-    private static let appGroupID = "group.de.godsapp.PrivacyFlow"
+    private static let appGroupID = "group.de.godsapp.statflow"
     private static let cacheFolder = "analytics_cache"
 
     private static var cacheDirectory: URL? {

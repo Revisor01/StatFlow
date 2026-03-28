@@ -8,7 +8,7 @@ import CryptoKit
 import WidgetKit
 
 struct WidgetAccountsStorage {
-    private static let appGroupID = "group.de.godsapp.PrivacyFlow"
+    private static let appGroupID = "group.de.godsapp.statflow"
     private static let fileName = "widget_accounts.encrypted"
     private static let legacyFileName = "widget_accounts.json"
     private static let keyFileName = "widget_credentials.key"
@@ -104,7 +104,7 @@ struct WidgetAccountsStorage {
 }
 
 struct WidgetCredentials {
-    private static let appGroupID = "group.de.godsapp.PrivacyFlow"
+    private static let appGroupID = "group.de.godsapp.statflow"
     private static let fileName = "widget_credentials.encrypted"
     private static let legacyFileName = "widget_credentials.json"
     private static let keyFileName = "widget_credentials.key"
