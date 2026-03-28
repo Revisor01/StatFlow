@@ -43,7 +43,7 @@ Plans:
   3. Keine relevanten Umami-Datenpunkte fehlen im Vergleich zur Umami-Weboberfläche
 **Plans**: 4 plans
 Plans:
-- [ ] 05-01-PLAN.md — Response-Modelle fuer alle fehlenden Umami-API-Endpunkte
+- [x] 05-01-PLAN.md — Response-Modelle fuer alle fehlenden Umami-API-Endpunkte
 - [ ] 05-02-PLAN.md — High-Priority Endpunkte: Stats, Sessions, Events, Me
 - [ ] 05-03-PLAN.md — Report-Endpunkte: CRUD + 7 spezialisierte Reports
 - [ ] 05-04-PLAN.md — Teams, Users, Share, Admin Vervollstaendigung

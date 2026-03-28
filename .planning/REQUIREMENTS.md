@@ -14,7 +14,7 @@ Requirements für Support & API Coverage. Aus User-Feedback nach v2.1.
 
 ### API Coverage
 
-- [ ] **API-01**: Vollständige Abdeckung aller Umami Self-Hosted API-Endpunkte (Audit + fehlende implementieren)
+- [x] **API-01**: Vollständige Abdeckung aller Umami Self-Hosted API-Endpunkte (Audit + fehlende implementieren)
 - [ ] **API-02**: Vollständige Abdeckung aller Plausible CE Self-Hosted API-Endpunkte (Audit + fehlende implementieren)
 
 ### Push-Benachrichtigungen
@@ -35,7 +35,7 @@ Requirements für Support & API Coverage. Aus User-Feedback nach v2.1.
 |-------------|-------|--------|
 | SUP-01 | Phase 04 | Complete |
 | SUP-02 | Phase 04 | Complete |
-| API-01 | Phase 05 | Pending |
+| API-01 | Phase 05 | Complete |
 | API-02 | Phase 06 | Pending |
 | NOTIF-01 | Phase 07 | Pending |
 

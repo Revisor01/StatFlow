@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Support & API Coverage
-status: verifying
-stopped_at: Completed 04-01-PLAN.md (Support-Redesign & Branding)
-last_updated: "2026-03-28T18:11:16.358Z"
+status: executing
+stopped_at: Completed 05-01-PLAN.md (Umami API Response Models)
+last_updated: "2026-03-28T18:24:03.095Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 5
+  completed_plans: 2
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Phase 04 — support-branding
+**Current focus:** Phase 05 — umami-api-coverage
 
 ## Current Position
 
-Phase: 05
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 05 (umami-api-coverage) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-03-28
 
 ## Performance Metrics
@@ -49,6 +49,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 03-alle-accounts-ansicht]: websiteAccountMap pattern for website-to-account lookup in flat All-mode view
 - [Phase 04-support-branding]: Product.emoji vollstaendig durch symbolName ersetzt — kein deprecated-Pfad, sauberer Schnitt
 - [Phase 04-support-branding]: tierColor als eigene Product-Extension — View bleibt schlank, ValetudiOS kann direkt nutzen
+- [Phase 05-umami-api-coverage]: Alle neuen Modelle Codable+Sendable — actor-API-Clients erfordern Sendable
+- [Phase 05-umami-api-coverage]: Identifiable nur wo SwiftUI-Listen-Verwendung sinnvoll (nicht bei reinen Wrapper-Responses)
 
 ### Pending Todos
 
@@ -60,7 +62,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:07:13.405Z
-Stopped at: Completed 04-01-PLAN.md (Support-Redesign & Branding)
+Last session: 2026-03-28T18:24:03.093Z
+Stopped at: Completed 05-01-PLAN.md (Umami API Response Models)
 Resume file: None
 Next action: `/gsd:plan-phase 04`
