@@ -450,3 +450,15 @@
 "accessibility.chart.visitors" = "Besucher im Zeitverlauf";
 "accessibility.dateRange.selected" = "Ausgewählt";
 "accessibility.dateRange.notSelected" = "Nicht ausgewählt";
+
+// MARK: - Events
+"events.title" = "Events";
+"events.loading" = "Lade Events...";
+"events.empty" = "Keine Events";
+"events.empty.description" = "Keine Events im gewählten Zeitraum.";
+"events.stats.events" = "Events";
+"events.stats.properties" = "Properties";
+"events.stats.records" = "Einträge";
+"events.detail.title" = "Event-Details";
+"events.detail.properties" = "Properties";
+"events.detail.noProperties" = "Keine Event-Properties vorhanden.";

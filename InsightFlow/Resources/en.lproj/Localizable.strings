@@ -449,3 +449,15 @@
 "accessibility.chart.visitors" = "Visitors over time";
 "accessibility.dateRange.selected" = "Selected";
 "accessibility.dateRange.notSelected" = "Not selected";
+
+// MARK: - Events
+"events.title" = "Events";
+"events.loading" = "Loading events...";
+"events.empty" = "No Events";
+"events.empty.description" = "No events recorded for this period.";
+"events.stats.events" = "Events";
+"events.stats.properties" = "Properties";
+"events.stats.records" = "Records";
+"events.detail.title" = "Event Details";
+"events.detail.properties" = "Properties";
+"events.detail.noProperties" = "No event properties available.";
