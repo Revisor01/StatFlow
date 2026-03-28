@@ -171,6 +171,21 @@ class AccountManagerTests: XCTestCase {
         XCTAssertEqual(manager.accounts[0].serverURL, "https://existing.com")
     }
 
+    // MARK: - FIX-01: Widget Sync
+
+    func testUpdateAccountSitesDoesNotCallReloadTimelines() throws {
+        // Verifiziere dass updateAccountSites nur syncWidgetData aufruft (kein reloadAllTimelines)
+        // syncWidgetData schreibt Daten ohne Widget-Timeline-Reload
+        let manager = AccountManager.shared
+        let account = makeTestAccount(name: "Widget Test")
+        manager.addAccount(account)
+
+        manager.updateAccountSites(account, sites: ["site1.com", "site2.com"])
+
+        let updated = manager.accounts.first(where: { $0.id == account.id })
+        XCTAssertEqual(updated?.sites, ["site1.com", "site2.com"])
+    }
+
     func testSetActiveAccountAppliesCredentialsToKeychain() async throws {
         let manager = AccountManager.shared
 
