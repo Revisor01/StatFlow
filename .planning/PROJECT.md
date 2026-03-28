@@ -51,7 +51,7 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 - [x] Widget-Code in mehrere Dateien aufteilen — Validated in Phase 2: Quick Wins & Widget Split
 - [x] Timing-Hacks durch async/await Koordination ersetzen — Validated in Phase 3: Stabilität
 - [x] Print-Statements aufräumen (#if DEBUG) — Validated in Phase 2: Quick Wins & Widget Split
-- [ ] Unit Tests für kritische Pfade ergänzen
+- [x] Unit Tests für kritische Pfade ergänzen — Validated in Phase 5: Tests (58 Tests grün)
 
 ### Out of Scope
 
@@ -105,4 +105,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 4 (Architektur) completion*
+*Last updated: 2026-03-28 after Phase 5 (Tests) completion — v2.0 milestone complete*
