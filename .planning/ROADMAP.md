@@ -28,7 +28,9 @@
   2. Nutzer können via Tap einen Einmal-Tip (z.B. "Buy me a Coffee") abschließen
   3. App zeigt im Info-/About-Bereich den Claim "Mit Liebe in Hennstedt gemacht"
   4. Easter-Egg mit Segens-Bezug ist für Nutzer mit Pastor-Kontext auffindbar (aber nicht aufdringlich)
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 04-01-PLAN.md — SupportView Redesign (SF Symbols, clean design) + Branding-Untertitel im Footer
 **UI hint**: yes
 
 ### Phase 05: Umami API Coverage
@@ -65,7 +67,7 @@
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 04. Support & Branding | v2.2 | 0/TBD | Not started | - |
+| 04. Support & Branding | v2.2 | 0/1 | Planned | - |
 | 05. Umami API Coverage | v2.2 | 0/TBD | Not started | - |
 | 06. Plausible API Coverage | v2.2 | 0/TBD | Not started | - |
 | 07. Push-Benachrichtigungen | v2.2 | 0/TBD | Not started | - |
