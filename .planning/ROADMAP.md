@@ -58,10 +58,10 @@ Plans:
   1. Kein `!`-Force-Unwrap auf `URL(string:)` oder `URLComponents.url` in `PlausibleAPI.swift`, `UmamiAPI.swift` und Widget-Code — alle Stellen nutzen `guard let` mit Fehlerweiterleitung
   2. Kein `DispatchQueue.main.asyncAfter` oder `Task.sleep` mehr in `AccountManager.swift` und `AuthManager.swift` — Koordination läuft über async/await oder Combine
   3. Account-Switching löst keinen Race Condition aus, der zu inkonsistentem Auth-State führen kann
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 03-01-PLAN.md — Force Unwraps in API-Clients und Widget-Networking eliminieren (STAB-01)
-- [ ] 03-02-PLAN.md — Timing-Hacks in AccountManager und AuthManager entfernen (STAB-02)
+- [x] 03-02-PLAN.md — Timing-Hacks in AccountManager und AuthManager entfernen (STAB-02)
 
 ### Phase 4: Architektur
 **Goal**: Die Codebase hat ein einziges Auth-System, API-Clients mit konsistenter Concurrency, und das ViewModel nutzt das AnalyticsProvider-Protokoll ohne `isPlausible`-Branching.
@@ -95,6 +95,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Security Hardening | 2/2 | Complete   | 2026-03-28 |
 | 2. Quick Wins & Widget Split | 2/4 | In Progress|  |
-| 3. Stabilität | 0/2 | Not started | - |
+| 3. Stabilität | 1/2 | In Progress|  |
 | 4. Architektur | 0/? | Not started | - |
 | 5. Tests | 0/? | Not started | - |

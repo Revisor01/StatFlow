@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Code Quality & Security Hardening
 status: executing
-stopped_at: Completed 02-quick-wins-widget-split-03-PLAN.md
-last_updated: "2026-03-28T02:52:53.839Z"
+stopped_at: Completed 03-stabilitaet-02-PLAN.md
+last_updated: "2026-03-28T03:11:26.704Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 6
-  completed_plans: 5
+  completed_phases: 2
+  total_plans: 8
+  completed_plans: 7
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Phase 02 — Quick Wins & Widget Split
+**Current focus:** Phase 03 — Stabilität
 
 ## Current Position
 
-Phase: 02 (Quick Wins & Widget Split) — EXECUTING
-Plan: 4 of 4
+Phase: 03 (Stabilität) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
 Last activity: 2026-03-28
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-quick-wins-widget-split P02 | 6min | 2 tasks | 16 files |
 | Phase 02-quick-wins-widget-split P01 | 7min | 2 tasks | 9 files |
 | Phase 02-quick-wins-widget-split P03 | 45min | 2 tasks | 11 files |
+| Phase 03-stabilitaet P02 | 5min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Recent decisions affecting current work:
 - [Phase 02-quick-wins-widget-split]: widgetLog() als internal fuer Sichtbarkeit aus allen Widget-Dateien im selben Target
 - [Phase 02-quick-wins-widget-split]: AppIntents import in WidgetTimeRange.swift benoetigt fuer TypeDisplayRepresentation/DisplayRepresentation
 - [Phase 02-quick-wins-widget-split]: View extraction pattern: mutable state via @Binding, read-only ViewModel as let parameter
+- [Phase 03-stabilitaet]: asyncAfter durch synchrones @MainActor-Post ersetzt: applyAccountCredentials garantiert alle Zuweisungen vor Notification
+- [Phase 03-stabilitaet]: Task.sleep entfernt: PlausibleSitesManager ist lazy Singleton, bereits initialisiert — getSites() gibt synchron zurück
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T02:52:53.836Z
-Stopped at: Completed 02-quick-wins-widget-split-03-PLAN.md
+Last session: 2026-03-28T03:11:26.702Z
+Stopped at: Completed 03-stabilitaet-02-PLAN.md
 Resume file: None

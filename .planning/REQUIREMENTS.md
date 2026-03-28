@@ -23,7 +23,7 @@ Requirements für Code Quality & Security Hardening. Jedes Requirement mappt auf
 ### Stabilität
 
 - [ ] **STAB-01**: Alle Force Unwraps in Networking-Code durch guard-let mit Error Handling ersetzt
-- [ ] **STAB-02**: Timing-Hacks (asyncAfter, Task.sleep) durch async/await Koordination ersetzt
+- [x] **STAB-02**: Timing-Hacks (asyncAfter, Task.sleep) durch async/await Koordination ersetzt
 - [x] **STAB-03**: Print-Statements in #if DEBUG gewrappt oder entfernt
 
 ### Struktur
@@ -72,7 +72,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STRUC-01 | Phase 2 | Complete |
 | STRUC-02 | Phase 2 | Complete |
 | STAB-01 | Phase 3 | Pending |
-| STAB-02 | Phase 3 | Pending |
+| STAB-02 | Phase 3 | Complete |
 | ARCH-03 | Phase 4 | Pending |
 | ARCH-02 | Phase 4 | Pending |
 | ARCH-01 | Phase 4 | Pending |
