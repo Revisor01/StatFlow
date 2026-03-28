@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 09-entry-exit-plausible-filters 09-02-PLAN.md
-last_updated: "2026-03-28T21:15:52.368Z"
+stopped_at: Completed 10-analytics-setup 10-01-PLAN.md
+last_updated: "2026-03-28T21:28:31.061Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
   percent: 0
 ---
 
@@ -21,12 +21,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Phase 09 — entry-exit-plausible-filters
+**Current focus:** Phase 10 — analytics-setup
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
+Phase: 10 (analytics-setup) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
@@ -54,6 +54,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 08-events-reports-screens]: LazyVGrid statt HStack fuer Umami Quick Actions — skaliert auf 4 Karten ohne Overflow
 - [Phase 09]: Plausible-only Entry/Exit via PlausibleAPI cast — no AnalyticsProvider protocol change needed
 - [Phase 09-entry-exit-plausible-filters]: GoalConversion struct in PlausibleGoal.swift for co-location; filter values reuse existing ViewModel breakdown data
+- [Phase 10-analytics-setup]: Private helper views (GuideSectionHeader, GuideStep, CodeBlock) defined in SetupGuideView.swift — file-scoped for tight cohesion
 
 ### Pending Todos
 
@@ -65,6 +66,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T21:15:11.708Z
-Stopped at: Completed 09-entry-exit-plausible-filters 09-02-PLAN.md
+Last session: 2026-03-28T21:28:31.059Z
+Stopped at: Completed 10-analytics-setup 10-01-PLAN.md
 Resume file: None

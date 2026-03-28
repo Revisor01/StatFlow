@@ -19,7 +19,7 @@ Neue UI-Screens für die in v2.2 implementierten API-Endpoints, Analytics auf ec
 
 ### Analytics Setup
 
-- [ ] **SETUP-01**: Analytics-Tracking auf eigenen Websites einrichten — Umami/Plausible Tracking-Code auf mindestens einer Website aktiv, Goals definiert, echte Daten fließen
+- [x] **SETUP-01**: Analytics-Tracking auf eigenen Websites einrichten — Umami/Plausible Tracking-Code auf mindestens einer Website aktiv, Goals definiert, echte Daten fließen
 
 ### In-App Guide
 
@@ -41,7 +41,7 @@ Neue UI-Screens für die in v2.2 implementierten API-Endpoints, Analytics auf ec
 | SCREEN-02 | Phase 08 | Complete |
 | SCREEN-03 | Phase 09 | Complete |
 | SCREEN-04 | Phase 09 | Complete |
-| SETUP-01 | Phase 10 | Pending |
+| SETUP-01 | Phase 10 | Complete |
 | GUIDE-01 | Phase 11 | Pending |
 
 **Coverage:**
