@@ -89,12 +89,21 @@ class SupportManager: ObservableObject {
 // MARK: - Support Product Extensions
 
 extension Product {
-    var emoji: String {
+    var symbolName: String {
         switch id {
-        case "de.godsapp.insightflow.support.small": return "☕️"
-        case "de.godsapp.insightflow.support.medium": return "🍕"
-        case "de.godsapp.insightflow.support.large": return "🎉"
-        default: return "💝"
+        case "de.godsapp.insightflow.support.small": return "cup.and.saucer.fill"
+        case "de.godsapp.insightflow.support.medium": return "gift.fill"
+        case "de.godsapp.insightflow.support.large": return "sparkles"
+        default: return "heart.fill"
+        }
+    }
+
+    var tierColor: Color {
+        switch id {
+        case "de.godsapp.insightflow.support.small": return .blue
+        case "de.godsapp.insightflow.support.medium": return .purple
+        case "de.godsapp.insightflow.support.large": return .orange
+        default: return .accentColor
         }
     }
 
