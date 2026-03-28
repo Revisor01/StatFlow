@@ -122,4 +122,44 @@ class AnalyticsCacheServiceTests: XCTestCase {
 
         XCTAssertGreaterThan(sut.cacheSize(), 0)
     }
+
+    func testLoadExpiredWebsitesReturnsIsExpiredTrue() {
+        let expiredJSON = """
+        {
+          "data": [{"id": "1", "name": "Test Site", "domain": "expired.com", "shareId": null, "provider": "umami"}],
+          "cachedAt": "2020-01-01T00:00:00Z",
+          "expiresAt": "2020-01-02T00:00:00Z"
+        }
+        """.data(using: .utf8)!
+
+        let fileURL = tempDir.appendingPathComponent("websites_acc-expired.json")
+        try! expiredJSON.write(to: fileURL)
+
+        let result = sut.loadWebsites(accountId: "acc-expired")
+
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.isExpired, true)
+        XCTAssertEqual(result?.data.count, 1)
+    }
+
+    func testClearExpiredCacheRemovesExpiredEntries() {
+        // Save a fresh (non-expired) entry
+        sut.saveWebsites([makeCachedWebsite()], accountId: "acc-fresh")
+
+        // Write an expired entry manually
+        let expiredJSON = """
+        {
+          "data": [{"id": "1", "name": "Old Site", "domain": "old.com", "shareId": null, "provider": "umami"}],
+          "cachedAt": "2020-01-01T00:00:00Z",
+          "expiresAt": "2020-01-02T00:00:00Z"
+        }
+        """.data(using: .utf8)!
+        let expiredFileURL = tempDir.appendingPathComponent("websites_acc-old.json")
+        try! expiredJSON.write(to: expiredFileURL)
+
+        sut.clearExpiredCache()
+
+        XCTAssertNil(sut.loadWebsites(accountId: "acc-old"))
+        XCTAssertNotNil(sut.loadWebsites(accountId: "acc-fresh"))
+    }
 }
