@@ -107,8 +107,8 @@ struct SettingsView: View {
                         account: account,
                         isActive: accountManager.activeAccount?.id == account.id,
                         onSelect: {
-                            accountManager.setActiveAccount(account)
                             Task {
+                                await accountManager.setActiveAccount(account)
                                 await viewModel.loadWebsites()
                             }
                         }
@@ -608,7 +608,9 @@ struct EditAccountView: View {
 
         // If this was the active account, refresh it
         if accountManager.activeAccount?.id == account.id {
-            accountManager.setActiveAccount(updatedAccount)
+            Task {
+                await accountManager.setActiveAccount(updatedAccount)
+            }
         }
 
         onAccountUpdated?()

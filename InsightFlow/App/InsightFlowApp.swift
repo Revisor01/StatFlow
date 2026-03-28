@@ -43,7 +43,9 @@ struct PrivacyFlowApp: App {
             if currentProvider != targetProvider {
                 // Find matching account and switch to it
                 if let targetAccount = AccountManager.shared.accounts.first(where: { $0.providerType == targetProvider }) {
-                    AccountManager.shared.setActiveAccount(targetAccount)
+                    Task {
+                        await AccountManager.shared.setActiveAccount(targetAccount)
+                    }
 
                     // Store pending deep link - will be processed after data loads
                     quickActionManager.pendingDeepLink = (websiteId: websiteId, provider: providerString)

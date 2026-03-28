@@ -104,7 +104,9 @@ class AccountManager: ObservableObject {
 
         // If this is the first account, make it active
         if activeAccount == nil {
-            setActiveAccount(account)
+            Task {
+                await setActiveAccount(account)
+            }
         }
     }
 
@@ -116,7 +118,9 @@ class AccountManager: ObservableObject {
         // If we removed the active account, switch to another one
         if activeAccount?.id == account.id {
             if let firstAccount = accounts.first {
-                setActiveAccount(firstAccount)
+                Task {
+                    await setActiveAccount(firstAccount)
+                }
             } else {
                 clearActiveAccount()
             }
@@ -151,20 +155,12 @@ class AccountManager: ObservableObject {
         }
     }
 
-    func setActiveAccount(_ account: AnalyticsAccount) {
+    func setActiveAccount(_ account: AnalyticsAccount) async {
         activeAccount = account
         UserDefaults.standard.set(account.id.uuidString, forKey: activeAccountKey)
 
-        // Apply credentials to the system
-        applyAccountCredentials(account)
-
-        // Update AuthManager's currentProvider to stay in sync
-        // This is critical for UI that depends on authManager.currentProvider
-        Task { @MainActor in
-            // Get AuthManager from environment through shared instance pattern
-            // Since we can't access EnvironmentObject here, we update KeychainService
-            // and AuthManager will read from there when needed
-        }
+        // Apply credentials to the system (awaits actor reconfiguration)
+        await applyAccountCredentials(account)
     }
 
     func clearActiveAccount() {
@@ -256,7 +252,7 @@ class AccountManager: ObservableObject {
 
     // MARK: - Apply Credentials
 
-    private func applyAccountCredentials(_ account: AnalyticsAccount) {
+    private func applyAccountCredentials(_ account: AnalyticsAccount) async {
         // Save to Keychain for the API services
         try? KeychainService.save(account.serverURL, for: .serverURL)
         try? KeychainService.save(account.providerType.rawValue, for: .providerType)
@@ -266,8 +262,8 @@ class AccountManager: ObservableObject {
             if let token = account.credentials.token {
                 try? KeychainService.save(token, for: .token)
             }
-            // Reconfigure UmamiAPI with stored credentials
-            UmamiAPI.shared.reconfigureFromKeychain()
+            // Reconfigure UmamiAPI with stored credentials (await actor method)
+            await UmamiAPI.shared.reconfigureFromKeychain()
             AnalyticsManager.shared.setProvider(UmamiAPI.shared)
 
         case .plausible:
@@ -289,10 +285,8 @@ class AccountManager: ObservableObject {
                 #endif
                 PlausibleSitesManager.shared.clearAll()
             }
-            // Reconfigure PlausibleAPI with stored credentials (actor — must await)
-            Task {
-                await PlausibleAPI.shared.reconfigureFromKeychain()
-            }
+            // Reconfigure PlausibleAPI with stored credentials (await actor method)
+            await PlausibleAPI.shared.reconfigureFromKeychain()
             // Notify PlausibleSitesManager observers (previously done inside PlausibleAPI.reconfigureFromKeychain)
             PlausibleSitesManager.shared.objectWillChange.send()
             AnalyticsManager.shared.setProvider(PlausibleAPI.shared)
@@ -429,7 +423,9 @@ class AccountManager: ObservableObject {
         )
 
         addAccount(account)
-        setActiveAccount(account)
+        Task {
+            await setActiveAccount(account)
+        }
     }
 
     // MARK: - Helpers
