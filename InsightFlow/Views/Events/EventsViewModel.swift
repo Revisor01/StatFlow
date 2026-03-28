@@ -4,7 +4,7 @@ import Foundation
 class EventsViewModel: ObservableObject {
     let websiteId: String
 
-    @Published var events: [MetricItem] = []
+    @Published var events: [AnalyticsMetricItem] = []
     @Published var eventStats: EventStatsResponse?
     @Published var isLoading = false
     @Published var error: String?
