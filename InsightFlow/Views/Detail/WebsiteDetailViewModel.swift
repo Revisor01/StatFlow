@@ -25,13 +25,6 @@ class WebsiteDetailViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
 
-    private let umamiAPI = UmamiAPI.shared
-    private let plausibleAPI = PlausibleAPI.shared
-
-    private var isPlausible: Bool {
-        AnalyticsManager.shared.providerType == .plausible
-    }
-
     init(websiteId: String) {
         self.websiteId = websiteId
     }
@@ -60,31 +53,19 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadStats(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let analyticsStats = try await plausibleAPI.getAnalyticsStats(websiteId: websiteId, dateRange: dateRange)
-                stats = WebsiteStats(
-                    pageviews: StatValue(value: analyticsStats.pageviews.value, change: analyticsStats.pageviews.change),
-                    visitors: StatValue(value: analyticsStats.visitors.value, change: analyticsStats.visitors.change),
-                    visits: StatValue(value: analyticsStats.visits.value, change: analyticsStats.visits.change),
-                    bounces: StatValue(value: analyticsStats.bounces.value, change: analyticsStats.bounces.change),
-                    totaltime: StatValue(value: analyticsStats.totaltime.value, change: analyticsStats.totaltime.change)
-                )
-            } else {
-                stats = try await umamiAPI.getStats(websiteId: websiteId, dateRange: dateRange)
-            }
+            let analyticsStats = try await provider.getAnalyticsStats(websiteId: websiteId, dateRange: dateRange)
+            stats = analyticsStats.toWebsiteStats()
         } catch {
             self.error = error.localizedDescription
         }
     }
 
     private func loadActiveVisitors() async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                activeVisitors = try await plausibleAPI.getActiveVisitors(websiteId: websiteId)
-            } else {
-                activeVisitors = try await umamiAPI.getActiveVisitors(websiteId: websiteId)
-            }
+            activeVisitors = try await provider.getActiveVisitors(websiteId: websiteId)
         } catch {
             #if DEBUG
             print("Failed to load active visitors: \(error)")
@@ -93,24 +74,19 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadPageviews(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let pageviewData = try await plausibleAPI.getPageviewsData(websiteId: websiteId, dateRange: dateRange)
-                let visitorData = try await plausibleAPI.getVisitorsData(websiteId: websiteId, dateRange: dateRange)
-                let formatter = ISO8601DateFormatter()
-                pageviewsData = fillMissingTimeSlots(
-                    data: pageviewData.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) },
-                    dateRange: dateRange
-                )
-                sessionsData = fillMissingTimeSlots(
-                    data: visitorData.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) },
-                    dateRange: dateRange
-                )
-            } else {
-                let data = try await umamiAPI.getPageviews(websiteId: websiteId, dateRange: dateRange)
-                pageviewsData = fillMissingTimeSlots(data: data.pageviews, dateRange: dateRange)
-                sessionsData = fillMissingTimeSlots(data: data.sessions, dateRange: dateRange)
-            }
+            let formatter = ISO8601DateFormatter()
+            let pageviewData = try await provider.getPageviewsData(websiteId: websiteId, dateRange: dateRange)
+            let visitorData = try await provider.getVisitorsData(websiteId: websiteId, dateRange: dateRange)
+            pageviewsData = fillMissingTimeSlots(
+                data: pageviewData.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) },
+                dateRange: dateRange
+            )
+            sessionsData = fillMissingTimeSlots(
+                data: visitorData.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) },
+                dateRange: dateRange
+            )
         } catch {
             #if DEBUG
             print("Failed to load pageviews: \(error)")
@@ -185,13 +161,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadTopPages(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let items = try await plausibleAPI.getPages(websiteId: websiteId, dateRange: dateRange)
-                topPages = items.map { MetricItem(x: $0.name, y: $0.value) }
-            } else {
-                topPages = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .path, limit: 50)
-            }
+            let items = try await provider.getPages(websiteId: websiteId, dateRange: dateRange)
+            topPages = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load top pages: \(error)")
@@ -200,13 +173,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadPageTitles(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                // Plausible doesn't have separate page titles, use top pages
-                pageTitles = []
-            } else {
-                pageTitles = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .title, limit: 50)
-            }
+            let items = try await provider.getPageTitles(websiteId: websiteId, dateRange: dateRange)
+            pageTitles = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load page titles: \(error)")
@@ -215,13 +185,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadReferrers(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let items = try await plausibleAPI.getReferrers(websiteId: websiteId, dateRange: dateRange)
-                referrers = items.map { MetricItem(x: $0.name, y: $0.value) }
-            } else {
-                referrers = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .referrer)
-            }
+            let items = try await provider.getReferrers(websiteId: websiteId, dateRange: dateRange)
+            referrers = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load referrers: \(error)")
@@ -230,13 +197,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadCountries(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let items = try await plausibleAPI.getCountries(websiteId: websiteId, dateRange: dateRange)
-                countries = items.map { MetricItem(x: $0.name, y: $0.value) }
-            } else {
-                countries = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .country)
-            }
+            let items = try await provider.getCountries(websiteId: websiteId, dateRange: dateRange)
+            countries = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load countries: \(error)")
@@ -245,13 +209,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadRegions(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let items = try await plausibleAPI.getRegions(websiteId: websiteId, dateRange: dateRange)
-                regions = items.map { MetricItem(x: $0.name, y: $0.value) }
-            } else {
-                regions = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .region)
-            }
+            let items = try await provider.getRegions(websiteId: websiteId, dateRange: dateRange)
+            regions = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load regions: \(error)")
@@ -260,13 +221,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadCities(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let items = try await plausibleAPI.getCities(websiteId: websiteId, dateRange: dateRange)
-                cities = items.map { MetricItem(x: $0.name, y: $0.value) }
-            } else {
-                cities = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .city)
-            }
+            let items = try await provider.getCities(websiteId: websiteId, dateRange: dateRange)
+            cities = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load cities: \(error)")
@@ -275,13 +233,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadDevices(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let items = try await plausibleAPI.getDevices(websiteId: websiteId, dateRange: dateRange)
-                devices = items.map { MetricItem(x: $0.name, y: $0.value) }
-            } else {
-                devices = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .device)
-            }
+            let items = try await provider.getDevices(websiteId: websiteId, dateRange: dateRange)
+            devices = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load devices: \(error)")
@@ -290,13 +245,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadBrowsers(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let items = try await plausibleAPI.getBrowsers(websiteId: websiteId, dateRange: dateRange)
-                browsers = items.map { MetricItem(x: $0.name, y: $0.value) }
-            } else {
-                browsers = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .browser)
-            }
+            let items = try await provider.getBrowsers(websiteId: websiteId, dateRange: dateRange)
+            browsers = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load browsers: \(error)")
@@ -305,13 +257,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadOperatingSystems(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                let items = try await plausibleAPI.getOS(websiteId: websiteId, dateRange: dateRange)
-                operatingSystems = items.map { MetricItem(x: $0.name, y: $0.value) }
-            } else {
-                operatingSystems = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .os)
-            }
+            let items = try await provider.getOS(websiteId: websiteId, dateRange: dateRange)
+            operatingSystems = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load operating systems: \(error)")
@@ -320,13 +269,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadLanguages(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                // Plausible doesn't have language breakdown in Stats API v2
-                languages = []
-            } else {
-                languages = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .language)
-            }
+            let items = try await provider.getLanguages(websiteId: websiteId, dateRange: dateRange)
+            languages = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load languages: \(error)")
@@ -335,13 +281,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadScreens(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                // Plausible doesn't have screen size breakdown in Stats API v2
-                screens = []
-            } else {
-                screens = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .screen)
-            }
+            let items = try await provider.getScreens(websiteId: websiteId, dateRange: dateRange)
+            screens = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load screens: \(error)")
@@ -350,13 +293,10 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     private func loadEvents(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            if isPlausible {
-                // Plausible events require different API approach
-                events = []
-            } else {
-                events = try await umamiAPI.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .event)
-            }
+            let items = try await provider.getEvents(websiteId: websiteId, dateRange: dateRange)
+            events = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
             #if DEBUG
             print("Failed to load events: \(error)")
