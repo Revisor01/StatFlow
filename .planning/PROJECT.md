@@ -11,7 +11,7 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 ## Current State
 
 **Latest shipped:** v2.1 UX Polish & Features (completed 2026-03-28)
-**Next milestone:** Not yet defined
+**Current milestone:** v2.2 Support & API Coverage
 
 ### v2.1 Accomplishments
 - Account-Switcher als kompakter Provider-Icon Menu-Button in der Toolbar
@@ -56,7 +56,11 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 <!-- Current scope. Building toward these. -->
 
-*No active requirements — start next milestone with `/gsd:new-milestone`*
+- [ ] SUP-01: "Buy me a Coffee"-ähnliche Support-Option — einheitlich über ValetudiOS + PrivacyFlow
+- [ ] SUP-02: Einheitlicher Branding-Claim + Pastor-Segens-Easter-Egg
+- [ ] API-01: Vollständige Umami Self-Hosted API-Abdeckung
+- [ ] API-02: Vollständige Plausible CE Self-Hosted API-Abdeckung
+- [ ] NOTIF-01: Push-Benachrichtigungs-Logik überarbeiten — strukturierte Gruppierung
 
 ### Out of Scope
 
@@ -64,7 +68,10 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 - Externe Dependencies einführen — bewusste Entscheidung, alles custom zu halten
 - iPad/macOS Support — Fokus auf bestehende iOS-App
-- Komplett neues UI-Design — v2.1 ist UX-Polish, kein Redesign
+- Komplett neues UI-Design — v2.1 war UX-Polish, kein Redesign
+- Externe Payment-Provider (Stripe etc.) — Apple In-App Purchase reicht
+- Abo-Modell — Einmal-Tip reicht, kein recurring
+- Cloud/SaaS API-Endpunkte — Nur Self-Hosted Varianten
 
 ## Context
 
@@ -108,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — v2.1 milestone archived*
+*Last updated: 2026-03-28 — v2.2 milestone started*

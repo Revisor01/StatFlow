@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: UX Polish & Features
-status: verifying
-stopped_at: Completed 03-alle-accounts-ansicht 03-01-PLAN.md
-last_updated: "2026-03-28T16:26:43.477Z"
+milestone: v2.2
+milestone_name: Support & API Coverage
+status: planning
+stopped_at: null
+last_updated: "2026-03-28T18:00:00.000Z"
 last_activity: 2026-03-28
 progress:
-  total_phases: 3
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 0
 ---
 
@@ -21,16 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Phase 03 — Alle-Accounts-Ansicht
+**Current focus:** Defining requirements for v2.2
 
 ## Current Position
 
-Phase: 03
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-28
-
-Progress: [░░░░░░░░░░] 0%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-28 — Milestone v2.2 started
 
 ## Performance Metrics
 
@@ -61,6 +59,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T16:25:47.541Z
-Stopped at: Completed 03-alle-accounts-ansicht 03-01-PLAN.md
+Last session: 2026-03-28
+Stopped at: Milestone v2.2 initialization
 Resume file: None
