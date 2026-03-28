@@ -12,7 +12,10 @@ final class AnalyticsCacheService: @unchecked Sendable {
     private let defaultTTL: TimeInterval = 3600 // 1 Stunde
     private let sparklineTTL: TimeInterval = 900 // 15 Minuten für Sparklines
 
+    private let overrideCacheDirectory: URL?
+
     private var cacheDirectory: URL? {
+        if let override = overrideCacheDirectory { return override }
         guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) else {
             return nil
         }
@@ -26,7 +29,10 @@ final class AnalyticsCacheService: @unchecked Sendable {
         return cacheURL
     }
 
-    private init() {}
+    private init() { self.overrideCacheDirectory = nil }
+
+    /// Testbarer Init mit Override für das Cache-Verzeichnis (kein App-Group-Entitlement nötig)
+    init(cacheDirectoryOverride: URL) { self.overrideCacheDirectory = cacheDirectoryOverride }
 
     // MARK: - Cache Keys
 

@@ -10,6 +10,7 @@
 		F80DEF712EE98A92004CEF6F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F80DEF702EE98A92004CEF6F /* WidgetKit.framework */; };
 		F80DEF732EE98A92004CEF6F /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F80DEF722EE98A92004CEF6F /* SwiftUI.framework */; };
 		F80DEF802EE98A94004CEF6F /* InsightFlowWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F80DEF6E2EE98A92004CEF6F /* InsightFlowWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A2000000000000000000001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A2000000000000000000000 /* XCTest.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -19,6 +20,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = F80DEF6D2EE98A92004CEF6F;
 			remoteInfo = InsightFlowWidgetExtension;
+		};
+		A2000000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A1000000000000000000002;
+			remoteInfo = InsightFlow;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -38,6 +46,8 @@
 
 /* Begin PBXFileReference section */
 		A1000000000000000000001 /* InsightFlow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InsightFlow.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A2000000000000000000000 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		A2000000000000000000010 /* InsightFlowTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InsightFlowTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F80DEF6E2EE98A92004CEF6F /* InsightFlowWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = InsightFlowWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F80DEF702EE98A92004CEF6F /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		F80DEF722EE98A92004CEF6F /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -78,6 +88,11 @@
 			path = InsightFlowWidget;
 			sourceTree = "<group>";
 		};
+		A2000000000000000000003 /* InsightFlowTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = InsightFlowTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +105,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A2000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A2000000000000000000001 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -99,6 +122,7 @@
 				F80DEF882EE98E1D004CEF6F /* InsightFlowWidgetExtension.entitlements */,
 				A1000000000000000000011 /* InsightFlow */,
 				F80DEF742EE98A92004CEF6F /* InsightFlowWidget */,
+				A2000000000000000000003 /* InsightFlowTests */,
 				F80DEF6F2EE98A92004CEF6F /* Frameworks */,
 				A1000000000000000000004 /* Products */,
 			);
@@ -109,6 +133,7 @@
 			children = (
 				A1000000000000000000001 /* InsightFlow.app */,
 				F80DEF6E2EE98A92004CEF6F /* InsightFlowWidgetExtension.appex */,
+				A2000000000000000000010 /* InsightFlowTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -118,6 +143,7 @@
 			children = (
 				F80DEF702EE98A92004CEF6F /* WidgetKit.framework */,
 				F80DEF722EE98A92004CEF6F /* SwiftUI.framework */,
+				A2000000000000000000000 /* XCTest.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -170,6 +196,28 @@
 			productReference = F80DEF6E2EE98A92004CEF6F /* InsightFlowWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		A2000000000000000000005 /* InsightFlowTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A2000000000000000000006 /* Build configuration list for PBXNativeTarget "InsightFlowTests" */;
+			buildPhases = (
+				A2000000000000000000007 /* Sources */,
+				A2000000000000000000004 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A2000000000000000000008 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A2000000000000000000003 /* InsightFlowTests */,
+			);
+			name = InsightFlowTests;
+			packageProductDependencies = (
+			);
+			productName = InsightFlowTests;
+			productReference = A2000000000000000000010 /* InsightFlowTests.xctest */;
+			productType = "com.apple.product-type.unit-test-bundle";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -185,6 +233,10 @@
 					};
 					F80DEF6D2EE98A92004CEF6F = {
 						CreatedOnToolsVersion = 26.1.1;
+					};
+					A2000000000000000000005 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = A1000000000000000000002;
 					};
 				};
 			};
@@ -205,6 +257,7 @@
 			targets = (
 				A1000000000000000000002 /* InsightFlow */,
 				F80DEF6D2EE98A92004CEF6F /* InsightFlowWidgetExtension */,
+				A2000000000000000000005 /* InsightFlowTests */,
 			);
 		};
 /* End PBXProject section */
@@ -241,6 +294,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A2000000000000000000007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -248,6 +308,11 @@
 			isa = PBXTargetDependency;
 			target = F80DEF6D2EE98A92004CEF6F /* InsightFlowWidgetExtension */;
 			targetProxy = F80DEF7E2EE98A94004CEF6F /* PBXContainerItemProxy */;
+		};
+		A2000000000000000000008 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A1000000000000000000002 /* InsightFlow */;
+			targetProxy = A2000000000000000000002 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -449,6 +514,38 @@
 			};
 			name = Release;
 		};
+		A2000000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = J459G9CJT5;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.godsapp.PrivacyFlow.InsightFlowTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/InsightFlow.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/InsightFlow";
+			};
+			name = Debug;
+		};
+		A200000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = J459G9CJT5;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.godsapp.PrivacyFlow.InsightFlowTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/InsightFlow.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/InsightFlow";
+			};
+			name = Release;
+		};
 		F80DEF822EE98A94004CEF6F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -537,6 +634,15 @@
 			buildConfigurations = (
 				F80DEF822EE98A94004CEF6F /* Debug */,
 				F80DEF832EE98A94004CEF6F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A2000000000000000000006 /* Build configuration list for PBXNativeTarget "InsightFlowTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A2000000000000000000009 /* Debug */,
+				A200000000000000000000A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
