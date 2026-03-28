@@ -18,16 +18,17 @@
 ## Phase Details
 
 ### Phase 13: Critical Bug Fixes
-**Goal**: Die 4 kritischsten Bugs fixen die das App Store Review oder die User Experience gefährden
+**Goal**: Die 4 kritischsten Bugs fixen die das App Store Review oder die User Experience gefaehrden
 **Depends on**: Nothing
 **Requirements**: FIX-01, FIX-02, FIX-03, FIX-04
 **Success Criteria** (what must be TRUE):
   1. Widget zeigt nach Account-Wechsel innerhalb von 5 Sekunden die korrekten Daten
   2. Navigiert der User weg, werden laufende API-Requests abgebrochen (kein Background-Battery-Drain)
-  3. Cache wird beim App-Start bereinigt (Einträge >7 Tage gelöscht, Gesamtgröße <100MB)
+  3. Cache wird beim App-Start bereinigt (Eintraege >7 Tage geloescht, Gesamtgroesse <100MB)
   4. Account-Wechsel zeigt Loading-Indikator statt Flash alter Daten
-**Plans:** 2 plans
+**Plans:** 3 plans
 Plans:
+- [ ] 13-00-PLAN.md — Wave 0: Test-Stubs (WebsiteDetailViewModelTests + DashboardViewModelTests)
 - [ ] 13-01-PLAN.md — Cache Lifecycle (FIX-03) + Account-Wechsel Loading State (FIX-04)
 - [ ] 13-02-PLAN.md — Widget Sync Race Condition (FIX-01) + Request Cancellation (FIX-02)
 
@@ -36,23 +37,23 @@ Plans:
 **Depends on**: Phase 13
 **Requirements**: CLEAN-01, CLEAN-02
 **Success Criteria** (what must be TRUE):
-  1. UmamiAPI.swift enthält keine ungenutzten Admin/Write-Methoden mehr (~20 Methoden weniger)
+  1. UmamiAPI.swift enthaelt keine ungenutzten Admin/Write-Methoden mehr (~20 Methoden weniger)
   2. Im Offline-Modus zeigt die App cached Daten mit sichtbarem "Offline"-Indikator
 **Plans**: TBD
 
 ### Phase 15: README & Repo
-**Goal**: Öffentliche Präsenz aufpolieren — README als Landing Page, Repo-Name aktuell
+**Goal**: Oeffentliche Praesenz aufpolieren — README als Landing Page, Repo-Name aktuell
 **Depends on**: Phase 14
 **Requirements**: README-01, REPO-01
 **Success Criteria** (what must be TRUE):
-  1. README.md enthält Feature-Liste, Architektur-Überblick, Screenshots-Platzhalter und Setup-Anleitung
-  2. GitHub Repo heißt Revisor01/StatFlow (Redirect von PrivacyFlow aktiv)
+  1. README.md enthaelt Feature-Liste, Architektur-Ueberblick, Screenshots-Platzhalter und Setup-Anleitung
+  2. GitHub Repo heisst Revisor01/StatFlow (Redirect von PrivacyFlow aktiv)
 **Plans**: TBD
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 13. Critical Bug Fixes | 0/2 | Not started | - |
+| 13. Critical Bug Fixes | 0/3 | Not started | - |
 | 14. Code Cleanup | 0/? | Not started | - |
 | 15. README & Repo | 0/? | Not started | - |
