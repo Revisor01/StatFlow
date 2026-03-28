@@ -124,22 +124,30 @@ class AccountManager: ObservableObject {
     }
 
     func updateAccountSites(_ account: AnalyticsAccount, sites: [String]) {
+        #if DEBUG
         print("AccountManager: updateAccountSites called for \(account.name) with \(sites.count) sites: \(sites)")
+        #endif
         if let index = accounts.firstIndex(where: { $0.id == account.id }) {
             var updated = accounts[index]
             updated.sites = sites
             accounts[index] = updated
             saveAccounts()
+            #if DEBUG
             print("AccountManager: saved accounts, account.sites = \(updated.sites ?? [])")
+            #endif
 
             if activeAccount?.id == account.id {
                 activeAccount = updated
+                #if DEBUG
                 print("AccountManager: updated activeAccount.sites = \(updated.sites ?? [])")
+                #endif
                 // Update widget credentials with new sites
                 updateWidgetCredentials(for: updated)
             }
         } else {
+            #if DEBUG
             print("AccountManager: account not found in accounts list!")
+            #endif
         }
     }
 
@@ -261,12 +269,18 @@ class AccountManager: ObservableObject {
                 try? KeychainService.save(apiKey, for: .apiKey)
             }
             // Restore Plausible sites - use setSitesWithoutPersist to avoid double-save
+            #if DEBUG
             print("AccountManager: applying Plausible account, account.sites = \(account.sites ?? [])")
+            #endif
             if let sites = account.sites, !sites.isEmpty {
+                #if DEBUG
                 print("AccountManager: restoring \(sites.count) sites from account")
+                #endif
                 PlausibleSitesManager.shared.setSitesWithoutPersist(sites)
             } else {
+                #if DEBUG
                 print("AccountManager: account has no sites, clearing PlausibleSitesManager")
+                #endif
                 PlausibleSitesManager.shared.clearAll()
             }
             // Reconfigure PlausibleAPI with stored credentials

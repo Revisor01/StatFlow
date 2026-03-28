@@ -488,7 +488,9 @@ class SessionsViewModel: ObservableObject {
             totalCount = response.count
             hasMore = sessions.count < totalCount
         } catch {
+            #if DEBUG
             print("Sessions error: \(error)")
+            #endif
         }
 
         isLoading = false
@@ -510,7 +512,9 @@ class SessionsViewModel: ObservableObject {
             sessions.append(contentsOf: response.data)
             hasMore = sessions.count < totalCount
         } catch {
+            #if DEBUG
             print("Sessions error: \(error)")
+            #endif
         }
 
         isLoading = false
@@ -546,7 +550,9 @@ class SessionDetailViewModel: ObservableObject {
                 dateRange: dateRange
             )
         } catch {
+            #if DEBUG
             print("Activity error: \(error)")
+            #endif
         }
 
         isLoading = false
@@ -576,7 +582,9 @@ class JourneyViewModel: ObservableObject {
                 steps: 5
             )
         } catch {
+            #if DEBUG
             print("Journey error: \(error)")
+            #endif
         }
 
         isLoading = false

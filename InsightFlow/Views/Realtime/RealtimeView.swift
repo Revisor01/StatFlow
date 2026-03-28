@@ -369,7 +369,9 @@ class RealtimeViewModel: ObservableObject {
             recentEvents = [] // Plausible doesn't provide individual events
 
         } catch {
+            #if DEBUG
             print("Plausible Realtime error: \(error)")
+            #endif
         }
     }
 
@@ -398,7 +400,9 @@ class RealtimeViewModel: ObservableObject {
                 .sorted { $0.createdDate > $1.createdDate }
 
         } catch {
+            #if DEBUG
             print("Realtime error: \(error)")
+            #endif
         }
     }
 }
@@ -620,7 +624,9 @@ class LiveEventDetailViewModel: ObservableObject {
                 dateRange: .today
             )
         } catch {
+            #if DEBUG
             print("Live session activity error: \(error)")
+            #endif
         }
 
         isLoading = false
