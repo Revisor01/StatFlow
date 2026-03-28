@@ -93,8 +93,14 @@ struct SupportButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
-                Text(product.emoji)
-                    .font(.title)
+                ZStack {
+                    Circle()
+                        .fill(product.tierColor)
+                        .frame(width: 44, height: 44)
+                    Image(systemName: product.symbolName)
+                        .font(.system(size: 20))
+                        .foregroundStyle(.white)
+                }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(product.supportName)
@@ -111,12 +117,12 @@ struct SupportButton: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.pink)
+                    .background(Color.accentColor)
                     .clipShape(Capsule())
             }
             .padding()
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }
