@@ -219,7 +219,7 @@ class NotificationManager: ObservableObject {
                 if let apiKey = account.credentials.apiKey {
                     try? KeychainService.save(account.serverURL, for: .serverURL)
                     try? KeychainService.save(apiKey, for: .apiKey)
-                    PlausibleAPI.shared.reconfigureFromKeychain()
+                    await PlausibleAPI.shared.reconfigureFromKeychain()
                     stats = try? await PlausibleAPI.shared.getAnalyticsStats(websiteId: website.id, dateRange: dateRange)
                 }
             }

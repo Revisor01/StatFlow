@@ -896,7 +896,7 @@ class DashboardViewModel: ObservableObject {
 
     func removeSite(_ websiteId: String) async {
         if isPlausible {
-            plausibleAPI.removeSite(domain: websiteId)
+            await plausibleAPI.removeSite(domain: websiteId)
         } else {
             // Umami: Delete via API
             do {

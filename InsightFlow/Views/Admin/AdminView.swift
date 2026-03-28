@@ -450,7 +450,7 @@ class AdminViewModel: ObservableObject {
 
     func deletePlausibleSite(_ site: PlausibleSite) async {
         // Remove from local storage only (Sites API v1 not available with Stats API key)
-        plausibleAPI.removeSite(domain: site.domain)
+        await plausibleAPI.removeSite(domain: site.domain)
         plausibleSites.removeAll { $0.domain == site.domain }
     }
 
