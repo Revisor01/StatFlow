@@ -25,7 +25,8 @@ struct AnalyticsAccount: Codable, Identifiable, Equatable {
         serverURL: String,
         providerType: AnalyticsProviderType,
         credentials: AccountCredentials,
-        sites: [String]? = nil
+        sites: [String]? = nil,
+        createdAt: Date = Date()
     ) {
         self.id = id
         self.name = name
@@ -33,7 +34,7 @@ struct AnalyticsAccount: Codable, Identifiable, Equatable {
         self.providerType = providerType
         self.credentials = credentials
         self.sites = sites
-        self.createdAt = Date()
+        self.createdAt = createdAt
     }
 
     var displayName: String {
@@ -73,11 +74,15 @@ class AccountManager: ObservableObject {
 
     private let accountsKey = "analytics_accounts"
     private let activeAccountKey = "active_account_id"
+    private let migrationV2Key = "credentials_migrated_v2"
 
     @Published var accounts: [AnalyticsAccount] = []
     @Published var activeAccount: AnalyticsAccount?
 
     private init() {
+        if !UserDefaults.standard.bool(forKey: migrationV2Key) {
+            migrateCredentialsToKeychain()
+        }
         loadAccounts()
     }
 
@@ -93,6 +98,8 @@ class AccountManager: ObservableObject {
         } else {
             accounts.append(account)
         }
+        // Credentials in Keychain speichern BEVOR saveAccounts() sie strippt
+        saveCredentialsToKeychain(for: account)
         saveAccounts()
 
         // If this is the first account, make it active
@@ -103,6 +110,7 @@ class AccountManager: ObservableObject {
 
     func removeAccount(_ account: AnalyticsAccount) {
         accounts.removeAll { $0.id == account.id }
+        KeychainService.deleteCredentials(for: account.id.uuidString)
         saveAccounts()
 
         // If we removed the active account, switch to another one
@@ -169,7 +177,7 @@ class AccountManager: ObservableObject {
     private func loadAccounts() {
         if let data = UserDefaults.standard.data(forKey: accountsKey),
            let decoded = try? JSONDecoder().decode([AnalyticsAccount].self, from: data) {
-            accounts = decoded
+            accounts = decoded.map { hydrateWithKeychainCredentials($0) }
         }
 
         // Load active account
@@ -184,9 +192,52 @@ class AccountManager: ObservableObject {
     }
 
     private func saveAccounts() {
-        if let encoded = try? JSONEncoder().encode(accounts) {
+        let stripped = accounts.map { accountWithoutCredentials($0) }
+        if let encoded = try? JSONEncoder().encode(stripped) {
             UserDefaults.standard.set(encoded, forKey: accountsKey)
         }
+    }
+
+    // MARK: - Keychain Credential Management
+
+    /// Schreibt Credentials eines Accounts in die Keychain (account-ID-scoped)
+    private func saveCredentialsToKeychain(for account: AnalyticsAccount) {
+        let accountId = account.id.uuidString
+        if let token = account.credentials.token, !token.isEmpty {
+            try? KeychainService.saveCredential(token, type: .token, accountId: accountId)
+        }
+        if let apiKey = account.credentials.apiKey, !apiKey.isEmpty {
+            try? KeychainService.saveCredential(apiKey, type: .apiKey, accountId: accountId)
+        }
+    }
+
+    /// Erstellt eine Kopie des Accounts ohne Credentials (für UserDefaults-Persistenz)
+    private func accountWithoutCredentials(_ account: AnalyticsAccount) -> AnalyticsAccount {
+        AnalyticsAccount(
+            id: account.id,
+            name: account.name,
+            serverURL: account.serverURL,
+            providerType: account.providerType,
+            credentials: AccountCredentials(token: nil, apiKey: nil),
+            sites: account.sites,
+            createdAt: account.createdAt
+        )
+    }
+
+    /// Lädt Credentials aus der Keychain und gibt einen hydratisierten Account zurück
+    private func hydrateWithKeychainCredentials(_ account: AnalyticsAccount) -> AnalyticsAccount {
+        let accountId = account.id.uuidString
+        let token = KeychainService.loadCredential(type: .token, accountId: accountId)
+        let apiKey = KeychainService.loadCredential(type: .apiKey, accountId: accountId)
+        return AnalyticsAccount(
+            id: account.id,
+            name: account.name,
+            serverURL: account.serverURL,
+            providerType: account.providerType,
+            credentials: AccountCredentials(token: token, apiKey: apiKey),
+            sites: account.sites,
+            createdAt: account.createdAt
+        )
     }
 
     // MARK: - Apply Credentials
@@ -301,6 +352,27 @@ class AccountManager: ObservableObject {
     }
 
     // MARK: - Migration from old system
+
+    /// Migriert bestehende Credentials aus UserDefaults in die Keychain (SEC-04)
+    private func migrateCredentialsToKeychain() {
+        guard let data = UserDefaults.standard.data(forKey: accountsKey),
+              let existingAccounts = try? JSONDecoder().decode([AnalyticsAccount].self, from: data) else {
+            // Kein UserDefaults-Eintrag: Neuinstallation oder schon migriert
+            UserDefaults.standard.set(true, forKey: migrationV2Key)
+            return
+        }
+
+        for account in existingAccounts {
+            if let token = account.credentials.token, !token.isEmpty {
+                try? KeychainService.saveCredential(token, type: .token, accountId: account.id.uuidString)
+            }
+            if let apiKey = account.credentials.apiKey, !apiKey.isEmpty {
+                try? KeychainService.saveCredential(apiKey, type: .apiKey, accountId: account.id.uuidString)
+            }
+        }
+
+        UserDefaults.standard.set(true, forKey: migrationV2Key)
+    }
 
     func migrateFromLegacyCredentials() {
         // Check if we already have accounts
