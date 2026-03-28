@@ -525,7 +525,9 @@ actor UmamiAPI: AnalyticsProvider {
             throw APIError.notConfigured
         }
 
-        var components = URLComponents(url: baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: true)!
+        guard var components = URLComponents(url: baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: true) else {
+            throw APIError.invalidURL
+        }
         if !queryItems.isEmpty {
             components.queryItems = queryItems
         }

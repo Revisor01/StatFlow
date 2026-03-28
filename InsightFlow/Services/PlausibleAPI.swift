@@ -299,10 +299,15 @@ class PlausibleAPI: ObservableObject, AnalyticsProvider {
             throw PlausibleError.invalidResponse
         }
 
-        var components = URLComponents(url: baseURL.appendingPathComponent("api/v1/stats/realtime/visitors"), resolvingAgainstBaseURL: false)!
+        guard var components = URLComponents(url: baseURL.appendingPathComponent("api/v1/stats/realtime/visitors"), resolvingAgainstBaseURL: false) else {
+            throw PlausibleError.invalidResponse
+        }
         components.queryItems = [URLQueryItem(name: "site_id", value: websiteId)]
 
-        var request = URLRequest(url: components.url!)
+        guard let componentsURL = components.url else {
+            throw PlausibleError.invalidResponse
+        }
+        var request = URLRequest(url: componentsURL)
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 10
 
@@ -444,7 +449,9 @@ class PlausibleAPI: ObservableObject, AnalyticsProvider {
             throw PlausibleError.notAuthenticated
         }
 
-        let url = URL(string: "\(serverURL)/api/v1/sites")!
+        guard let url = URL(string: "\(serverURL)/api/v1/sites") else {
+            throw PlausibleError.invalidResponse
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -479,7 +486,9 @@ class PlausibleAPI: ObservableObject, AnalyticsProvider {
         }
 
         let encodedDomain = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        let url = URL(string: "\(serverURL)/api/v1/sites/\(encodedDomain)")!
+        guard let url = URL(string: "\(serverURL)/api/v1/sites/\(encodedDomain)") else {
+            throw PlausibleError.invalidResponse
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "DELETE"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -513,7 +522,9 @@ class PlausibleAPI: ObservableObject, AnalyticsProvider {
         }
 
         let encodedDomain = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
-        let url = URL(string: "\(serverURL)/api/v1/sites/\(encodedDomain)/shared-links")!
+        guard let url = URL(string: "\(serverURL)/api/v1/sites/\(encodedDomain)/shared-links") else {
+            throw PlausibleError.invalidResponse
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -554,7 +565,9 @@ class PlausibleAPI: ObservableObject, AnalyticsProvider {
             throw PlausibleError.notAuthenticated
         }
 
-        let url = URL(string: "\(serverURL)/\(endpoint)")!
+        guard let url = URL(string: "\(serverURL)/\(endpoint)") else {
+            throw PlausibleError.invalidResponse
+        }
         var request = URLRequest(url: url)
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 30
@@ -580,7 +593,9 @@ class PlausibleAPI: ObservableObject, AnalyticsProvider {
             throw PlausibleError.notAuthenticated
         }
 
-        let url = URL(string: "\(serverURL)/\(endpoint)")!
+        guard let url = URL(string: "\(serverURL)/\(endpoint)") else {
+            throw PlausibleError.invalidResponse
+        }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
