@@ -68,6 +68,31 @@ struct UsersResponse: Codable, Sendable {
     let count: Int
 }
 
+// MARK: - Team Website Models
+
+struct TeamWebsitesResponse: Codable, Sendable {
+    let data: [Website]
+    let count: Int
+    let page: Int
+    let pageSize: Int
+}
+
+// MARK: - User Detail Models
+
+struct UserWebsitesResponse: Codable, Sendable {
+    let data: [Website]
+    let count: Int
+    let page: Int
+    let pageSize: Int
+}
+
+struct UserTeamsResponse: Codable, Sendable {
+    let data: [Team]
+    let count: Int
+    let page: Int
+    let pageSize: Int
+}
+
 // MARK: - Journey Models
 
 struct JourneyPath: Codable, Identifiable, Sendable {
