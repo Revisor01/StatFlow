@@ -49,6 +49,8 @@ class WebsiteDetailViewModel: ObservableObject {
             group.addTask { await self.loadLanguages(dateRange: dateRange) }
             group.addTask { await self.loadScreens(dateRange: dateRange) }
             group.addTask { await self.loadEvents(dateRange: dateRange) }
+            group.addTask { await self.loadEntryPages(dateRange: dateRange) }
+            group.addTask { await self.loadExitPages(dateRange: dateRange) }
         }
     }
 
@@ -300,6 +302,32 @@ class WebsiteDetailViewModel: ObservableObject {
         } catch {
             #if DEBUG
             print("Failed to load events: \(error)")
+            #endif
+        }
+    }
+
+    private func loadEntryPages(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider,
+              let plausible = provider as? PlausibleAPI else { return }
+        do {
+            let items = try await plausible.getEntryPages(websiteId: websiteId, dateRange: dateRange)
+            entryPages = items.map { MetricItem(x: $0.name, y: $0.value) }
+        } catch {
+            #if DEBUG
+            print("Failed to load entry pages: \(error)")
+            #endif
+        }
+    }
+
+    private func loadExitPages(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider,
+              let plausible = provider as? PlausibleAPI else { return }
+        do {
+            let items = try await plausible.getExitPages(websiteId: websiteId, dateRange: dateRange)
+            exitPages = items.map { MetricItem(x: $0.name, y: $0.value) }
+        } catch {
+            #if DEBUG
+            print("Failed to load exit pages: \(error)")
             #endif
         }
     }

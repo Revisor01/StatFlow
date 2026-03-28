@@ -185,6 +185,8 @@
 "website.languages" = "Languages";
 "website.screens" = "Screens";
 "website.events" = "Events";
+"website.entryPages" = "Entry Pages";
+"website.exitPages" = "Exit Pages";
 "website.homepage" = "Homepage";
 "website.noTitle" = "(No Title)";
 

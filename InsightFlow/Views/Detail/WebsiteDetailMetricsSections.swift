@@ -4,8 +4,13 @@ import Charts
 struct WebsiteDetailMetricsSections: View {
     let viewModel: WebsiteDetailViewModel
 
+    private var isPlausible: Bool {
+        AnalyticsManager.shared.providerType == .plausible
+    }
+
     var body: some View {
         Group {
+            trafficFlowSection
             locationSection
             techSection
             if !viewModel.languages.isEmpty || !viewModel.screens.isEmpty {
@@ -13,6 +18,89 @@ struct WebsiteDetailMetricsSections: View {
             }
             if !viewModel.events.isEmpty {
                 eventsSection
+            }
+        }
+    }
+
+    // MARK: - Traffic Flow Section (Plausible only)
+
+    @ViewBuilder
+    var trafficFlowSection: some View {
+        if isPlausible && (!viewModel.entryPages.isEmpty || !viewModel.exitPages.isEmpty) {
+            if !viewModel.entryPages.isEmpty && !viewModel.exitPages.isEmpty {
+                HStack(alignment: .top, spacing: 16) {
+                    GlassCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            SectionHeader(title: String(localized: "website.entryPages"), icon: "arrow.down.right.circle.fill")
+
+                            ForEach(viewModel.entryPages.prefix(5)) { page in
+                                HStack {
+                                    Text(page.name)
+                                        .font(.caption)
+                                        .lineLimit(1)
+                                    Spacer()
+                                    Text(page.value.formatted())
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                            }
+                        }
+                    }
+
+                    GlassCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            SectionHeader(title: String(localized: "website.exitPages"), icon: "arrow.up.left.circle.fill")
+
+                            ForEach(viewModel.exitPages.prefix(5)) { page in
+                                HStack {
+                                    Text(page.name)
+                                        .font(.caption)
+                                        .lineLimit(1)
+                                    Spacer()
+                                    Text(page.value.formatted())
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if !viewModel.entryPages.isEmpty {
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        SectionHeader(title: String(localized: "website.entryPages"), icon: "arrow.down.right.circle.fill")
+
+                        ForEach(viewModel.entryPages.prefix(5)) { page in
+                            HStack {
+                                Text(page.name)
+                                    .font(.caption)
+                                    .lineLimit(1)
+                                Spacer()
+                                Text(page.value.formatted())
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                        }
+                    }
+                }
+            } else {
+                GlassCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        SectionHeader(title: String(localized: "website.exitPages"), icon: "arrow.up.left.circle.fill")
+
+                        ForEach(viewModel.exitPages.prefix(5)) { page in
+                            HStack {
+                                Text(page.name)
+                                    .font(.caption)
+                                    .lineLimit(1)
+                                Spacer()
+                                Text(page.value.formatted())
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                        }
+                    }
+                }
             }
         }
     }
