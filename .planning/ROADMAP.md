@@ -93,7 +93,7 @@ Plans:
 - [x] 05-01-PLAN.md — Test-Target anlegen, CacheService refactorn, KeychainService + DateRange Tests (TEST-01)
 - [x] 05-02-PLAN.md — Umami + Plausible API Response Parsing Tests (TEST-01)
 - [x] 05-03-PLAN.md — AccountManager + AnalyticsCacheService Tests (TEST-01)
-- [ ] 05-04-PLAN.md — Gap Closure: AccountManager Migration-Tests + Cache TTL-Expiry-Tests (TEST-01)
+- [x] 05-04-PLAN.md — Gap Closure: AccountManager Migration-Tests + Cache TTL-Expiry-Tests (TEST-01)
 
 ## Progress
 

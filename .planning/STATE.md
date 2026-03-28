@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Code Quality & Security Hardening
 status: verifying
-stopped_at: Completed 05-tests-03-PLAN.md
-last_updated: "2026-03-28T04:34:05.299Z"
+stopped_at: Completed 05-tests-04-PLAN.md
+last_updated: "2026-03-28T04:49:21.095Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
   completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 15
+  completed_plans: 15
   percent: 0
 ---
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 05-tests P01 | 25min | 2 tasks | 5 files |
 | Phase 05-tests P02 | 10min | 2 tasks | 2 files |
 | Phase 05-tests P03 | 13min | 2 tasks | 2 files |
+| Phase 05-tests P04 | 10min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 05-tests]: Inline JSON String-Literals als Fixtures statt separater Fixture-Dateien — einfacher zu lesen und wartbar
 - [Phase 05-tests]: @MainActor class mit async setUp/tearDown fuer Singleton-State-Cleanup in AccountManagerTests
 - [Phase 05-tests]: cacheDirectoryOverride mit UUID-tempDir pro Test fuer vollstaendige File-System-Isolation ohne App-Group-Entitlement
+- [Phase 05-tests]: addTeardownBlock statt tearDown-Erweiterung fuer Keychain-Cleanup — lokaler scope pro Test
+- [Phase 05-tests]: Manuelles JSON-Literal als Fixture fuer abgelaufenen Cache — kein CacheWrapper-Refactoring noetig
 
 ### Pending Todos
 
@@ -106,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-28T04:34:05.297Z
-Stopped at: Completed 05-tests-03-PLAN.md
+Last session: 2026-03-28T04:49:16.675Z
+Stopped at: Completed 05-tests-04-PLAN.md
 Resume file: None
