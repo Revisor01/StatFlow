@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.4
-milestone_name: Rename to StatFlow
+milestone: v2.0
+milestone_name: milestone
 status: planning
-stopped_at: Milestone v2.4 initialized
-last_updated: "2026-03-28T22:04:29.836Z"
+stopped_at: Completed 13-02-PLAN.md
+last_updated: "2026-03-28T23:50:00.109Z"
 last_activity: 2026-03-28
 progress:
-  total_phases: 1
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 10
+  completed_phases: 8
+  total_plans: 15
+  completed_plans: 16
 ---
 
 # Project State
@@ -35,6 +35,8 @@ Last activity: 2026-03-28
 
 - App-Name: StatFlow (ersetzt PrivacyFlow/InsightFlow)
 - Bundle ID Prefix: de.godsapp.statflow
+- [Phase 13-critical-bug-fixes]: syncWidgetData schreibt Widget-Daten ohne Timeline-Reload — reloadAllTimelines nur in updateWidgetCredentials nach abgeschlossenen async-Ops
+- [Phase 13-critical-bug-fixes]: Task-Handle-Pattern in WebsiteDetailViewModel: loadingTask als private var mit cancel/replace fuer ViewModel-async-Methoden
 
 ### Blockers/Concerns
 
@@ -42,6 +44,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Milestone v2.4 initialized
+Last session: 2026-03-28T23:49:45.944Z
+Stopped at: Completed 13-02-PLAN.md
 Resume file: None
