@@ -56,7 +56,10 @@ Plans:
   1. Alle dokumentierten Plausible CE Self-Hosted API-Endpunkte sind auditiert und fehlende implementiert
   2. Nutzer sehen in der Detailansicht alle Metriken, die die Plausible API bereitstellt
   3. Keine relevanten Plausible-Datenpunkte fehlen im Vergleich zur Plausible-Weboberfläche
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 06-01-PLAN.md — Sites-Liste, Goals-API und Filter-Infrastruktur
+- [ ] 06-02-PLAN.md — Fehlende Dimensionen und AnalyticsProvider-Methoden
 
 ### Phase 07: Push-Benachrichtigungen
 **Goal**: Push-Benachrichtigungen sind strukturiert gruppiert und skalieren auch bei vielen überwachten Websites
@@ -74,5 +77,5 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 04. Support & Branding | v2.2 | 1/1 | Complete    | 2026-03-28 |
 | 05. Umami API Coverage | v2.2 | 2/4 | Complete    | 2026-03-28 |
-| 06. Plausible API Coverage | v2.2 | 0/TBD | Not started | - |
+| 06. Plausible API Coverage | v2.2 | 0/2 | Not started | - |
 | 07. Push-Benachrichtigungen | v2.2 | 0/TBD | Not started | - |
