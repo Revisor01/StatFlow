@@ -349,7 +349,7 @@ struct WebsiteDetailView: View {
                 .buttonStyle(.plain)
             }
         } else {
-            HStack(spacing: 12) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 // Sessions / User Journey - Umami only
                 NavigationLink {
                     SessionsView(website: website)
@@ -372,6 +372,32 @@ struct WebsiteDetailView: View {
                         title: String(localized: "compare.title"),
                         subtitle: String(localized: "compare.type"),
                         color: .orange
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Events (Umami only)
+                NavigationLink {
+                    EventsView(website: website)
+                } label: {
+                    QuickActionCard(
+                        icon: "bolt.fill",
+                        title: String(localized: "events.quickAction"),
+                        subtitle: String(localized: "events.quickAction.subtitle"),
+                        color: .cyan
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Reports (Umami only)
+                NavigationLink {
+                    ReportsHubView(website: website)
+                } label: {
+                    QuickActionCard(
+                        icon: "chart.pie.fill",
+                        title: String(localized: "reports.quickAction"),
+                        subtitle: String(localized: "reports.quickAction.subtitle"),
+                        color: .indigo
                     )
                 }
                 .buttonStyle(.plain)
