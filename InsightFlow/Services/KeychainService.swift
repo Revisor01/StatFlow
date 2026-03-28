@@ -76,6 +76,66 @@ enum KeychainService: Sendable {
             delete(for: key)
         }
     }
+
+    // MARK: - Account-Scoped Credentials
+
+    enum CredentialType: String, CaseIterable {
+        case token = "token"
+        case apiKey = "apiKey"
+    }
+
+    static func saveCredential(_ value: String, type: CredentialType, accountId: String) throws {
+        let accountKey = "\(type.rawValue)_\(accountId)"
+        let data = value.data(using: .utf8)!
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: accountKey
+        ]
+        SecItemDelete(deleteQuery as CFDictionary)
+        let attributes: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: accountKey,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+        ]
+        let status = SecItemAdd(attributes as CFDictionary, nil)
+        guard status == errSecSuccess else {
+            throw KeychainError.saveFailed(status)
+        }
+    }
+
+    static func loadCredential(type: CredentialType, accountId: String) -> String? {
+        let accountKey = "\(type.rawValue)_\(accountId)"
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: accountKey,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let value = String(data: data, encoding: .utf8) else {
+            return nil
+        }
+        return value
+    }
+
+    static func deleteCredentials(for accountId: String) {
+        for type in CredentialType.allCases {
+            let accountKey = "\(type.rawValue)_\(accountId)"
+            let query: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: accountKey
+            ]
+            SecItemDelete(query as CFDictionary)
+        }
+    }
 }
 
 enum KeychainError: LocalizedError {
