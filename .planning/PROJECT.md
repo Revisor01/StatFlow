@@ -10,8 +10,13 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 ## Current State
 
-**Latest shipped:** v2.0 Code Quality & Security Hardening (completed 2026-03-28)
-**Current milestone:** v2.1 UX Polish & Features
+**Latest shipped:** v2.1 UX Polish & Features (completed 2026-03-28)
+**Next milestone:** Not yet defined
+
+### v2.1 Accomplishments
+- Account-Switcher als kompakter Provider-Icon Menu-Button in der Toolbar
+- Widget-Tap öffnet Website-Details (Deep Link Fix)
+- "Alle Accounts"-Ansicht mit kombinierter Website-Liste und Provider-Badges
 
 ### v2.0 Accomplishments
 - Credentials sicher in Keychain gespeichert (per Account-ID), Widget-Tokens AES-GCM-verschlüsselt
@@ -43,15 +48,15 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 - ✓ Widget-Code aufgeteilt (9 Dateien) — v2.0
 - ✓ Force Unwraps + Timing-Hacks eliminiert — v2.0
 - ✓ 58 Unit Tests für kritische Pfade — v2.0
+- ✓ Account-Switcher als Provider-Icon Menu-Button — v2.1
+- ✓ Widget Deep Link Fix — v2.1
+- ✓ Alle-Accounts-Ansicht mit Provider-Badges — v2.1
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Account-Switcher im Dashboard kompakter (Button statt großer Bereich)
-- [ ] "Abbrechen"-Button im Account-Hinzufügen-Modal entfernen (wenn von Switcher)
-- [ ] Widget-Tap öffnet Website-Details (Deep Link Fix)
-- [ ] "Alle Accounts"-Ansicht im Dashboard (kombinierte Stats)
+*No active requirements — start next milestone with `/gsd:new-milestone`*
 
 ### Out of Scope
 
@@ -103,4 +108,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — v2.1 milestone started*
+*Last updated: 2026-03-28 — v2.1 milestone archived*
