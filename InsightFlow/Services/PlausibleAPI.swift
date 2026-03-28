@@ -435,6 +435,32 @@ actor PlausibleAPI: AnalyticsProvider {
         return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:os_version", filters: filters)
     }
 
+    // MARK: - AnalyticsProvider Protocol Methods
+
+    func getEvents(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "event:name")
+    }
+
+    func getScreens(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:screen")
+    }
+
+    func getPageTitles(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        // Plausible CE does not track page titles (privacy-first design)
+        return []
+    }
+
+    func getLanguages(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        // Plausible CE does not track browser language (privacy-first design)
+        return []
+    }
+
+    // MARK: - Referrer URLs
+
+    func getReferrerURLs(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:referrer", filters: filters)
+    }
+
     // MARK: - Entry & Exit Pages
 
     func getEntryPages(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
