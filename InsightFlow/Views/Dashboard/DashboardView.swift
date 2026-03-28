@@ -10,7 +10,7 @@ struct DashboardView: View {
     @State private var selectedDateRange: DateRange = .today
     @State private var showingAddSite = false
     @State private var showingAddUmamiSite = false
-    @State private var showingAccountSwitcher = false
+    @State private var showingAddAccount = false
     @State private var isReordering = false
 
     var body: some View {
@@ -25,11 +25,6 @@ struct DashboardView: View {
                             // Offline-Banner
                             if viewModel.isOffline {
                                 offlineBanner
-                            }
-
-                            // Account Switcher (only show if multiple accounts)
-                            if accountManager.hasMultipleAccounts {
-                                accountSwitcherButton
                             }
 
                             if settingsManager.showDateRangePicker {
@@ -95,6 +90,13 @@ struct DashboardView: View {
                         .accessibilityLabel(String(localized: "dashboard.edit.button"))
                     }
 
+                    // Account-Switcher Menu (nur wenn mehrere Accounts)
+                    if accountManager.hasMultipleAccounts {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            accountSwitcherMenu
+                        }
+                    }
+
                     // Chart Style Toggle (nur wenn Graph sichtbar)
                     if settingsManager.showGraph {
                         ToolbarItem(placement: .navigationBarTrailing) {
@@ -150,6 +152,15 @@ struct DashboardView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showingAddAccount) {
+                NavigationStack {
+                    AddAccountView(onAccountAdded: {
+                        Task {
+                            await viewModel.loadData(dateRange: selectedDateRange)
+                        }
+                    })
+                }
+            }
         }
         .task {
             await viewModel.loadData(dateRange: selectedDateRange)
@@ -192,6 +203,47 @@ struct DashboardView: View {
     /// Use AccountManager as source of truth for provider type
     private var currentProviderIsPlausible: Bool {
         AccountManager.shared.activeAccount?.providerType == .plausible
+    }
+
+    private var activeAccountId: UUID {
+        accountManager.activeAccount?.id ?? UUID()
+    }
+
+    @ViewBuilder
+    private var accountSwitcherMenu: some View {
+        let activeId = activeAccountId
+        let accounts = accountManager.accounts
+        Menu {
+            Picker("Account", selection: Binding<UUID>(
+                get: { activeId },
+                set: { newId in
+                    if let account = accounts.first(where: { $0.id == newId }) {
+                        Task {
+                            await accountManager.setActiveAccount(account)
+                            await viewModel.loadData(dateRange: selectedDateRange)
+                        }
+                    }
+                }
+            )) {
+                ForEach(accounts) { account in
+                    Label(account.displayName, systemImage: account.icon)
+                        .tag(account.id)
+                }
+            }
+
+            Divider()
+
+            Button {
+                showingAddAccount = true
+            } label: {
+                Label("account.switcher.addAccount", systemImage: "plus.circle.fill")
+            }
+        } label: {
+            let iconName = accountManager.activeAccount?.icon ?? "server.rack"
+            let isUmami = accountManager.activeAccount?.providerType == .umami
+            Image(systemName: iconName)
+                .foregroundStyle(isUmami ? Color.orange : Color.blue)
+        }
     }
 
     private var offlineBanner: some View {
@@ -341,100 +393,6 @@ struct DashboardView: View {
         .listStyle(.insetGrouped)
     }
 
-    private var accountSwitcherButton: some View {
-        Button {
-            showingAccountSwitcher = true
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: accountManager.activeAccount?.icon ?? "server.rack")
-                    .font(.system(size: 16))
-                    .foregroundStyle(accountManager.activeAccount?.providerType == .umami ? .orange : .blue)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(accountManager.activeAccount?.displayName ?? "Account")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    Text(accountManager.activeAccount?.providerType.displayName ?? "")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.up.chevron.down")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-        .buttonStyle(.plain)
-        .sheet(isPresented: $showingAccountSwitcher) {
-            AccountSwitcherSheet(onAccountChanged: {
-                Task {
-                    await viewModel.loadData(dateRange: selectedDateRange)
-                }
-            })
-        }
-    }
-}
-
-// MARK: - Account Switcher Sheet
-
-struct AccountSwitcherSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @ObservedObject private var accountManager = AccountManager.shared
-    var onAccountChanged: (() -> Void)?
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section {
-                    ForEach(accountManager.accounts) { account in
-                        AccountRow(
-                            account: account,
-                            isActive: accountManager.activeAccount?.id == account.id,
-                            onSelect: {
-                                Task {
-                                    await accountManager.setActiveAccount(account)
-                                    onAccountChanged?()
-                                    dismiss()
-                                }
-                            }
-                        )
-                    }
-                    .onDelete { indexSet in
-                        for index in indexSet {
-                            accountManager.removeAccount(accountManager.accounts[index])
-                        }
-                    }
-                } header: {
-                    Text("account.switcher.accounts")
-                }
-
-                Section {
-                    NavigationLink {
-                        AddAccountView(onAccountAdded: {
-                            onAccountChanged?()
-                            dismiss()
-                        })
-                    } label: {
-                        Label("account.switcher.addAccount", systemImage: "plus.circle.fill")
-                            .foregroundStyle(.blue)
-                    }
-                }
-            }
-            .navigationTitle("account.switcher.title")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("button.done") { dismiss() }
-                }
-            }
-        }
-    }
 }
 
 struct AccountRow: View {
@@ -622,13 +580,6 @@ struct AddAccountView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("account.add.title")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("button.cancel") {
-                    dismiss()
-                }
-            }
-        }
     }
 
     private var isFormValid: Bool {
