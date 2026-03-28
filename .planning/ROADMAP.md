@@ -45,7 +45,7 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md — Response-Modelle fuer alle fehlenden Umami-API-Endpunkte
 - [ ] 05-02-PLAN.md — High-Priority Endpunkte: Stats, Sessions, Events, Me
-- [ ] 05-03-PLAN.md — Report-Endpunkte: CRUD + 7 spezialisierte Reports
+- [x] 05-03-PLAN.md — Report-Endpunkte: CRUD + 7 spezialisierte Reports
 - [ ] 05-04-PLAN.md — Teams, Users, Share, Admin Vervollstaendigung
 
 ### Phase 06: Plausible API Coverage
@@ -73,6 +73,6 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 04. Support & Branding | v2.2 | 1/1 | Complete    | 2026-03-28 |
-| 05. Umami API Coverage | v2.2 | 0/4 | In progress | - |
+| 05. Umami API Coverage | v2.2 | 2/4 | In progress | - |
 | 06. Plausible API Coverage | v2.2 | 0/TBD | Not started | - |
 | 07. Push-Benachrichtigungen | v2.2 | 0/TBD | Not started | - |
