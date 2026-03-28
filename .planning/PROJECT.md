@@ -42,9 +42,9 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Credentials sicher in Keychain statt UserDefaults speichern
-- [ ] Widget-Account-Tokens verschlüsseln (AES-GCM)
-- [ ] Token-Logging aus Widget entfernen
+- [x] Credentials sicher in Keychain statt UserDefaults speichern — Validated in Phase 1: Security Hardening
+- [x] Widget-Account-Tokens verschlüsseln (AES-GCM) — Validated in Phase 1: Security Hardening
+- [x] Token-Logging aus Widget entfernen — Validated in Phase 1: Security Hardening
 - [ ] Auth-System auf einen Manager konsolidieren
 - [ ] AnalyticsProvider-Protokoll in ViewModel nutzen
 - [ ] Force Unwraps durch safe unwrapping ersetzen
@@ -105,4 +105,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after milestone v2.0 initialization*
+*Last updated: 2026-03-28 after Phase 1 (Security Hardening) completion*
