@@ -28,7 +28,7 @@
   4. Account-Switching funktioniert weiterhin korrekt (alle Daten laden nach Switch)
 **Plans:** 1 plan
 Plans:
-- [ ] 01-01-PLAN.md — Account-Switcher zu Toolbar-Menu umbauen + Cancel-Button entfernen
+- [x] 01-01-PLAN.md — Account-Switcher zu Toolbar-Menu umbauen + Cancel-Button entfernen
 **UI hint**: yes
 
 ### Phase 2: Widget Deep Link Fix
