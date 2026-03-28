@@ -405,6 +405,7 @@
 "account.switcher.title" = "Accounts";
 "account.switcher.accounts" = "Your Accounts";
 "account.switcher.addAccount" = "Add Account";
+"account.switcher.all" = "All";
 "account.add.title" = "Add Account";
 "account.add.provider" = "Provider";
 "account.add.name" = "Name (optional)";

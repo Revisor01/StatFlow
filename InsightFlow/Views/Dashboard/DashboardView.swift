@@ -12,6 +12,8 @@ struct DashboardView: View {
     @State private var showingAddUmamiSite = false
     @State private var showingAddAccount = false
     @State private var isReordering = false
+    @State private var showAllAccounts = false
+    @State private var websiteAccountMap: [String: AnalyticsAccount] = [:]
 
     var body: some View {
         NavigationStack {
@@ -44,16 +46,28 @@ struct DashboardView: View {
                                             onShareLinkUpdated: { updatedWebsite in
                                                 viewModel.updateWebsite(updatedWebsite)
                                             },
-                                            onRemoveSite: {
+                                            onRemoveSite: showAllAccounts ? nil : {
                                                 Task {
                                                     await viewModel.removeSite(website.id)
                                                 }
                                             },
-                                            isUmamiProvider: !currentProviderIsPlausible,
-                                            isHourlyData: selectedDateRange.unit == "hour"
+                                            isUmamiProvider: showAllAccounts
+                                                ? websiteAccountMap[website.id]?.providerType == .umami
+                                                : !currentProviderIsPlausible,
+                                            isHourlyData: selectedDateRange.unit == "hour",
+                                            providerName: showAllAccounts
+                                                ? websiteAccountMap[website.id]?.providerType.displayName
+                                                : nil
                                         )
                                         .onTapGesture {
-                                            selectedWebsite = website
+                                            Task {
+                                                if showAllAccounts,
+                                                   let account = websiteAccountMap[website.id] {
+                                                    await accountManager.setActiveAccount(account)
+                                                    showAllAccounts = false
+                                                }
+                                                selectedWebsite = website
+                                            }
                                         }
                                     }
                                 }
@@ -163,7 +177,12 @@ struct DashboardView: View {
             }
         }
         .task {
-            await viewModel.loadData(dateRange: selectedDateRange)
+            if showAllAccounts {
+                let map = await viewModel.loadAllAccountsData(dateRange: selectedDateRange, accounts: accountManager.accounts)
+                websiteAccountMap = map
+            } else {
+                await viewModel.loadData(dateRange: selectedDateRange)
+            }
         }
         .onChange(of: selectedDateRange) { _, newValue in
             Task {
@@ -186,8 +205,11 @@ struct DashboardView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .accountDidChange)) { _ in
-            Task {
-                await viewModel.loadData(dateRange: selectedDateRange)
+            // Only reload when NOT in all-accounts mode (avoid disrupting combined view)
+            if !showAllAccounts {
+                Task {
+                    await viewModel.loadData(dateRange: selectedDateRange)
+                }
             }
         }
         .onChange(of: scenePhase) { _, newPhase in
@@ -211,38 +233,73 @@ struct DashboardView: View {
 
     @ViewBuilder
     private var accountSwitcherMenu: some View {
-        let activeId = activeAccountId
-        let accounts = accountManager.accounts
         Menu {
-            Picker("Account", selection: Binding<UUID>(
-                get: { activeId },
-                set: { newId in
-                    if let account = accounts.first(where: { $0.id == newId }) {
-                        Task {
-                            await accountManager.setActiveAccount(account)
-                            await viewModel.loadData(dateRange: selectedDateRange)
-                        }
-                    }
-                }
-            )) {
-                ForEach(accounts) { account in
-                    Label(account.displayName, systemImage: account.icon)
-                        .tag(account.id)
-                }
-            }
-
-            Divider()
-
-            Button {
-                showingAddAccount = true
-            } label: {
-                Label("account.switcher.addAccount", systemImage: "plus.circle.fill")
-            }
+            accountSwitcherMenuItems
         } label: {
+            accountSwitcherLabel
+        }
+    }
+
+    @ViewBuilder
+    private var accountSwitcherLabel: some View {
+        if showAllAccounts {
+            Image(systemName: "rectangle.stack")
+                .foregroundStyle(Color.purple)
+        } else {
             let iconName = accountManager.activeAccount?.icon ?? "server.rack"
             let isUmami = accountManager.activeAccount?.providerType == .umami
             Image(systemName: iconName)
                 .foregroundStyle(isUmami ? Color.orange : Color.blue)
+        }
+    }
+
+    @ViewBuilder
+    private var accountSwitcherMenuItems: some View {
+        // "Alle" als erste Option
+        Button {
+            showAllAccounts = true
+            Task {
+                let map = await viewModel.loadAllAccountsData(
+                    dateRange: selectedDateRange,
+                    accounts: accountManager.accounts
+                )
+                websiteAccountMap = map
+            }
+        } label: {
+            HStack {
+                Label(String(localized: "account.switcher.all"), systemImage: "rectangle.stack")
+                if showAllAccounts {
+                    Image(systemName: "checkmark")
+                }
+            }
+        }
+
+        Divider()
+
+        // Einzelne Accounts
+        ForEach(accountManager.accounts) { account in
+            Button {
+                showAllAccounts = false
+                Task {
+                    await accountManager.setActiveAccount(account)
+                    await viewModel.loadData(dateRange: selectedDateRange)
+                }
+            } label: {
+                HStack {
+                    Label(account.displayName, systemImage: account.icon)
+                    if !showAllAccounts && accountManager.activeAccount?.id == account.id {
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+        }
+
+        Divider()
+
+        Button {
+            showingAddAccount = true
+        } label: {
+            Label("account.switcher.addAccount", systemImage: "plus.circle.fill")
         }
     }
 
@@ -749,6 +806,68 @@ class DashboardViewModel: ObservableObject {
 
     private var currentAccountId: String {
         AccountManager.shared.activeAccount?.id.uuidString ?? "default"
+    }
+
+    /// Loads websites from all accounts into a flat list, returns a map of website-id -> account
+    func loadAllAccountsData(dateRange: DateRange, accounts: [AnalyticsAccount]) async -> [String: AnalyticsAccount] {
+        isLoading = true
+        currentDateRange = dateRange
+        isOffline = false
+
+        let originalAccount = AccountManager.shared.activeAccount
+        var allWebsites: [Website] = []
+        var accountMap: [String: AnalyticsAccount] = [:]
+
+        for account in accounts {
+            do {
+                // Apply this account's credentials temporarily
+                await AccountManager.shared.setActiveAccount(account)
+
+                var accountWebsites: [Website] = []
+                if account.providerType == .plausible {
+                    let analyticsWebsites = try await plausibleAPI.getAnalyticsWebsites()
+                    accountWebsites = analyticsWebsites.map { site in
+                        Website(id: site.id, name: site.name, domain: site.domain, shareId: nil, teamId: nil, resetAt: nil, createdAt: nil)
+                    }
+                } else {
+                    accountWebsites = try await umamiAPI.getWebsites()
+                }
+
+                for website in accountWebsites {
+                    accountMap[website.id] = account
+                }
+                allWebsites.append(contentsOf: accountWebsites)
+            } catch {
+                #if DEBUG
+                print("loadAllAccountsData: failed for account \(account.displayName): \(error)")
+                #endif
+                // Continue loading other accounts
+            }
+        }
+
+        websites = allWebsites
+
+        // Load stats for all websites concurrently (credentials are applied per-account above,
+        // but stats load uses the currently configured API; we reload per-account)
+        for account in accounts {
+            let accountWebsites = allWebsites.filter { accountMap[$0.id]?.id == account.id }
+            guard !accountWebsites.isEmpty else { continue }
+
+            await AccountManager.shared.setActiveAccount(account)
+            await withTaskGroup(of: Void.self) { group in
+                for website in accountWebsites {
+                    group.addTask { await self.loadWebsiteData(website, dateRange: dateRange) }
+                }
+            }
+        }
+
+        // Restore original active account
+        if let original = originalAccount {
+            await AccountManager.shared.setActiveAccount(original)
+        }
+
+        isLoading = false
+        return accountMap
     }
 
     func loadData(dateRange: DateRange) async {

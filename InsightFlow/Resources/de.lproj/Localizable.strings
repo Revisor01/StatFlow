@@ -406,6 +406,7 @@
 "account.switcher.title" = "Accounts";
 "account.switcher.accounts" = "Deine Accounts";
 "account.switcher.addAccount" = "Account hinzufügen";
+"account.switcher.all" = "Alle";
 "account.add.title" = "Account hinzufügen";
 "account.add.provider" = "Anbieter";
 "account.add.name" = "Name (optional)";
