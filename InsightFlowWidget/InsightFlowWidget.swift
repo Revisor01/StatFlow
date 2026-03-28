@@ -66,19 +66,64 @@ struct WidgetAccount: Codable, Identifiable, Hashable {
 
 struct WidgetAccountsStorage {
     private static let appGroupID = "group.de.godsapp.PrivacyFlow"
-    private static let fileName = "widget_accounts.json"
+    private static let fileName = "widget_accounts.encrypted"
+    private static let legacyFileName = "widget_accounts.json"
+    private static let keyFileName = "widget_credentials.key"
+
+    private static var containerURL: URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID)
+    }
+
+    private static func loadEncryptionKey() -> SymmetricKey? {
+        guard let url = containerURL?.appendingPathComponent(keyFileName),
+              FileManager.default.fileExists(atPath: url.path),
+              let keyData = try? Data(contentsOf: url),
+              keyData.count == 32 else {
+            return nil
+        }
+        return SymmetricKey(data: keyData)
+    }
 
     static func loadAccounts() -> [WidgetAccount] {
-        guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) else {
+        guard let containerURL = containerURL else {
             widgetLog("loadAccounts: no container URL")
             return []
         }
-        let fileURL = containerURL.appendingPathComponent(fileName)
-        guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            widgetLog("loadAccounts: file does not exist, trying legacy")
-            // Fall back to legacy single-account credentials
+
+        // Versuche verschluesselte Datei zuerst
+        let encryptedURL = containerURL.appendingPathComponent(fileName)
+        if FileManager.default.fileExists(atPath: encryptedURL.path) {
+            do {
+                guard let key = loadEncryptionKey() else {
+                    widgetLog("loadAccounts: no encryption key, trying legacy")
+                    return loadLegacyAccounts(containerURL: containerURL)
+                }
+                let encryptedData = try Data(contentsOf: encryptedURL)
+                let sealedBox = try AES.GCM.SealedBox(combined: encryptedData)
+                let jsonData = try AES.GCM.open(sealedBox, using: key)
+                let accounts = try JSONDecoder().decode([WidgetAccount].self, from: jsonData)
+                widgetLog("loadAccounts: loaded \(accounts.count) accounts (encrypted)")
+                for acc in accounts {
+                    widgetLog("  - \(acc.name): provider=\(acc.providerType), sites=\(acc.sites ?? [])")
+                }
+                return accounts
+            } catch {
+                widgetLog("loadAccounts: decrypt error: \(error), trying legacy")
+                return loadLegacyAccounts(containerURL: containerURL)
+            }
+        }
+
+        // Fallback auf Legacy-Plaintext
+        return loadLegacyAccounts(containerURL: containerURL)
+    }
+
+    /// Legacy-Plaintext laden (fuer Uebergangszeit nach Update)
+    private static func loadLegacyAccounts(containerURL: URL) -> [WidgetAccount] {
+        let legacyURL = containerURL.appendingPathComponent(legacyFileName)
+        guard FileManager.default.fileExists(atPath: legacyURL.path) else {
+            widgetLog("loadAccounts: no legacy file, trying legacy credentials")
             if let legacyCreds = WidgetCredentials.load() {
-                widgetLog("loadAccounts: using legacy creds, provider=\(legacyCreds.providerType), sites=\(legacyCreds.sites ?? [])")
+                widgetLog("loadAccounts: using legacy creds, provider=\(legacyCreds.providerType)")
                 return [WidgetAccount(
                     id: "legacy",
                     name: "",
@@ -91,18 +136,16 @@ struct WidgetAccountsStorage {
             return []
         }
         do {
-            let data = try Data(contentsOf: fileURL)
+            let data = try Data(contentsOf: legacyURL)
             let accounts = try JSONDecoder().decode([WidgetAccount].self, from: data)
-            widgetLog("loadAccounts: loaded \(accounts.count) accounts")
+            widgetLog("loadAccounts: loaded \(accounts.count) accounts (legacy plaintext)")
             for acc in accounts {
-                widgetLog("  - \(acc.name): provider=\(acc.providerType), sites=\(acc.sites ?? []), token=\(acc.token.prefix(10))...")
+                widgetLog("  - \(acc.name): provider=\(acc.providerType), sites=\(acc.sites ?? [])")
             }
             return accounts
         } catch {
-            widgetLog("loadAccounts: decode error: \(error)")
-            // Try legacy on decode error
+            widgetLog("loadAccounts: legacy decode error: \(error)")
             if let legacyCreds = WidgetCredentials.load() {
-                widgetLog("loadAccounts: fallback to legacy after error")
                 return [WidgetAccount(
                     id: "legacy",
                     name: "",
@@ -113,19 +156,6 @@ struct WidgetAccountsStorage {
                 )]
             }
             return []
-        }
-    }
-
-    static func saveAccounts(_ accounts: [WidgetAccount]) {
-        guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) else {
-            return
-        }
-        let fileURL = containerURL.appendingPathComponent(fileName)
-        do {
-            let data = try JSONEncoder().encode(accounts)
-            try data.write(to: fileURL)
-        } catch {
-            widgetLog("Failed to save widget accounts: \(error)")
         }
     }
 }
