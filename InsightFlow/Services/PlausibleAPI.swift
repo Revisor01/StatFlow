@@ -100,6 +100,12 @@ actor PlausibleAPI: AnalyticsProvider {
 
     // MARK: - Site Management
 
+    func getSitesList() async throws -> [PlausibleSite] {
+        let data = try await request(endpoint: "api/v1/sites")
+        let response = try decoder.decode(PlausibleSitesResponse.self, from: data)
+        return response.sites
+    }
+
     func addSite(domain: String) async throws {
         // Normalize the domain (remove http/https, trailing slashes, whitespace)
         let normalizedDomain = normalizeDomain(domain)
@@ -421,13 +427,8 @@ actor PlausibleAPI: AnalyticsProvider {
         return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:os")
     }
 
-    private func getBreakdown(websiteId: String, dateRange: DateRange, dimension: String) async throws -> [AnalyticsMetricItem] {
-        let body: [String: Any] = [
-            "site_id": websiteId,
-            "metrics": ["visitors"],
-            "date_range": plausibleDateRange(for: dateRange),
-            "dimensions": [dimension]
-        ]
+    private func getBreakdown(websiteId: String, dateRange: DateRange, dimension: String, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
+        let body = buildQueryBody(siteId: websiteId, metrics: ["visitors"], dateRange: dateRange, dimensions: [dimension], filters: filters)
 
         let data = try await postRequest(endpoint: "api/v2/query", body: body)
         let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
@@ -546,12 +547,111 @@ actor PlausibleAPI: AnalyticsProvider {
         return try decoder.decode(PlausibleSharedLink.self, from: data)
     }
 
+    // MARK: - Goals
+
+    func getGoals(domain: String) async throws -> [PlausibleGoal] {
+        let encodedDomain = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
+        let data = try await request(endpoint: "api/v1/sites/\(encodedDomain)/goals")
+        let response = try decoder.decode(PlausibleGoalsResponse.self, from: data)
+        return response.goals
+    }
+
+    func createGoal(domain: String, goalType: PlausibleGoalType, value: String) async throws -> PlausibleGoal {
+        guard let apiKey = apiKey else {
+            throw PlausibleError.notAuthenticated
+        }
+
+        let encodedDomain = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
+        guard let url = URL(string: "\(serverURL)/api/v1/sites/\(encodedDomain)/goals") else {
+            throw PlausibleError.invalidResponse
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30
+
+        var body: [String: Any] = ["goal_type": goalType.rawValue]
+        switch goalType {
+        case .event:
+            body["event_name"] = value
+        case .page:
+            body["page_path"] = value
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw PlausibleError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
+            if httpResponse.statusCode == 401 {
+                throw PlausibleError.unauthorized
+            }
+            throw PlausibleError.serverError(httpResponse.statusCode)
+        }
+
+        return try decoder.decode(PlausibleGoal.self, from: data)
+    }
+
+    func deleteGoal(domain: String, goalId: Int) async throws {
+        guard let apiKey = apiKey else {
+            throw PlausibleError.notAuthenticated
+        }
+
+        let encodedDomain = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
+        guard let url = URL(string: "\(serverURL)/api/v1/sites/\(encodedDomain)/goals/\(goalId)") else {
+            throw PlausibleError.invalidResponse
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw PlausibleError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 204 else {
+            if httpResponse.statusCode == 401 {
+                throw PlausibleError.unauthorized
+            }
+            throw PlausibleError.serverError(httpResponse.statusCode)
+        }
+    }
+
     // MARK: - Tracking Code
 
     nonisolated func getTrackingCode(domain: String) -> String {
         """
         <script defer data-domain="\(domain)" src="\(serverURL)/js/script.js"></script>
         """
+    }
+
+    // MARK: - Query Builder
+
+    /// Builds v2 query body with optional filters
+    private func buildQueryBody(
+        siteId: String,
+        metrics: [String],
+        dateRange: DateRange,
+        dimensions: [String] = [],
+        filters: [PlausibleQueryFilter] = [],
+        limit: Int? = nil
+    ) -> [String: Any] {
+        var body: [String: Any] = [
+            "site_id": siteId,
+            "metrics": metrics,
+            "date_range": plausibleDateRange(for: dateRange)
+        ]
+        if !dimensions.isEmpty { body["dimensions"] = dimensions }
+        if !filters.isEmpty { body["filters"] = filters.map { $0.toQueryParam() } }
+        if let limit = limit { body["limit"] = limit }
+        return body
     }
 
     // MARK: - Network
