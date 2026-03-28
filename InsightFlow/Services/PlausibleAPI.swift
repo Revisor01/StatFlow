@@ -3,8 +3,7 @@ import WidgetKit
 
 // MARK: - Plausible API
 
-@MainActor
-class PlausibleAPI: ObservableObject, AnalyticsProvider {
+actor PlausibleAPI: AnalyticsProvider {
     static let shared = PlausibleAPI()
 
     nonisolated let providerType: AnalyticsProviderType = .plausible
@@ -13,7 +12,7 @@ class PlausibleAPI: ObservableObject, AnalyticsProvider {
         KeychainService.load(for: .serverURL) ?? "https://plausible.io"
     }
 
-    var apiKey: String? {
+    nonisolated var apiKey: String? {
         KeychainService.load(for: .apiKey)
     }
 
@@ -96,10 +95,7 @@ class PlausibleAPI: ObservableObject, AnalyticsProvider {
 
     /// Reconfigure from Keychain - called when switching accounts
     func reconfigureFromKeychain() {
-        // PlausibleAPI reads directly from Keychain via computed properties
-        // Force PlausibleSitesManager to notify its observers
-        PlausibleSitesManager.shared.objectWillChange.send()
-        objectWillChange.send()
+        // PlausibleAPI reads from Keychain via nonisolated computed properties — no actor state to update
     }
 
     // MARK: - Site Management
