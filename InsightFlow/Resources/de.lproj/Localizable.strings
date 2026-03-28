@@ -507,3 +507,50 @@
 "filter.browser" = "Browser";
 "filter.select" = "Filter auswählen";
 "filter.clear" = "Zurücksetzen";
+
+// MARK: - Setup Guide
+"setupGuide.title" = "Analytics einrichten";
+"setupGuide.settings.link" = "Analytics einrichten";
+"setupGuide.intro" = "Hier erfährst du Schritt für Schritt, wie du Umami oder Plausible Tracking auf deiner Website einrichtest, Goals definierst und prüfst ob Daten ankommen.";
+
+"setupGuide.umami.title" = "Umami Tracking einrichten";
+"setupGuide.umami.step1.title" = "Website in Umami anlegen";
+"setupGuide.umami.step1.desc" = "Melde dich in deiner Umami-Instanz an. Gehe zu Einstellungen → Websites → Website hinzufügen. Trage Name und Domain ein.";
+"setupGuide.umami.step2.title" = "Tracking-Script kopieren";
+"setupGuide.umami.step2.desc" = "Klicke nach dem Anlegen auf den Tracking-Code-Button. Du siehst ein <script>-Tag mit deiner Website-ID.";
+"setupGuide.umami.step3.title" = "Script in deine Website einfügen";
+"setupGuide.umami.step3.desc" = "Füge das Script vor dem schließenden </head>-Tag jeder Seite ein. WordPress: Plugin 'Insert Headers and Footers'. Next.js: in _document.tsx oder app/layout.tsx.";
+"setupGuide.umami.step4.title" = "Website besuchen";
+"setupGuide.umami.step4.desc" = "Öffne deine Website im Browser. Innerhalb einer Minute sollte Umami den ersten Seitenaufruf anzeigen.";
+
+"setupGuide.plausible.title" = "Plausible Tracking einrichten";
+"setupGuide.plausible.step1.title" = "Website in Plausible anlegen";
+"setupGuide.plausible.step1.desc" = "Gehe in deine Plausible-Instanz und klicke auf '+ Website hinzufügen'. Trage deine Domain ein (ohne https://).";
+"setupGuide.plausible.step2.title" = "Snippet kopieren";
+"setupGuide.plausible.step2.desc" = "Plausible zeigt dir ein einzeiliges Script-Snippet. Kopiere es.";
+"setupGuide.plausible.step3.title" = "Script einfügen";
+"setupGuide.plausible.step3.desc" = "Einfügen vor </head>. WordPress: 'Insert Headers and Footers'. Hugo/Jekyll: im Base-Layout. Webflow: Settings → Custom Code → Head.";
+"setupGuide.plausible.step4.title" = "In Plausible prüfen";
+"setupGuide.plausible.step4.desc" = "Klicke auf 'Datenerfassung starten'. Plausible zeigt ein grünes Häkchen sobald Traffic erkannt wird.";
+
+"setupGuide.goals.title" = "Goals definieren";
+"setupGuide.goals.umami.subtitle" = "Umami Goals";
+"setupGuide.goals.umami.step1" = "Gehe zu Einstellungen → Websites → deine Website → Goals.";
+"setupGuide.goals.umami.step2" = "Klicke 'Goal hinzufügen'. Wähle Typ: URL (für Seitenbesuche) oder Event (für Custom-Events).";
+"setupGuide.goals.umami.step3" = "URL-Goal: Gib den Pfad ein, z.B. /danke oder /checkout/success.";
+"setupGuide.goals.umami.step4" = "Event-Goal: Trage den Event-Namen ein, den dein Code sendet (z.B. 'signup', 'purchase').";
+"setupGuide.goals.plausible.subtitle" = "Plausible Goals";
+"setupGuide.goals.plausible.step1" = "Gehe in deiner Website-Übersicht zu Einstellungen → Goals → + Goal hinzufügen.";
+"setupGuide.goals.plausible.step2" = "Wähle Pageview (URL-Pfad) oder Custom Event.";
+"setupGuide.goals.plausible.step3" = "Pageview-Beispiel: /danke — wird ausgelöst wenn jemand diese Seite besucht.";
+"setupGuide.goals.plausible.step4" = "Custom Event: Binde das Plausible Events-Script ein und sende Events per JavaScript.";
+
+"setupGuide.verify.title" = "Datenfluss prüfen";
+"setupGuide.verify.step1.title" = "App aktualisieren";
+"setupGuide.verify.step1.desc" = "Öffne diese App und ziehe auf einer Website nach unten zum Aktualisieren.";
+"setupGuide.verify.step2.title" = "Seitenaufrufe prüfen";
+"setupGuide.verify.step2.desc" = "Besuche deine getrackte Website im Browser. Die Seitenaufruf-Zahl in der App sollte sich erhöhen.";
+"setupGuide.verify.step3.title" = "Goals prüfen";
+"setupGuide.verify.step3.desc" = "Nach einer Conversion bis zu 10 Minuten warten. Goals erscheinen in der Website-Detailansicht im Goals-Bereich.";
+"setupGuide.verify.step4.title" = "Keine Daten?";
+"setupGuide.verify.step4.desc" = "Prüfe ob das Script lädt: Browser DevTools → Netzwerk-Tab, nach script.js suchen. Website-ID oder Domain muss exakt übereinstimmen.";

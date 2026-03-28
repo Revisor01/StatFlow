@@ -506,3 +506,50 @@
 "filter.browser" = "Browser";
 "filter.select" = "Select Filter";
 "filter.clear" = "Clear";
+
+// MARK: - Setup Guide
+"setupGuide.title" = "Analytics Setup";
+"setupGuide.settings.link" = "Analytics Setup Guide";
+"setupGuide.intro" = "Follow these step-by-step instructions to set up Umami or Plausible tracking on your website, define goals, and verify that data is flowing.";
+
+"setupGuide.umami.title" = "Set Up Umami Tracking";
+"setupGuide.umami.step1.title" = "Add website in Umami";
+"setupGuide.umami.step1.desc" = "Log in to your Umami instance. Go to Settings → Websites → Add website. Enter name and domain.";
+"setupGuide.umami.step2.title" = "Copy the tracking script";
+"setupGuide.umami.step2.desc" = "After adding the website, click the tracking code button. You'll see a <script> tag with your website ID.";
+"setupGuide.umami.step3.title" = "Add script to your website";
+"setupGuide.umami.step3.desc" = "Paste before the closing </head> tag on every page. WordPress: use the \"Insert Headers and Footers\" plugin. Next.js: add to _document.tsx or app/layout.tsx.";
+"setupGuide.umami.step4.title" = "Visit your website";
+"setupGuide.umami.step4.desc" = "Open your website in a browser. Within a minute, Umami should show your first pageview.";
+
+"setupGuide.plausible.title" = "Set Up Plausible Tracking";
+"setupGuide.plausible.step1.title" = "Add website in Plausible";
+"setupGuide.plausible.step1.desc" = "Go to your Plausible instance and click \"+ Add website\". Enter your domain (without https://).";
+"setupGuide.plausible.step2.title" = "Copy the snippet";
+"setupGuide.plausible.step2.desc" = "Plausible shows you a one-line script snippet. Copy it.";
+"setupGuide.plausible.step3.title" = "Add script to your website";
+"setupGuide.plausible.step3.desc" = "Paste before </head>. WordPress: \"Insert Headers and Footers\". Hugo/Jekyll: base layout. Webflow: Settings → Custom Code → Head.";
+"setupGuide.plausible.step4.title" = "Verify in Plausible";
+"setupGuide.plausible.step4.desc" = "Click \"Start collecting data\". Plausible shows a green checkmark once traffic is detected.";
+
+"setupGuide.goals.title" = "Define Goals";
+"setupGuide.goals.umami.subtitle" = "Umami Goals";
+"setupGuide.goals.umami.step1" = "Go to Settings → Websites → your website → Goals.";
+"setupGuide.goals.umami.step2" = "Click \"Add goal\". Choose type: URL (for page visits) or Event (for custom events).";
+"setupGuide.goals.umami.step3" = "URL goal: enter the path, e.g. /thank-you or /checkout/success.";
+"setupGuide.goals.umami.step4" = "Event goal: enter the event name you send from your code (e.g. \"signup\", \"purchase\").";
+"setupGuide.goals.plausible.subtitle" = "Plausible Goals";
+"setupGuide.goals.plausible.step1" = "In your website overview, go to Settings → Goals → + Add goal.";
+"setupGuide.goals.plausible.step2" = "Choose Pageview (URL path) or Custom Event.";
+"setupGuide.goals.plausible.step3" = "Pageview example: /thank-you — fires when someone visits that page.";
+"setupGuide.goals.plausible.step4" = "Custom Event: add the Plausible events script and trigger events from JavaScript.";
+
+"setupGuide.verify.title" = "Verify Data Flow";
+"setupGuide.verify.step1.title" = "Refresh the app";
+"setupGuide.verify.step1.desc" = "Open this app and pull to refresh on any website.";
+"setupGuide.verify.step2.title" = "Check pageview counts";
+"setupGuide.verify.step2.desc" = "Visit your tracked website in a browser. The pageview count in the app should increase.";
+"setupGuide.verify.step3.title" = "Check goals";
+"setupGuide.verify.step3.desc" = "After a conversion, wait up to 10 minutes. Goals appear in the website detail view under the Goals section.";
+"setupGuide.verify.step4.title" = "No data showing?";
+"setupGuide.verify.step4.desc" = "Check that the script is loading: browser DevTools → Network tab, look for script.js. Website ID or domain must match exactly.";

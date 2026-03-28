@@ -299,6 +299,18 @@ struct SettingsView: View {
                 }
             }
 
+            NavigationLink {
+                SetupGuideView()
+            } label: {
+                HStack {
+                    Label(String(localized: "setupGuide.settings.link"), systemImage: "doc.text.magnifyingglass")
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
             // Umami Link
             Link(destination: URL(string: "https://umami.is")!) {
                 HStack {
