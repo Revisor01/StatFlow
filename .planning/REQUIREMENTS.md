@@ -9,8 +9,8 @@ Requirements für Support & API Coverage. Aus User-Feedback nach v2.1.
 
 ### Support / Monetarisierung
 
-- [ ] **SUP-01**: "Buy me a Coffee"-ähnliche Support-Option — einheitliches Design über ValetudiOS und PrivacyFlow
-- [ ] **SUP-02**: Einheitlicher Claim/Branding ("Mit Liebe in Hennstedt gemacht" + versteckter Segens-Bezug als Pastor-Easter-Egg)
+- [x] **SUP-01**: "Buy me a Coffee"-ähnliche Support-Option — einheitliches Design über ValetudiOS und PrivacyFlow
+- [x] **SUP-02**: Einheitlicher Claim/Branding ("Mit Liebe in Hennstedt gemacht" + versteckter Segens-Bezug als Pastor-Easter-Egg)
 
 ### API Coverage
 
@@ -33,8 +33,8 @@ Requirements für Support & API Coverage. Aus User-Feedback nach v2.1.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SUP-01 | Phase 04 | Pending |
-| SUP-02 | Phase 04 | Pending |
+| SUP-01 | Phase 04 | Complete |
+| SUP-02 | Phase 04 | Complete |
 | API-01 | Phase 05 | Pending |
 | API-02 | Phase 06 | Pending |
 | NOTIF-01 | Phase 07 | Pending |

@@ -2,16 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Support & API Coverage
-status: roadmap_created
-stopped_at: null
-last_updated: "2026-03-28T18:00:00.000Z"
+status: verifying
+stopped_at: Completed 04-01-PLAN.md (Support-Redesign & Branding)
+last_updated: "2026-03-28T18:07:13.407Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
 ---
 
 # Project State
@@ -21,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** v2.2 Support & API Coverage — Roadmap erstellt, Phase 04 als nächstes planen
+**Current focus:** Phase 04 — support-branding
 
 ## Current Position
 
-Phase: Not started (Phase 04 bereit zur Planung)
-Plan: —
-Status: Roadmap erstellt
-Last activity: 2026-03-28 — Roadmap v2.2 erstellt (4 Phasen: 04-07)
+Phase: 04 (support-branding) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
+Last activity: 2026-03-28
 
 ## Performance Metrics
 
@@ -48,6 +47,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 01-dashboard-ux-polish]: @ViewBuilder computed property fuer komplexe Menu-Bodies (Compiler Type-Check-Timeout vermeiden)
 - [Phase 03-alle-accounts-ansicht]: Manual Buttons (not Picker) in account switcher Menu for heterogeneous 'Alle' + account options
 - [Phase 03-alle-accounts-ansicht]: websiteAccountMap pattern for website-to-account lookup in flat All-mode view
+- [Phase 04-support-branding]: Product.emoji vollstaendig durch symbolName ersetzt — kein deprecated-Pfad, sauberer Schnitt
+- [Phase 04-support-branding]: tierColor als eigene Product-Extension — View bleibt schlank, ValetudiOS kann direkt nutzen
 
 ### Pending Todos
 
@@ -59,7 +60,7 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Roadmap v2.2 erstellt
+Last session: 2026-03-28T18:07:13.405Z
+Stopped at: Completed 04-01-PLAN.md (Support-Redesign & Branding)
 Resume file: None
 Next action: `/gsd:plan-phase 04`
