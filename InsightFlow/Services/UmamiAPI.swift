@@ -199,6 +199,50 @@ actor UmamiAPI: AnalyticsProvider {
         return metrics.map { AnalyticsMetricItem(name: $0.name, value: $0.value) }
     }
 
+    func getRegions(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        let items = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .region)
+        return items.map { AnalyticsMetricItem(name: $0.x, value: $0.y) }
+    }
+
+    func getCities(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        let items = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .city)
+        return items.map { AnalyticsMetricItem(name: $0.x, value: $0.y) }
+    }
+
+    func getPageTitles(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        let items = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .title, limit: 50)
+        return items.map { AnalyticsMetricItem(name: $0.x, value: $0.y) }
+    }
+
+    func getLanguages(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        let items = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .language)
+        return items.map { AnalyticsMetricItem(name: $0.x, value: $0.y) }
+    }
+
+    func getScreens(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        let items = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .screen)
+        return items.map { AnalyticsMetricItem(name: $0.x, value: $0.y) }
+    }
+
+    func getEvents(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] {
+        let items = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .event)
+        return items.map { AnalyticsMetricItem(name: $0.x, value: $0.y) }
+    }
+
+    func getRealtimeTopPages(websiteId: String, limit: Int = 10) async throws -> [AnalyticsMetricItem] {
+        let items = try await getMetrics(websiteId: websiteId, dateRange: .today, type: .path, limit: limit)
+        return items.map { AnalyticsMetricItem(name: $0.x, value: $0.y) }
+    }
+
+    func getRealtimeCountries(websiteId: String, limit: Int = 10) async throws -> [AnalyticsMetricItem] {
+        let items = try await getMetrics(websiteId: websiteId, dateRange: .today, type: .country, limit: limit)
+        return items.map { AnalyticsMetricItem(name: $0.x, value: $0.y) }
+    }
+
+    func getRealtimePageviews(websiteId: String) async throws -> Int {
+        return try await getActiveVisitors(websiteId: websiteId)
+    }
+
     // MARK: - Authentication
 
     nonisolated func login(baseURL: URL, username: String, password: String) async throws -> String {

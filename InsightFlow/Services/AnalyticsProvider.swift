@@ -154,6 +154,24 @@ protocol AnalyticsProvider: Sendable {
     func getDevices(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
     func getBrowsers(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
     func getOS(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
+    func getRegions(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
+    func getCities(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
+    func getPageTitles(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
+    func getLanguages(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
+    func getScreens(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
+    func getEvents(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
+    func getRealtimeTopPages(websiteId: String, limit: Int) async throws -> [AnalyticsMetricItem]
+    func getRealtimeCountries(websiteId: String, limit: Int) async throws -> [AnalyticsMetricItem]
+    func getRealtimePageviews(websiteId: String) async throws -> Int
+}
+
+// MARK: - Default Implementations for Provider-specific Metrics
+
+extension AnalyticsProvider {
+    func getPageTitles(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] { [] }
+    func getLanguages(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] { [] }
+    func getScreens(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] { [] }
+    func getEvents(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem] { [] }
 }
 
 struct AnalyticsMetricItem: Identifiable {
@@ -178,7 +196,6 @@ class AnalyticsManager: ObservableObject {
     @Published var currentProvider: (any AnalyticsProvider)?
     @Published var providerType: AnalyticsProviderType?
     @Published var serverType: AnalyticsServerType?
-    @Published var isAuthenticated = false
 
     private init() {
         loadSavedProvider()
@@ -187,14 +204,12 @@ class AnalyticsManager: ObservableObject {
     func setProvider(_ provider: any AnalyticsProvider) {
         currentProvider = provider
         providerType = provider.providerType
-        isAuthenticated = provider.isAuthenticated
     }
 
     func logout() {
         currentProvider = nil
         providerType = nil
         serverType = nil
-        isAuthenticated = false
         KeychainService.delete(for: .providerType)
         KeychainService.delete(for: .serverType)
         KeychainService.delete(for: .serverURL)
@@ -214,12 +229,10 @@ class AnalyticsManager: ObservableObject {
         case .umami:
             if KeychainService.load(for: .token) != nil {
                 currentProvider = UmamiAPI.shared
-                isAuthenticated = true
             }
         case .plausible:
             if KeychainService.load(for: .apiKey) != nil {
                 currentProvider = PlausibleAPI.shared
-                isAuthenticated = true
             }
         }
     }
