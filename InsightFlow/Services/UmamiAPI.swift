@@ -428,6 +428,107 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode(EventStatsResponse.self, from: data)
     }
 
+    // MARK: - Event Data
+
+    func getEventData(websiteId: String, dateRange: DateRange, page: Int = 1, pageSize: Int = 20) async throws -> EventDataResponse {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/event-data",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                URLQueryItem(name: "page", value: String(page)),
+                URLQueryItem(name: "pageSize", value: String(pageSize))
+            ]
+        )
+        return try decoder.decode(EventDataResponse.self, from: data)
+    }
+
+    func getEventDataById(websiteId: String, eventId: String) async throws -> EventDataItem {
+        let data = try await request(endpoint: "api/websites/\(websiteId)/event-data/\(eventId)")
+        return try decoder.decode(EventDataItem.self, from: data)
+    }
+
+    func getEventDataEvents(websiteId: String, dateRange: DateRange) async throws -> [EventDataEvent] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/event-data/events",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt))
+            ]
+        )
+        return try decoder.decode([EventDataEvent].self, from: data)
+    }
+
+    func getEventDataFields(websiteId: String, dateRange: DateRange) async throws -> [EventDataField] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/event-data/fields",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt))
+            ]
+        )
+        return try decoder.decode([EventDataField].self, from: data)
+    }
+
+    func getEventDataProperties(websiteId: String, dateRange: DateRange) async throws -> [EventDataProperty] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/event-data/properties",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt))
+            ]
+        )
+        return try decoder.decode([EventDataProperty].self, from: data)
+    }
+
+    func getEventDataValues(websiteId: String, dateRange: DateRange, eventName: String, propertyName: String) async throws -> [EventDataValue] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/event-data/values",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                URLQueryItem(name: "eventName", value: eventName),
+                URLQueryItem(name: "propertyName", value: propertyName)
+            ]
+        )
+        return try decoder.decode([EventDataValue].self, from: data)
+    }
+
+    func getEventDataStats(websiteId: String, dateRange: DateRange) async throws -> EventDataStats {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/event-data/stats",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt))
+            ]
+        )
+        return try decoder.decode(EventDataStats.self, from: data)
+    }
+
     // MARK: - Sessions
 
     func getSessions(websiteId: String, dateRange: DateRange, page: Int = 1, pageSize: Int = 20) async throws -> SessionsResponse {
