@@ -51,13 +51,13 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 - ✓ Account-Switcher als Provider-Icon Menu-Button — v2.1
 - ✓ Widget Deep Link Fix — v2.1
 - ✓ Alle-Accounts-Ansicht mit Provider-Badges — v2.1
+- ✓ Support-Option mit SF Symbols statt Emojis (SUP-01) — v2.2
+- ✓ Branding-Untertitel "Ein Pastorenprojekt" (SUP-02) — v2.2
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] SUP-01: "Buy me a Coffee"-ähnliche Support-Option — einheitlich über ValetudiOS + PrivacyFlow
-- [ ] SUP-02: Einheitlicher Branding-Claim + Pastor-Segens-Easter-Egg
 - [ ] API-01: Vollständige Umami Self-Hosted API-Abdeckung
 - [ ] API-02: Vollständige Plausible CE Self-Hosted API-Abdeckung
 - [ ] NOTIF-01: Push-Benachrichtigungs-Logik überarbeiten — strukturierte Gruppierung
@@ -115,4 +115,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — v2.2 milestone started*
+*Last updated: 2026-03-28 — Phase 04 Support & Branding complete*
