@@ -9,8 +9,8 @@ Neue UI-Screens für die in v2.2 implementierten API-Endpoints, Analytics auf ec
 
 ### Data Screens (Umami)
 
-- [ ] **SCREEN-01**: Events-View — Nutzer sehen Event-Liste, Event-Details und Event-Statistiken für Umami-Websites
-- [ ] **SCREEN-02**: Reports-View — Nutzer können Funnel-Reports, UTM-Auswertungen, Goal-Tracking und Attribution-Reports einsehen
+- [x] **SCREEN-01**: Events-View — Nutzer sehen Event-Liste, Event-Details und Event-Statistiken für Umami-Websites
+- [x] **SCREEN-02**: Reports-View — Nutzer können Funnel-Reports, UTM-Auswertungen, Goal-Tracking und Attribution-Reports einsehen
 
 ### Data Screens (Allgemein)
 
@@ -37,8 +37,8 @@ Neue UI-Screens für die in v2.2 implementierten API-Endpoints, Analytics auf ec
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCREEN-01 | Phase 08 | Pending |
-| SCREEN-02 | Phase 08 | Pending |
+| SCREEN-01 | Phase 08 | Complete |
+| SCREEN-02 | Phase 08 | Complete |
 | SCREEN-03 | Phase 09 | Pending |
 | SCREEN-04 | Phase 09 | Pending |
 | SETUP-01 | Phase 10 | Pending |

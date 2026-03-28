@@ -9,7 +9,7 @@
 
 ## Phases
 
-- [ ] **Phase 08: Events & Reports Screens** - Umami Events- und Reports-Views als neue Screens in der App
+- [x] **Phase 08: Events & Reports Screens** - Umami Events- und Reports-Views als neue Screens in der App (completed 2026-03-28)
 - [ ] **Phase 09: Entry/Exit Pages + Plausible Filters** - Herkunfts-/Absprung-Daten und Plausible Goals mit Filter-UI
 - [ ] **Phase 10: Analytics Setup** - Tracking-Code auf echten Websites aktivieren, Goals definieren, Datenfluss sicherstellen
 - [ ] **Phase 11: In-App Data Guide** - Erklärungen zu Analytics-Begriffen direkt in der App
@@ -27,9 +27,9 @@
   4. Leere States (keine Events, keine Reports) werden sauber angezeigt
 **Plans**: 3 plans
 Plans:
-- [ ] 08-01-PLAN.md — Events-Screen (Liste + Detail Drill-Down) mit ViewModel
-- [ ] 08-02-PLAN.md — Reports-Hub (4 Karten) und Detail-Views (Funnel, UTM, Goals, Attribution)
-- [ ] 08-03-PLAN.md — Integration in WebsiteDetailView Quick Actions + visuelle Verifikation
+- [x] 08-01-PLAN.md — Events-Screen (Liste + Detail Drill-Down) mit ViewModel
+- [x] 08-02-PLAN.md — Reports-Hub (4 Karten) und Detail-Views (Funnel, UTM, Goals, Attribution)
+- [x] 08-03-PLAN.md — Integration in WebsiteDetailView Quick Actions + visuelle Verifikation
 **UI hint**: yes
 
 ### Phase 09: Entry/Exit Pages + Plausible Filters
@@ -68,7 +68,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 08. Events & Reports Screens | 0/3 | Planning complete | - |
+| 08. Events & Reports Screens | 3/3 | Complete   | 2026-03-28 |
 | 09. Entry/Exit Pages + Plausible Filters | 0/? | Not started | - |
 | 10. Analytics Setup | 0/? | Not started | - |
 | 11. In-App Data Guide | 0/? | Not started | - |

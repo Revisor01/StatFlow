@@ -2,11 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 08-events-reports-screens 08-01-PLAN.md
-last_updated: "2026-03-28T20:47:04.873Z"
+status: completed
+stopped_at: Completed 08-events-reports-screens 08-03-PLAN.md
+last_updated: "2026-03-28T20:59:31.819Z"
 last_activity: 2026-03-28
 progress:
+  total_phases: 4
+  completed_phases: 1
+  total_plans: 3
+  completed_plans: 3
   percent: 0
 ---
 
@@ -47,6 +51,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 03-alle-accounts-ansicht]: Manual Buttons (not Picker) in account switcher Menu for heterogeneous 'Alle' + account options
 - [Phase 03-alle-accounts-ansicht]: websiteAccountMap pattern for website-to-account lookup in flat All-mode view
 - [Phase 08-events-reports-screens]: Each view (EventsView + EventDetailView) owns its own @StateObject EventsViewModel
+- [Phase 08-events-reports-screens]: LazyVGrid statt HStack fuer Umami Quick Actions — skaliert auf 4 Karten ohne Overflow
 
 ### Pending Todos
 
@@ -58,6 +63,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T20:47:04.872Z
-Stopped at: Completed 08-events-reports-screens 08-01-PLAN.md
+Last session: 2026-03-28T20:59:31.814Z
+Stopped at: Completed 08-events-reports-screens 08-03-PLAN.md
 Resume file: None
