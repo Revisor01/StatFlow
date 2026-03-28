@@ -399,9 +399,6 @@ struct SettingsView: View {
                     Image(systemName: "heart.fill")
                     Text("in Hennstedt")
                 }
-                Text("settings.branding.subtitle")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
             }
             .font(.caption)
             .foregroundStyle(.secondary)
