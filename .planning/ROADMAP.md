@@ -39,7 +39,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. UmamiAPI.swift enthaelt keine ungenutzten Admin/Write-Methoden mehr (~20 Methoden weniger)
   2. Im Offline-Modus zeigt die App cached Daten mit sichtbarem "Offline"-Indikator
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 14-01-PLAN.md — Dead Code entfernen: 43 ungenutzte Methoden + verwaiste Model-Typen (CLEAN-01)
+- [ ] 14-02-PLAN.md — Offline-Banner in 4 Views ergaenzen (CLEAN-02)
 
 ### Phase 15: README & Repo
 **Goal**: Oeffentliche Praesenz aufpolieren — README als Landing Page, Repo-Name aktuell
@@ -55,5 +58,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 13. Critical Bug Fixes | 0/3 | Complete    | 2026-03-29 |
-| 14. Code Cleanup | 0/? | Not started | - |
+| 14. Code Cleanup | 0/2 | Not started | - |
 | 15. README & Repo | 0/? | Not started | - |
