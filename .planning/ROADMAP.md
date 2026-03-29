@@ -51,10 +51,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. README.md enthaelt Feature-Liste, Architektur-Ueberblick, Screenshots-Platzhalter und Setup-Anleitung
   2. GitHub Repo heisst Revisor01/StatFlow (Redirect von PrivacyFlow aktiv)
-**Plans:** 1/2 plans executed
+**Plans:** 2 plans
 Plans:
-- [ ] 15-01-PLAN.md — README.md als StatFlow Landing Page neu schreiben (README-01)
-- [x] 15-02-PLAN.md — GitHub Repository umbenennen zu StatFlow (REPO-01)
+- [x] 15-01-PLAN.md — README.md als StatFlow Landing Page neu schreiben (README-01)
+- [ ] 15-02-PLAN.md — GitHub Repository umbenennen zu StatFlow (REPO-01)
 
 ## Progress
 
@@ -62,4 +62,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 13. Critical Bug Fixes | 0/3 | Complete    | 2026-03-29 |
 | 14. Code Cleanup | 1/2 | Complete    | 2026-03-29 |
-| 15. README & Repo | 1/2 | In Progress|  |
+| 15. README & Repo | 1/2 | In progress | - |

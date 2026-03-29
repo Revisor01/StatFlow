@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Pre-Release Polish
-status: executing
-stopped_at: Completed 15-02-PLAN.md
-last_updated: "2026-03-29T00:44:45.117Z"
+status: planning
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-29T00:45:00.000Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 3
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-28)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** Phase 15 — README & Repo
+**Current focus:** v2.4 Rename to StatFlow
 
 ## Current Position
 
-Phase: 15 (README & Repo) — EXECUTING
-Plan: 2 of 2
-Status: Ready to execute
+Phase: 15
+Plan: 01 complete, 02 pending
+Status: In progress
 Last activity: 2026-03-29
 
 ## Accumulated Context
@@ -36,7 +36,7 @@ Last activity: 2026-03-29
 - App-Name: StatFlow (ersetzt PrivacyFlow/InsightFlow)
 - Bundle ID Prefix: de.godsapp.statflow
 - [Phase 14-code-cleanup]: SessionsViewModel in SessionsView.swift definiert — isOffline direkt dort eingebaut
-- [Phase 15-readme-repo]: GitHub Repository von PrivacyFlow zu StatFlow umbenannt via gh API PATCH
+- [Phase 15-readme-repo]: README.md vollstaendig auf StatFlow umgestellt, Badge-URLs auf Revisor01/StatFlow, Swift 5.10 (korrekt per STACK.md)
 
 ### Blockers/Concerns
 
@@ -44,6 +44,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T00:44:45.114Z
-Stopped at: Completed 15-02-PLAN.md
+Last session: 2026-03-29T00:45:00.000Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None
