@@ -78,46 +78,4 @@ struct AttributionItem: Codable, Identifiable, Sendable {
     var id: String { "\(source ?? "")-\(channel ?? "")" }
 }
 
-// MARK: - Performance Report (Core Web Vitals)
 
-struct PerformanceItem: Codable, Identifiable, Sendable {
-    let path: String?
-    let lcp: Double?       // Largest Contentful Paint (ms)
-    let inp: Double?       // Interaction to Next Paint (ms)
-    let cls: Double?       // Cumulative Layout Shift
-    let fcp: Double?       // First Contentful Paint (ms)
-    let ttfb: Double?      // Time to First Byte (ms)
-
-    var id: String { path ?? UUID().uuidString }
-}
-
-// MARK: - Breakdown Report
-
-struct BreakdownItem: Codable, Identifiable, Sendable {
-    let name: String
-    let pageviews: Int?
-    let visitors: Int?
-    let visits: Int?
-    let bounces: Int?
-    let totaltime: Int?
-
-    var id: String { name }
-}
-
-// MARK: - Revenue Report
-
-struct RevenueItem: Codable, Identifiable, Sendable {
-    let currency: String
-    let total: Double
-    let count: Int
-    let uniqueCount: Int
-    let comparison: RevenueComparison?
-
-    var id: String { currency }
-}
-
-struct RevenueComparison: Codable, Sendable {
-    let total: Double
-    let count: Int
-    let uniqueCount: Int
-}
