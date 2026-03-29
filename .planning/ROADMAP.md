@@ -30,7 +30,9 @@
   2. Bei "Analytics einrichten" und "Analytics Glossar" erscheint nur ein Chevron statt zwei
   3. Das Dove-Icon wird in der Settings-View korrekt angezeigt
   4. Die Beschreibungstexte der Benachrichtigungs-Einstellungen sind klar und verständlich formuliert
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 16-01-PLAN.md — Alle vier UI-Fixes: Kachelhöhe, Chevrons, Dove-Icon, Notification-Strings
 **UI hint**: yes
 
 ### Phase 17: Modale & Account-Flow
@@ -42,7 +44,9 @@
   2. Beim Hinzufügen eines Accounts außerhalb des Onboardings ist die Auswahl "Self-Hosted vs. Offiziell" vorhanden
   3. Das Account-hinzufügen-Modal hat einen X/Schließen-Button
   4. In den Modalen (Website, Teams, Benutzer, Webseite) zeigen die Toolbar-Buttons nur Icons (X und Häkchen) statt Text
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 16-01-PLAN.md — Alle vier UI-Fixes: Kachelhöhe, Chevrons, Dove-Icon, Notification-Strings
 **UI hint**: yes
 
 ### Progress
