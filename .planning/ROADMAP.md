@@ -13,7 +13,7 @@
 
 - [x] **Phase 13: Critical Bug Fixes** — Widget Sync, Request Cancellation, Cache Cleanup, Loading State (completed 2026-03-29)
 - [x] **Phase 14: Code Cleanup** — Orphaned API-Methoden entfernen, Offline-Mode UI (completed 2026-03-29)
-- [ ] **Phase 15: README & Repo** — README.md neu schreiben, GitHub Repo umbenennen
+- [x] **Phase 15: README & Repo** — README.md neu schreiben, GitHub Repo umbenennen (completed 2026-03-29)
 
 ## Phase Details
 
@@ -51,7 +51,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. README.md enthaelt Feature-Liste, Architektur-Ueberblick, Screenshots-Platzhalter und Setup-Anleitung
   2. GitHub Repo heisst Revisor01/StatFlow (Redirect von PrivacyFlow aktiv)
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 15-01-PLAN.md — README.md als StatFlow Landing Page neu schreiben (README-01)
 - [ ] 15-02-PLAN.md — GitHub Repository umbenennen zu StatFlow (REPO-01)
@@ -62,4 +62,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 13. Critical Bug Fixes | 0/3 | Complete    | 2026-03-29 |
 | 14. Code Cleanup | 1/2 | Complete    | 2026-03-29 |
-| 15. README & Repo | 1/2 | In progress | - |
+| 15. README & Repo | 1/2 | Complete    | 2026-03-29 |
