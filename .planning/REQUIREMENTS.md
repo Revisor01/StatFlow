@@ -22,7 +22,7 @@ Pre-Release Polish: Kritische Bugs fixen, toten Code aufräumen, README neu, Rep
 ### Dokumentation & Repo
 
 - [ ] **README-01**: README.md neu schreiben — Feature-Liste, Architektur-Überblick, Screenshots-Platzhalter, Setup-Anleitung
-- [ ] **REPO-01**: GitHub Repo von Revisor01/PrivacyFlow zu Revisor01/StatFlow umbenennen
+- [x] **REPO-01**: GitHub Repo von Revisor01/PrivacyFlow zu Revisor01/StatFlow umbenennen
 
 ## Out of Scope
 
@@ -44,7 +44,7 @@ Pre-Release Polish: Kritische Bugs fixen, toten Code aufräumen, README neu, Rep
 | CLEAN-01 | Phase 14 | Complete |
 | CLEAN-02 | Phase 14 | Pending |
 | README-01 | Phase 15 | Pending |
-| REPO-01 | Phase 15 | Pending |
+| REPO-01 | Phase 15 | Complete |
 
 **Coverage:**
 - v2.5 requirements: 8 total
