@@ -16,7 +16,7 @@ Pre-Release Polish: Kritische Bugs fixen, toten Code aufräumen, README neu, Rep
 
 ### Code Cleanup
 
-- [ ] **CLEAN-01**: ~20 ungenutzte Admin/Write API-Methoden aus UmamiAPI.swift entfernen
+- [x] **CLEAN-01**: ~20 ungenutzte Admin/Write API-Methoden aus UmamiAPI.swift entfernen
 - [ ] **CLEAN-02**: Offline-Mode UI — Cached Daten mit "Offline"-Indikator anzeigen statt Fehler-Screen
 
 ### Dokumentation & Repo
@@ -41,7 +41,7 @@ Pre-Release Polish: Kritische Bugs fixen, toten Code aufräumen, README neu, Rep
 | FIX-02 | Phase 13 | Pending |
 | FIX-03 | Phase 13 | Pending |
 | FIX-04 | Phase 13 | Pending |
-| CLEAN-01 | Phase 14 | Pending |
+| CLEAN-01 | Phase 14 | Complete |
 | CLEAN-02 | Phase 14 | Pending |
 | README-01 | Phase 15 | Pending |
 | REPO-01 | Phase 15 | Pending |
