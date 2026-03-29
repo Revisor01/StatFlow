@@ -12,7 +12,7 @@
 ## Phases
 
 - [x] **Phase 13: Critical Bug Fixes** — Widget Sync, Request Cancellation, Cache Cleanup, Loading State (completed 2026-03-29)
-- [ ] **Phase 14: Code Cleanup** — Orphaned API-Methoden entfernen, Offline-Mode UI
+- [x] **Phase 14: Code Cleanup** — Orphaned API-Methoden entfernen, Offline-Mode UI (completed 2026-03-29)
 - [ ] **Phase 15: README & Repo** — README.md neu schreiben, GitHub Repo umbenennen
 
 ## Phase Details
@@ -39,7 +39,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. UmamiAPI.swift enthaelt keine ungenutzten Admin/Write-Methoden mehr (~20 Methoden weniger)
   2. Im Offline-Modus zeigt die App cached Daten mit sichtbarem "Offline"-Indikator
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 14-01-PLAN.md — Dead Code entfernen: 43 ungenutzte Methoden + verwaiste Model-Typen (CLEAN-01)
 - [ ] 14-02-PLAN.md — Offline-Banner in 4 Views ergaenzen (CLEAN-02)
@@ -58,5 +58,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 13. Critical Bug Fixes | 0/3 | Complete    | 2026-03-29 |
-| 14. Code Cleanup | 1/2 | In Progress|  |
+| 14. Code Cleanup | 1/2 | Complete    | 2026-03-29 |
 | 15. README & Repo | 0/? | Not started | - |
