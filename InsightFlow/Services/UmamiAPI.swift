@@ -237,29 +237,6 @@ actor UmamiAPI: AnalyticsProvider {
         return try await getActiveVisitors(websiteId: websiteId)
     }
 
-    // MARK: - Me
-
-    func getMe() async throws -> MeResponse {
-        let data = try await request(endpoint: "api/me")
-        return try decoder.decode(MeResponse.self, from: data)
-    }
-
-    func getMyTeams() async throws -> [Team] {
-        let data = try await request(endpoint: "api/me/teams")
-        let response = try decoder.decode(TeamsResponse.self, from: data)
-        return response.data
-    }
-
-    func getMyWebsites(includeTeams: Bool = false) async throws -> [Website] {
-        var queryItems: [URLQueryItem] = []
-        if includeTeams {
-            queryItems.append(URLQueryItem(name: "includeTeams", value: "true"))
-        }
-        let data = try await request(endpoint: "api/me/websites", queryItems: queryItems)
-        let response = try decoder.decode(WebsiteResponse.self, from: data)
-        return response.websites
-    }
-
     // MARK: - Authentication
 
     nonisolated func login(baseURL: URL, username: String, password: String) async throws -> String {
@@ -355,45 +332,6 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode(RealtimeData.self, from: data)
     }
 
-    func getDateRange(websiteId: String) async throws -> DateRangeResponse {
-        let data = try await request(endpoint: "api/websites/\(websiteId)/daterange")
-        return try decoder.decode(DateRangeResponse.self, from: data)
-    }
-
-    func getEventsSeries(websiteId: String, dateRange: DateRange, timezone: String = "Europe/Berlin") async throws -> [EventData] {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/events/series",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt)),
-                URLQueryItem(name: "unit", value: dateRange.unit),
-                URLQueryItem(name: "timezone", value: timezone)
-            ]
-        )
-        return try decoder.decode([EventData].self, from: data)
-    }
-
-    func getExpandedMetrics(websiteId: String, dateRange: DateRange, type: MetricType, limit: Int = 10) async throws -> [ExpandedMetricItem] {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/metrics/expanded",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt)),
-                URLQueryItem(name: "type", value: type.rawValue),
-                URLQueryItem(name: "limit", value: String(limit))
-            ]
-        )
-        return try decoder.decode([ExpandedMetricItem].self, from: data)
-    }
-
     // MARK: - Events
 
     func getEventsDetail(websiteId: String, dateRange: DateRange, page: Int = 1, pageSize: Int = 20) async throws -> EventsResponse {
@@ -430,28 +368,6 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Event Data
 
-    func getEventData(websiteId: String, dateRange: DateRange, page: Int = 1, pageSize: Int = 20) async throws -> EventDataResponse {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/event-data",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt)),
-                URLQueryItem(name: "page", value: String(page)),
-                URLQueryItem(name: "pageSize", value: String(pageSize))
-            ]
-        )
-        return try decoder.decode(EventDataResponse.self, from: data)
-    }
-
-    func getEventDataById(websiteId: String, eventId: String) async throws -> EventDataItem {
-        let data = try await request(endpoint: "api/websites/\(websiteId)/event-data/\(eventId)")
-        return try decoder.decode(EventDataItem.self, from: data)
-    }
-
     func getEventDataEvents(websiteId: String, dateRange: DateRange) async throws -> [EventDataEvent] {
         let dates = dateRange.dates
         let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
@@ -465,36 +381,6 @@ actor UmamiAPI: AnalyticsProvider {
             ]
         )
         return try decoder.decode([EventDataEvent].self, from: data)
-    }
-
-    func getEventDataFields(websiteId: String, dateRange: DateRange) async throws -> [EventDataField] {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/event-data/fields",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt))
-            ]
-        )
-        return try decoder.decode([EventDataField].self, from: data)
-    }
-
-    func getEventDataProperties(websiteId: String, dateRange: DateRange) async throws -> [EventDataProperty] {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/event-data/properties",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt))
-            ]
-        )
-        return try decoder.decode([EventDataProperty].self, from: data)
     }
 
     func getEventDataValues(websiteId: String, dateRange: DateRange, eventName: String, propertyName: String) async throws -> [EventDataValue] {
@@ -512,21 +398,6 @@ actor UmamiAPI: AnalyticsProvider {
             ]
         )
         return try decoder.decode([EventDataValue].self, from: data)
-    }
-
-    func getEventDataStats(websiteId: String, dateRange: DateRange) async throws -> EventDataStats {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/event-data/stats",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt))
-            ]
-        )
-        return try decoder.decode(EventDataStats.self, from: data)
     }
 
     // MARK: - Sessions
@@ -563,76 +434,9 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode([SessionActivity].self, from: data)
     }
 
-    func getSessionStats(websiteId: String, dateRange: DateRange) async throws -> SessionStatsResponse {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/sessions/stats",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt))
-            ]
-        )
-        return try decoder.decode(SessionStatsResponse.self, from: data)
-    }
-
-    func getSessionsWeekly(websiteId: String, dateRange: DateRange, timezone: String = "Europe/Berlin") async throws -> [WeeklySessionPoint] {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/sessions/weekly",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt)),
-                URLQueryItem(name: "timezone", value: timezone)
-            ]
-        )
-        return try decoder.decode([WeeklySessionPoint].self, from: data)
-    }
-
     func getSession(websiteId: String, sessionId: String) async throws -> Session {
         let data = try await request(endpoint: "api/websites/\(websiteId)/sessions/\(sessionId)")
         return try decoder.decode(Session.self, from: data)
-    }
-
-    func getSessionProperties(websiteId: String, sessionId: String) async throws -> [SessionPropertyItem] {
-        let data = try await request(endpoint: "api/websites/\(websiteId)/sessions/\(sessionId)/properties")
-        return try decoder.decode([SessionPropertyItem].self, from: data)
-    }
-
-    func getSessionDataProperties(websiteId: String, dateRange: DateRange) async throws -> [SessionDataProperty] {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/session-data/properties",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt))
-            ]
-        )
-        return try decoder.decode([SessionDataProperty].self, from: data)
-    }
-
-    func getSessionDataValues(websiteId: String, dateRange: DateRange, propertyName: String) async throws -> [SessionDataValue] {
-        let dates = dateRange.dates
-        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
-        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
-
-        let data = try await request(
-            endpoint: "api/websites/\(websiteId)/session-data/values",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt)),
-                URLQueryItem(name: "propertyName", value: propertyName)
-            ]
-        )
-        return try decoder.decode([SessionDataValue].self, from: data)
     }
 
     // MARK: - Website Management
@@ -666,10 +470,6 @@ actor UmamiAPI: AnalyticsProvider {
 
     func deleteWebsite(websiteId: String) async throws {
         _ = try await deleteRequest(endpoint: "api/websites/\(websiteId)")
-    }
-
-    func resetWebsiteStats(websiteId: String) async throws {
-        _ = try await postRequest(endpoint: "api/websites/\(websiteId)/reset", body: [:])
     }
 
     // MARK: - Teams
@@ -746,61 +546,6 @@ actor UmamiAPI: AnalyticsProvider {
         _ = try await deleteRequest(endpoint: "api/teams/\(teamId)/users/\(userId)")
     }
 
-    func getUserTeams(page: Int = 1, pageSize: Int = 20) async throws -> [Team] {
-        let data = try await request(
-            endpoint: "api/teams",
-            queryItems: [
-                URLQueryItem(name: "page", value: String(page)),
-                URLQueryItem(name: "pageSize", value: String(pageSize))
-            ]
-        )
-        let response = try decoder.decode(TeamsResponse.self, from: data)
-        return response.data
-    }
-
-    func joinTeam(accessCode: String) async throws -> TeamMember {
-        let body: [String: Any] = ["accessCode": accessCode]
-        let data = try await postRequest(endpoint: "api/teams/join", body: body)
-        return try decoder.decode(TeamMember.self, from: data)
-    }
-
-    func getTeam(teamId: String) async throws -> Team {
-        let data = try await request(endpoint: "api/teams/\(teamId)")
-        return try decoder.decode(Team.self, from: data)
-    }
-
-    func updateTeam(teamId: String, name: String? = nil, accessCode: String? = nil) async throws -> Team {
-        var body: [String: Any] = [:]
-        if let name = name { body["name"] = name }
-        if let accessCode = accessCode { body["accessCode"] = accessCode }
-
-        let data = try await postRequest(endpoint: "api/teams/\(teamId)", body: body)
-        return try decoder.decode(Team.self, from: data)
-    }
-
-    func getTeamMember(teamId: String, userId: String) async throws -> TeamMember {
-        let data = try await request(endpoint: "api/teams/\(teamId)/users/\(userId)")
-        return try decoder.decode(TeamMember.self, from: data)
-    }
-
-    func updateTeamMemberRole(teamId: String, userId: String, role: String) async throws -> TeamMember {
-        let body: [String: Any] = ["role": role]
-        let data = try await postRequest(endpoint: "api/teams/\(teamId)/users/\(userId)", body: body)
-        return try decoder.decode(TeamMember.self, from: data)
-    }
-
-    func getTeamWebsites(teamId: String, page: Int = 1, pageSize: Int = 20) async throws -> [Website] {
-        let data = try await request(
-            endpoint: "api/teams/\(teamId)/websites",
-            queryItems: [
-                URLQueryItem(name: "page", value: String(page)),
-                URLQueryItem(name: "pageSize", value: String(pageSize))
-            ]
-        )
-        let response = try decoder.decode(TeamWebsitesResponse.self, from: data)
-        return response.data
-    }
-
     // MARK: - Users (Admin)
 
     func getUsers() async throws -> [UmamiUser] {
@@ -821,109 +566,6 @@ actor UmamiAPI: AnalyticsProvider {
 
     func deleteUser(userId: String) async throws {
         _ = try await deleteRequest(endpoint: "api/users/\(userId)")
-    }
-
-    func getUser(userId: String) async throws -> UmamiUser {
-        let data = try await request(endpoint: "api/users/\(userId)")
-        return try decoder.decode(UmamiUser.self, from: data)
-    }
-
-    func updateUser(userId: String, username: String? = nil, password: String? = nil, role: String? = nil) async throws -> UmamiUser {
-        var body: [String: Any] = [:]
-        if let username = username { body["username"] = username }
-        if let password = password { body["password"] = password }
-        if let role = role { body["role"] = role }
-
-        let data = try await postRequest(endpoint: "api/users/\(userId)", body: body)
-        return try decoder.decode(UmamiUser.self, from: data)
-    }
-
-    func getUserWebsites(userId: String, includeTeams: Bool = false, page: Int = 1, pageSize: Int = 20) async throws -> [Website] {
-        var queryItems = [
-            URLQueryItem(name: "page", value: String(page)),
-            URLQueryItem(name: "pageSize", value: String(pageSize))
-        ]
-        if includeTeams {
-            queryItems.append(URLQueryItem(name: "includeTeams", value: "true"))
-        }
-
-        let data = try await request(endpoint: "api/users/\(userId)/websites", queryItems: queryItems)
-        let response = try decoder.decode(UserWebsitesResponse.self, from: data)
-        return response.data
-    }
-
-    func getUserTeamsList(userId: String, page: Int = 1, pageSize: Int = 20) async throws -> [Team] {
-        let data = try await request(
-            endpoint: "api/users/\(userId)/teams",
-            queryItems: [
-                URLQueryItem(name: "page", value: String(page)),
-                URLQueryItem(name: "pageSize", value: String(pageSize))
-            ]
-        )
-        let response = try decoder.decode(UserTeamsResponse.self, from: data)
-        return response.data
-    }
-
-    // MARK: - Share
-
-    func createSharePage(entityId: String, shareType: Int, name: String, slug: String, parameters: [String: Any]? = nil) async throws -> SharePage {
-        var body: [String: Any] = [
-            "entityId": entityId,
-            "shareType": shareType,
-            "name": name,
-            "slug": slug
-        ]
-        if let parameters = parameters { body["parameters"] = parameters }
-
-        let data = try await postRequest(endpoint: "api/share", body: body)
-        return try decoder.decode(SharePage.self, from: data)
-    }
-
-    func getSharePage(shareId: String) async throws -> SharePage {
-        let data = try await request(endpoint: "api/share/id/\(shareId)")
-        return try decoder.decode(SharePage.self, from: data)
-    }
-
-    func updateSharePage(shareId: String, name: String? = nil, slug: String? = nil, parameters: [String: Any]? = nil) async throws -> SharePage {
-        var body: [String: Any] = [:]
-        if let name = name { body["name"] = name }
-        if let slug = slug { body["slug"] = slug }
-        if let parameters = parameters { body["parameters"] = parameters }
-
-        let data = try await postRequest(endpoint: "api/share/id/\(shareId)", body: body)
-        return try decoder.decode(SharePage.self, from: data)
-    }
-
-    func deleteSharePage(shareId: String) async throws {
-        _ = try await deleteRequest(endpoint: "api/share/id/\(shareId)")
-    }
-
-    func getWebsiteShares(websiteId: String) async throws -> [SharePage] {
-        let data = try await request(endpoint: "api/websites/\(websiteId)/shares")
-        let response = try decoder.decode(ShareListResponse.self, from: data)
-        return response.data
-    }
-
-    func createWebsiteShare(websiteId: String, name: String, parameters: [String: Any]? = nil) async throws -> SharePage {
-        var body: [String: Any] = ["name": name]
-        if let parameters = parameters { body["parameters"] = parameters }
-
-        let data = try await postRequest(endpoint: "api/websites/\(websiteId)/shares", body: body)
-        return try decoder.decode(SharePage.self, from: data)
-    }
-
-    // MARK: - Admin
-
-    func getAdminWebsites(page: Int = 1, pageSize: Int = 20) async throws -> [Website] {
-        let data = try await request(
-            endpoint: "api/admin/websites",
-            queryItems: [
-                URLQueryItem(name: "page", value: String(page)),
-                URLQueryItem(name: "pageSize", value: String(pageSize))
-            ]
-        )
-        let response = try decoder.decode(WebsiteResponse.self, from: data)
-        return response.websites
     }
 
     // MARK: - Journey Report
@@ -980,38 +622,6 @@ actor UmamiAPI: AnalyticsProvider {
             ]
         )
         return try decoder.decode(ReportListResponse.self, from: data)
-    }
-
-    func createReport(websiteId: String, type: String, name: String, description: String? = nil, parameters: [String: Any] = [:]) async throws -> Report {
-        var body: [String: Any] = [
-            "websiteId": websiteId,
-            "type": type,
-            "name": name
-        ]
-        if let description = description { body["description"] = description }
-        if !parameters.isEmpty { body["parameters"] = parameters }
-
-        let data = try await postRequest(endpoint: "api/reports", body: body)
-        return try decoder.decode(Report.self, from: data)
-    }
-
-    func getReport(reportId: String) async throws -> Report {
-        let data = try await request(endpoint: "api/reports/\(reportId)")
-        return try decoder.decode(Report.self, from: data)
-    }
-
-    func updateReport(reportId: String, name: String? = nil, description: String? = nil, parameters: [String: Any]? = nil) async throws -> Report {
-        var body: [String: Any] = [:]
-        if let name = name { body["name"] = name }
-        if let description = description { body["description"] = description }
-        if let parameters = parameters { body["parameters"] = parameters }
-
-        let data = try await postRequest(endpoint: "api/reports/\(reportId)", body: body)
-        return try decoder.decode(Report.self, from: data)
-    }
-
-    func deleteReport(reportId: String) async throws {
-        _ = try await deleteRequest(endpoint: "api/reports/\(reportId)")
     }
 
     func getFunnelReport(websiteId: String, dateRange: DateRange, steps: [[String: String]]) async throws -> [FunnelStep] {
@@ -1090,64 +700,6 @@ actor UmamiAPI: AnalyticsProvider {
 
         let data = try await postRequest(endpoint: "api/reports/attribution", body: body)
         return try decoder.decode([AttributionItem].self, from: data)
-    }
-
-    func getPerformanceReport(websiteId: String, dateRange: DateRange) async throws -> [PerformanceItem] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let dates = dateRange.dates
-
-        let body: [String: Any] = [
-            "websiteId": websiteId,
-            "type": "performance",
-            "filters": [:],
-            "parameters": [
-                "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end)
-            ]
-        ]
-
-        let data = try await postRequest(endpoint: "api/reports/performance", body: body)
-        return try decoder.decode([PerformanceItem].self, from: data)
-    }
-
-    func getBreakdownReport(websiteId: String, dateRange: DateRange, property: String) async throws -> [BreakdownItem] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let dates = dateRange.dates
-
-        let body: [String: Any] = [
-            "websiteId": websiteId,
-            "type": "breakdown",
-            "filters": [:],
-            "parameters": [
-                "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end),
-                "property": property
-            ]
-        ]
-
-        let data = try await postRequest(endpoint: "api/reports/breakdown", body: body)
-        return try decoder.decode([BreakdownItem].self, from: data)
-    }
-
-    func getRevenueReport(websiteId: String, dateRange: DateRange) async throws -> [RevenueItem] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let dates = dateRange.dates
-
-        let body: [String: Any] = [
-            "websiteId": websiteId,
-            "type": "revenue",
-            "filters": [:],
-            "parameters": [
-                "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end)
-            ]
-        ]
-
-        let data = try await postRequest(endpoint: "api/reports/revenue", body: body)
-        return try decoder.decode([RevenueItem].self, from: data)
     }
 
     func getMetrics(websiteId: String, dateRange: DateRange, type: MetricType, limit: Int = 10) async throws -> [MetricItem] {
