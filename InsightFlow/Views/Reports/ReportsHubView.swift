@@ -16,9 +16,30 @@ struct ReportsHubView: View {
         GridItem(.flexible())
     ]
 
+    private var offlineBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "wifi.slash")
+                .font(.subheadline)
+            Text("detail.offline")
+                .font(.subheadline)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.orange.opacity(0.15))
+        .foregroundStyle(.orange)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 16) {
+            LazyVStack(spacing: 16) {
+                if viewModel.isOffline {
+                    offlineBanner
+                        .padding(.horizontal)
+                }
+
+                LazyVGrid(columns: columns, spacing: 16) {
                 NavigationLink {
                     FunnelReportView(
                         website: website,
@@ -74,6 +95,7 @@ struct ReportsHubView: View {
                     )
                 }
                 .buttonStyle(.plain)
+                }
             }
             .padding()
         }

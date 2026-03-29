@@ -25,6 +25,11 @@ struct SessionsView: View {
             dateRangePicker
                 .padding()
 
+            if viewModel.isOffline {
+                offlineBanner
+                    .padding(.horizontal)
+            }
+
             switch selectedTab {
             case .journeys:
                 journeysContent
@@ -153,6 +158,21 @@ struct SessionsView: View {
                 .padding()
             }
         }
+    }
+
+    private var offlineBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "wifi.slash")
+                .font(.subheadline)
+            Text("detail.offline")
+                .font(.subheadline)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.orange.opacity(0.15))
+        .foregroundStyle(.orange)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private var dateRangePicker: some View {
@@ -462,6 +482,7 @@ class SessionsViewModel: ObservableObject {
 
     @Published var sessions: [Session] = []
     @Published var isLoading = false
+    @Published var isOffline = false
     @Published var hasMore = false
 
     private var currentPage = 1
@@ -475,6 +496,7 @@ class SessionsViewModel: ObservableObject {
 
     func loadData(dateRange: DateRange) async {
         isLoading = true
+        isOffline = false
         currentPage = 1
 
         do {
@@ -491,6 +513,14 @@ class SessionsViewModel: ObservableObject {
             #if DEBUG
             print("Sessions error: \(error)")
             #endif
+            let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
+                                 (error as? URLError)?.code == .networkConnectionLost ||
+                                 (error as? URLError)?.code == .timedOut ||
+                                 (error as? URLError)?.code == .cannotFindHost ||
+                                 (error as? URLError)?.code == .cannotConnectToHost
+            if isNetworkError {
+                isOffline = true
+            }
         }
 
         isLoading = false

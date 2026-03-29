@@ -63,6 +63,11 @@ struct WebsiteDetailView: View {
 
                 filterChipBar
 
+                if viewModel.isOffline {
+                    offlineBanner
+                        .padding(.horizontal)
+                }
+
                 if let stats = viewModel.stats {
                     heroStats(stats)
                 }
@@ -145,6 +150,23 @@ struct WebsiteDetailView: View {
         .onDisappear {
             viewModel.cancelLoading()
         }
+    }
+
+    // MARK: - Offline Banner
+
+    private var offlineBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "wifi.slash")
+                .font(.subheadline)
+            Text("detail.offline")
+                .font(.subheadline)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.orange.opacity(0.15))
+        .foregroundStyle(.orange)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     // MARK: - Date Range Picker
