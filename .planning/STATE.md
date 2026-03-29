@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Pre-Release Polish
 status: planning
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-03-29T00:38:35.603Z"
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-29T00:45:00.000Z"
 last_activity: 2026-03-29
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
 ---
 
 # Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 ## Current Position
 
 Phase: 15
-Plan: Not started
-Status: Ready for planning
+Plan: 01 complete, 02 pending
+Status: In progress
 Last activity: 2026-03-29
 
 ## Accumulated Context
@@ -36,6 +36,7 @@ Last activity: 2026-03-29
 - App-Name: StatFlow (ersetzt PrivacyFlow/InsightFlow)
 - Bundle ID Prefix: de.godsapp.statflow
 - [Phase 14-code-cleanup]: SessionsViewModel in SessionsView.swift definiert — isOffline direkt dort eingebaut
+- [Phase 15-readme-repo]: README.md vollstaendig auf StatFlow umgestellt, Badge-URLs auf Revisor01/StatFlow, Swift 5.10 (korrekt per STACK.md)
 
 ### Blockers/Concerns
 
@@ -43,6 +44,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-29T00:34:51.498Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-03-29T00:45:00.000Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None
