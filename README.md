@@ -99,7 +99,7 @@ Demnächst verfügbar.
    ```bash
    git clone https://github.com/Revisor01/StatFlow.git
    ```
-2. `StatFlow.xcodeproj` in Xcode 16+ öffnen
+2. `InsightFlow.xcodeproj` in Xcode 16+ öffnen
 3. Bundle ID in den Signing-Einstellungen auf die eigene Team-ID anpassen
 4. Auf Gerät oder Simulator bauen und ausführen
 
