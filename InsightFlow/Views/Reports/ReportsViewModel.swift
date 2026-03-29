@@ -10,6 +10,7 @@ class ReportsViewModel: ObservableObject {
     @Published var goalData: [GoalReportItem] = []
     @Published var attributionData: [AttributionItem] = []
     @Published var isLoading: Bool = false
+    @Published var isOffline = false
     @Published var error: String?
 
     private let api = UmamiAPI.shared
@@ -38,6 +39,7 @@ class ReportsViewModel: ObservableObject {
 
     func loadReports() async {
         isLoading = true
+        isOffline = false
         error = nil
 
         do {
@@ -47,7 +49,16 @@ class ReportsViewModel: ObservableObject {
             #if DEBUG
             print("ReportsViewModel: loadReports error: \(error)")
             #endif
-            self.error = error.localizedDescription
+            let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
+                                 (error as? URLError)?.code == .networkConnectionLost ||
+                                 (error as? URLError)?.code == .timedOut ||
+                                 (error as? URLError)?.code == .cannotFindHost ||
+                                 (error as? URLError)?.code == .cannotConnectToHost
+            if isNetworkError {
+                self.isOffline = true
+            } else {
+                self.error = error.localizedDescription
+            }
         }
 
         isLoading = false

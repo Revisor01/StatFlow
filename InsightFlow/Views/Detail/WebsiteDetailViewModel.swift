@@ -27,6 +27,7 @@ class WebsiteDetailViewModel: ObservableObject {
     @Published var totalVisitors: Int = 0
     @Published var activeFilters: [PlausibleQueryFilter] = []
     @Published var isLoading = false
+    @Published var isOffline = false
     @Published var error: String?
 
     init(websiteId: String, domain: String = "") {
@@ -36,6 +37,7 @@ class WebsiteDetailViewModel: ObservableObject {
 
     func loadData(dateRange: DateRange) async {
         isLoading = true
+        isOffline = false
         defer { isLoading = false }
 
         await withTaskGroup(of: Void.self) { group in
@@ -68,7 +70,16 @@ class WebsiteDetailViewModel: ObservableObject {
             stats = websiteStats
             totalVisitors = websiteStats.visitors.value
         } catch {
-            self.error = error.localizedDescription
+            let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
+                                 (error as? URLError)?.code == .networkConnectionLost ||
+                                 (error as? URLError)?.code == .timedOut ||
+                                 (error as? URLError)?.code == .cannotFindHost ||
+                                 (error as? URLError)?.code == .cannotConnectToHost
+            if isNetworkError {
+                isOffline = true
+            } else {
+                self.error = error.localizedDescription
+            }
         }
     }
 
