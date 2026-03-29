@@ -11,6 +11,7 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 ## Current State
 
 **Latest shipped:** v2.5 Pre-Release Polish (completed 2026-03-29)
+**Current milestone:** v2.6 Design Polish
 **GitHub:** Revisor01/StatFlow
 
 ### v2.5 Accomplishments
@@ -145,4 +146,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 — v2.5 Pre-Release Polish completed*
+*Last updated: 2026-03-29 — v2.6 Design Polish started*
