@@ -43,6 +43,7 @@
 "dashboard.empty.plausible" = "Add your first website to see statistics.";
 "dashboard.empty.umami" = "You don't have any websites in your Umami account yet.";
 "dashboard.offline" = "Offline – showing cached data";
+"detail.offline" = "Offline – data unavailable";
 "dashboard.reorder.hint" = "Hold and drag to reorder";
 "dashboard.edit.button" = "Customize Dashboard";
 "dashboard.edit.order" = "Order";

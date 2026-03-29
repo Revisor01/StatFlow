@@ -462,6 +462,7 @@ class SessionsViewModel: ObservableObject {
 
     @Published var sessions: [Session] = []
     @Published var isLoading = false
+    @Published var isOffline = false
     @Published var hasMore = false
 
     private var currentPage = 1
@@ -475,6 +476,7 @@ class SessionsViewModel: ObservableObject {
 
     func loadData(dateRange: DateRange) async {
         isLoading = true
+        isOffline = false
         currentPage = 1
 
         do {
@@ -491,6 +493,14 @@ class SessionsViewModel: ObservableObject {
             #if DEBUG
             print("Sessions error: \(error)")
             #endif
+            let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
+                                 (error as? URLError)?.code == .networkConnectionLost ||
+                                 (error as? URLError)?.code == .timedOut ||
+                                 (error as? URLError)?.code == .cannotFindHost ||
+                                 (error as? URLError)?.code == .cannotConnectToHost
+            if isNetworkError {
+                isOffline = true
+            }
         }
 
         isLoading = false

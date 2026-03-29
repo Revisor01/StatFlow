@@ -7,6 +7,7 @@ class EventsViewModel: ObservableObject {
     @Published var events: [AnalyticsMetricItem] = []
     @Published var eventStats: EventStatsResponse?
     @Published var isLoading = false
+    @Published var isOffline = false
     @Published var error: String?
 
     // Detail-View properties
@@ -21,6 +22,7 @@ class EventsViewModel: ObservableObject {
 
     func loadEvents(dateRange: DateRange) async {
         isLoading = true
+        isOffline = false
         error = nil
 
         await withTaskGroup(of: Void.self) { group in
@@ -38,7 +40,16 @@ class EventsViewModel: ObservableObject {
                     print("Events error: \(error)")
                     #endif
                     await MainActor.run {
-                        self.error = error.localizedDescription
+                        let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
+                                             (error as? URLError)?.code == .networkConnectionLost ||
+                                             (error as? URLError)?.code == .timedOut ||
+                                             (error as? URLError)?.code == .cannotFindHost ||
+                                             (error as? URLError)?.code == .cannotConnectToHost
+                        if isNetworkError {
+                            self.isOffline = true
+                        } else {
+                            self.error = error.localizedDescription
+                        }
                     }
                 }
             }
