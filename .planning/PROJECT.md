@@ -1,8 +1,8 @@
-# InsightFlow
+# StatFlow
 
 ## What This Is
 
-InsightFlow ist eine iOS-App (SwiftUI), die als Dashboard für Umami und Plausible Analytics dient. Nutzer können mehrere Analytics-Accounts verwalten, Website-Statistiken einsehen, Zeiträume vergleichen und Echtzeit-Daten anzeigen. Die App enthält ein Widget für den Homescreen.
+StatFlow ist eine iOS-App (SwiftUI), die als Dashboard für Umami und Plausible Analytics dient. Nutzer können mehrere Analytics-Accounts verwalten, Website-Statistiken einsehen, Zeiträume vergleichen und Echtzeit-Daten anzeigen. Die App enthält ein Widget für den Homescreen.
 
 ## Core Value
 
@@ -10,8 +10,15 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 ## Current State
 
-**Latest shipped:** v2.3 API Data Screens & Analytics Setup (completed 2026-03-28)
-**Current milestone:** v2.5 Pre-Release Polish
+**Latest shipped:** v2.5 Pre-Release Polish (completed 2026-03-29)
+**GitHub:** Revisor01/StatFlow
+
+### v2.5 Accomplishments
+- 4 kritische Bugs gefixt: Widget-Sync, Request-Cancellation, Cache-Cleanup, Loading-State
+- 43 ungenutzte API-Methoden entfernt (448 LOC weniger)
+- Offline-Banner in 4 Views mit URLError-Erkennung
+- README.md als StatFlow Landing Page neu geschrieben
+- GitHub Repo von PrivacyFlow zu StatFlow umbenannt
 
 ### v2.4 Accomplishments
 - App umbenannt zu "StatFlow" — Display Name, Bundle IDs, URL Scheme, Product IDs, alle Strings
@@ -68,19 +75,20 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 - ✓ Alle-Accounts-Ansicht mit Provider-Badges — v2.1
 - ✓ Support-Option mit SF Symbols statt Emojis (SUP-01) — v2.2
 - ✓ Branding-Untertitel "Ein Pastorenprojekt" (SUP-02) — v2.2
+- ✓ Widget Sync Race Condition behoben (FIX-01) — v2.5
+- ✓ Request Cancellation bei Navigation (FIX-02) — v2.5
+- ✓ Cache Cleanup beim App-Start (FIX-03) — v2.5
+- ✓ Account Switch Loading State (FIX-04) — v2.5
+- ✓ 43 ungenutzte API-Methoden entfernt (CLEAN-01) — v2.5
+- ✓ Offline-Mode UI mit Banner (CLEAN-02) — v2.5
+- ✓ README als Landing Page (README-01) — v2.5
+- ✓ GitHub Repo umbenannt zu StatFlow (REPO-01) — v2.5
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] FIX-01: Widget Sync Race Condition — Widget zeigt nach Account-Wechsel zuverlässig aktuelle Daten
-- [ ] FIX-02: Request Cancellation — Offene Requests abbrechen wenn User navigiert
-- [ ] FIX-03: Cache Cleanup — LRU Eviction + Expiration Cleanup beim App-Start
-- [ ] FIX-04: Account Switch Loading State — Expliziter Loading-State statt Flash alter Daten
-- [ ] CLEAN-01: ~20 ungenutzte Admin/Write API-Methoden entfernen
-- [ ] CLEAN-02: Offline-Mode UI — Cached Daten mit Indikator statt Fehler-Screen
-- [ ] README-01: README.md neu schreiben (Features, Screenshots-Platzhalter, DE/EN)
-- [ ] REPO-01: GitHub Repo von PrivacyFlow zu StatFlow umbenennen
+(Keine aktiven Requirements — nächster Milestone noch nicht definiert)
 
 ### Out of Scope
 
@@ -97,17 +105,17 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 - iOS 18+ Deployment Target, reine SwiftUI App (Swift 6.0)
 - Keine externen Dependencies (kein SPM, CocoaPods, Carthage)
-- 58 Unit Tests als Sicherheitsnetz (KeychainService, AccountManager, API-Parsing, DateRange, Cache)
+- 58+ Unit Tests als Sicherheitsnetz (KeychainService, AccountManager, API-Parsing, DateRange, Cache, AnalyticsCacheService, DashboardViewModel, WebsiteDetailViewModel)
 - Widget in 9 Dateien aufgeteilt, beide API-Clients als actors
 - AccountManager ist einzige Auth-Autorität
-- App released als v2.0 auf GitHub (Revisor01/PrivacyFlow)
+- App released als v2.5 auf GitHub (Revisor01/StatFlow)
 
 ## Constraints
 
 - **Tech Stack**: Swift/SwiftUI only — keine externen Dependencies
 - **Kompatibilität**: Account-Daten in Keychain, Widget-Daten verschlüsselt in App Group
 - **Widget**: Widget Extension teilt Code über App Group
-- **Tests**: 58 Unit Tests vorhanden — neue Features sollten Tests haben
+- **Tests**: 58+ Unit Tests vorhanden — neue Features sollten Tests haben
 
 ## Key Decisions
 
@@ -116,6 +124,8 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 | AccountManager als Single Source of Truth für Auth | Drei überlappende Systeme verursachen State-Sync-Probleme | Shipped v2.0 |
 | Keychain per Account-ID statt Single-Slot | Häufiges Account-Switching verursacht unnötige Keychain-Writes | Shipped v2.0 |
 | actor-Pattern für beide API-Clients | Inkonsistenz zwischen UmamiAPI (actor) und PlausibleAPI (@MainActor) | Shipped v2.0 |
+| Task-Cancellation mit loadingTask Handle | .task allein cancelt nicht bei Date-Range-Wechsel | Shipped v2.5 |
+| Offline-Banner differenziert nach View-Typ | Dashboard hat Cache-Fallback, Detail-Views nicht | Shipped v2.5 |
 
 ## Evolution
 
@@ -135,4 +145,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 — v2.5 Pre-Release Polish started*
+*Last updated: 2026-03-29 — v2.5 Pre-Release Polish completed*
