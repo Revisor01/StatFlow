@@ -236,6 +236,63 @@ final class AnalyticsCacheService: @unchecked Sendable {
         return totalSize
     }
 
+    /// Löscht Cache-Einträge älter als N Tage (basierend auf cachedAt, nicht expiresAt)
+    func clearStaleEntries(olderThan days: Int = 7) {
+        guard let cacheDir = cacheDirectory,
+              let files = try? FileManager.default.contentsOfDirectory(
+                  at: cacheDir, includingPropertiesForKeys: nil) else { return }
+        let cutoff = Date().addingTimeInterval(-Double(days) * 86400)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        var deletedCount = 0
+        for fileURL in files where fileURL.pathExtension == "json" {
+            if let data = try? Data(contentsOf: fileURL),
+               let metadata = try? decoder.decode(CacheMetadata.self, from: data),
+               metadata.cachedAt < cutoff {
+                try? FileManager.default.removeItem(at: fileURL)
+                deletedCount += 1
+            }
+        }
+        #if DEBUG
+        if deletedCount > 0 {
+            print("AnalyticsCacheService: Cleared \(deletedCount) stale entries (>\(days) days)")
+        }
+        #endif
+    }
+
+    /// Löscht älteste Cache-Dateien bis Gesamtgröße unter maxSize liegt
+    func evictOldestEntries(maxSize: Int64) {
+        guard let cacheDir = cacheDirectory,
+              let files = try? FileManager.default.contentsOfDirectory(
+                  at: cacheDir,
+                  includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey]) else { return }
+
+        // Sortiere nach Änderungsdatum (älteste zuerst)
+        let sorted = files
+            .filter { $0.pathExtension == "json" }
+            .compactMap { url -> (URL, Date, Int64)? in
+                guard let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]),
+                      let date = values.contentModificationDate,
+                      let size = values.fileSize else { return nil }
+                return (url, date, Int64(size))
+            }
+            .sorted { $0.1 < $1.1 }
+
+        var currentSize = cacheSize()
+        var deletedCount = 0
+        for (url, _, fileSize) in sorted {
+            guard currentSize > maxSize else { break }
+            try? FileManager.default.removeItem(at: url)
+            currentSize -= fileSize
+            deletedCount += 1
+        }
+        #if DEBUG
+        if deletedCount > 0 {
+            print("AnalyticsCacheService: Evicted \(deletedCount) entries (cache was over \(maxSize) bytes)")
+        }
+        #endif
+    }
+
     /// Formatierte Cache-Größe
     var formattedCacheSize: String {
         let size = cacheSize()

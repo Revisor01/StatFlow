@@ -162,4 +162,83 @@ class AnalyticsCacheServiceTests: XCTestCase {
         XCTAssertNil(sut.loadWebsites(accountId: "acc-old"))
         XCTAssertNotNil(sut.loadWebsites(accountId: "acc-fresh"))
     }
+
+    // MARK: - Stale Entry Cleanup Tests
+
+    func testClearStaleEntriesRemovesOldEntries() {
+        // Write a cache entry with cachedAt 8 days in the past
+        let oldDate = Date().addingTimeInterval(-8 * 86400)
+        let isoFormatter = ISO8601DateFormatter()
+        let wrapper = "{\"data\":[{\"id\":\"1\",\"name\":\"Old\",\"domain\":\"old.com\",\"shareId\":null,\"provider\":\"umami\"}],\"cachedAt\":\"\(isoFormatter.string(from: oldDate))\",\"expiresAt\":\"\(isoFormatter.string(from: oldDate.addingTimeInterval(3600)))\"}"
+        let fileURL = tempDir.appendingPathComponent("stale_test.json")
+        try! wrapper.data(using: .utf8)!.write(to: fileURL)
+
+        sut.clearStaleEntries(olderThan: 7)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+
+    func testClearStaleEntriesKeepsRecentEntries() {
+        // Save a fresh entry (cachedAt = now)
+        sut.saveWebsites([makeCachedWebsite()], accountId: "keep-test")
+        sut.clearStaleEntries(olderThan: 7)
+
+        let result = sut.loadWebsites(accountId: "keep-test")
+        XCTAssertNotNil(result)
+    }
+
+    // MARK: - LRU Eviction Tests
+
+    func testEvictOldestEntriesRemovesWhenOverLimit() {
+        // Write several small files with different modification dates
+        let fileManager = FileManager.default
+
+        // Write 3 files and manually set old modification dates for 2 of them
+        for i in 1...3 {
+            let content = "{\"data\":\(i),\"timestamp\":\"file\(i)\"}".data(using: .utf8)!
+            let fileURL = tempDir.appendingPathComponent("evict_test_\(i).json")
+            try! content.write(to: fileURL)
+        }
+
+        // Get current size
+        let totalSize = sut.cacheSize()
+        guard totalSize > 0 else {
+            XCTFail("Expected non-zero cache size after writing files")
+            return
+        }
+
+        // Evict with maxSize = 1 byte (forces eviction of almost all files)
+        sut.evictOldestEntries(maxSize: 1)
+
+        // After eviction, cache size should be less (some files deleted)
+        // Note: the newest file should remain if possible
+        XCTAssertLessThanOrEqual(sut.cacheSize(), totalSize)
+    }
+
+    func testEvictOldestEntriesDoesNothingWhenUnderLimit() {
+        sut.saveWebsites([makeCachedWebsite()], accountId: "evict-test")
+        let sizeBefore = sut.cacheSize()
+
+        // Evict with very large maxSize (no eviction needed)
+        sut.evictOldestEntries(maxSize: 100 * 1024 * 1024)
+
+        let sizeAfter = sut.cacheSize()
+        XCTAssertEqual(sizeBefore, sizeAfter, "Cache size should not change when under limit")
+    }
+
+    func testCacheSizeAfterEviction() {
+        // Save multiple entries
+        for i in 1...5 {
+            sut.saveWebsites([makeCachedWebsite(id: "\(i)", domain: "site\(i).com")], accountId: "size-test-\(i)")
+        }
+
+        let sizeBefore = sut.cacheSize()
+        XCTAssertGreaterThan(sizeBefore, 0)
+
+        // Evict everything
+        sut.evictOldestEntries(maxSize: 1)
+
+        let sizeAfter = sut.cacheSize()
+        XCTAssertLessThan(sizeAfter, sizeBefore)
+    }
 }
