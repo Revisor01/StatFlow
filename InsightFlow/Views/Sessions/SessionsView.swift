@@ -25,6 +25,11 @@ struct SessionsView: View {
             dateRangePicker
                 .padding()
 
+            if viewModel.isOffline {
+                offlineBanner
+                    .padding(.horizontal)
+            }
+
             switch selectedTab {
             case .journeys:
                 journeysContent
@@ -153,6 +158,21 @@ struct SessionsView: View {
                 .padding()
             }
         }
+    }
+
+    private var offlineBanner: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "wifi.slash")
+                .font(.subheadline)
+            Text("detail.offline")
+                .font(.subheadline)
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.orange.opacity(0.15))
+        .foregroundStyle(.orange)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private var dateRangePicker: some View {
