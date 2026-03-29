@@ -11,7 +11,7 @@
 
 ## Phases
 
-- [ ] **Phase 13: Critical Bug Fixes** — Widget Sync, Request Cancellation, Cache Cleanup, Loading State
+- [x] **Phase 13: Critical Bug Fixes** — Widget Sync, Request Cancellation, Cache Cleanup, Loading State (completed 2026-03-29)
 - [ ] **Phase 14: Code Cleanup** — Orphaned API-Methoden entfernen, Offline-Mode UI
 - [ ] **Phase 15: README & Repo** — README.md neu schreiben, GitHub Repo umbenennen
 
@@ -26,7 +26,7 @@
   2. Navigiert der User weg, werden laufende API-Requests abgebrochen (kein Background-Battery-Drain)
   3. Cache wird beim App-Start bereinigt (Eintraege >7 Tage geloescht, Gesamtgroesse <100MB)
   4. Account-Wechsel zeigt Loading-Indikator statt Flash alter Daten
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
 - [ ] 13-00-PLAN.md — Wave 0: Test-Stubs (WebsiteDetailViewModelTests + DashboardViewModelTests)
 - [ ] 13-01-PLAN.md — Cache Lifecycle (FIX-03) + Account-Wechsel Loading State (FIX-04)
@@ -54,6 +54,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 13. Critical Bug Fixes | 0/3 | Not started | - |
+| 13. Critical Bug Fixes | 0/3 | Complete    | 2026-03-29 |
 | 14. Code Cleanup | 0/? | Not started | - |
 | 15. README & Repo | 0/? | Not started | - |
