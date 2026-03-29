@@ -28,6 +28,7 @@ class WebsiteDetailViewModel: ObservableObject {
     @Published var activeFilters: [PlausibleQueryFilter] = []
     @Published var isLoading = false
     @Published var error: String?
+    private var loadingTask: Task<Void, Never>?
 
     init(websiteId: String, domain: String = "") {
         self.websiteId = websiteId
@@ -35,29 +36,44 @@ class WebsiteDetailViewModel: ObservableObject {
     }
 
     func loadData(dateRange: DateRange) async {
-        isLoading = true
-        defer { isLoading = false }
+        // Cancel vorherigen Load — verhindert Background-Battery-Drain (FIX-02)
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            defer {
+                if !Task.isCancelled {
+                    isLoading = false
+                }
+            }
 
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { await self.loadStats(dateRange: dateRange) }
-            group.addTask { await self.loadActiveVisitors() }
-            group.addTask { await self.loadPageviews(dateRange: dateRange) }
-            group.addTask { await self.loadTopPages(dateRange: dateRange) }
-            group.addTask { await self.loadPageTitles(dateRange: dateRange) }
-            group.addTask { await self.loadReferrers(dateRange: dateRange) }
-            group.addTask { await self.loadCountries(dateRange: dateRange) }
-            group.addTask { await self.loadRegions(dateRange: dateRange) }
-            group.addTask { await self.loadCities(dateRange: dateRange) }
-            group.addTask { await self.loadDevices(dateRange: dateRange) }
-            group.addTask { await self.loadBrowsers(dateRange: dateRange) }
-            group.addTask { await self.loadOperatingSystems(dateRange: dateRange) }
-            group.addTask { await self.loadLanguages(dateRange: dateRange) }
-            group.addTask { await self.loadScreens(dateRange: dateRange) }
-            group.addTask { await self.loadEvents(dateRange: dateRange) }
-            group.addTask { await self.loadEntryPages(dateRange: dateRange) }
-            group.addTask { await self.loadExitPages(dateRange: dateRange) }
-            group.addTask { await self.loadGoals(dateRange: dateRange) }
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { await self.loadStats(dateRange: dateRange) }
+                group.addTask { await self.loadActiveVisitors() }
+                group.addTask { await self.loadPageviews(dateRange: dateRange) }
+                group.addTask { await self.loadTopPages(dateRange: dateRange) }
+                group.addTask { await self.loadPageTitles(dateRange: dateRange) }
+                group.addTask { await self.loadReferrers(dateRange: dateRange) }
+                group.addTask { await self.loadCountries(dateRange: dateRange) }
+                group.addTask { await self.loadRegions(dateRange: dateRange) }
+                group.addTask { await self.loadCities(dateRange: dateRange) }
+                group.addTask { await self.loadDevices(dateRange: dateRange) }
+                group.addTask { await self.loadBrowsers(dateRange: dateRange) }
+                group.addTask { await self.loadOperatingSystems(dateRange: dateRange) }
+                group.addTask { await self.loadLanguages(dateRange: dateRange) }
+                group.addTask { await self.loadScreens(dateRange: dateRange) }
+                group.addTask { await self.loadEvents(dateRange: dateRange) }
+                group.addTask { await self.loadEntryPages(dateRange: dateRange) }
+                group.addTask { await self.loadExitPages(dateRange: dateRange) }
+                group.addTask { await self.loadGoals(dateRange: dateRange) }
+            }
         }
+        loadingTask = task
+        await task.value
+    }
+
+    func cancelLoading() {
+        loadingTask?.cancel()
+        loadingTask = nil
     }
 
     private func loadStats(dateRange: DateRange) async {

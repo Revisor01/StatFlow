@@ -151,8 +151,9 @@ class AccountManager: ObservableObject {
                 #if DEBUG
                 print("AccountManager: updated activeAccount.sites = \(updated.sites ?? [])")
                 #endif
-                // Update widget credentials with new sites
-                updateWidgetCredentials(for: updated)
+                // Nur Daten schreiben — kein reloadAllTimelines (FIX-01)
+                // Widget-Reload passiert ausschliesslich ueber applyAccountCredentials
+                syncWidgetData(for: updated)
             }
         } else {
             #if DEBUG
@@ -298,11 +299,11 @@ class AccountManager: ObservableObject {
             AnalyticsManager.shared.setProvider(PlausibleAPI.shared)
         }
 
-        // Update widget
-        updateWidgetCredentials(for: account)
-
-        // Notify all views to refresh
+        // Erst Views benachrichtigen, dann Widget-Reload (alle Writes sind abgeschlossen, FIX-01)
         NotificationCenter.default.post(name: .accountDidChange, object: nil)
+
+        // Widget-Reload NACH allen async-Operationen und Filesystem-Writes
+        updateWidgetCredentials(for: account)
     }
 
     private func updateWidgetCredentials(for account: AnalyticsAccount) {
@@ -326,6 +327,28 @@ class AccountManager: ObservableObject {
         // New multi-account support for widget
         syncAccountsToWidget()
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// Schreibt Widget-Credentials und Account-Daten ohne Timeline-Reload (FIX-01)
+    /// Nur fuer updateAccountSites — reloadAllTimelines passiert ausschliesslich in updateWidgetCredentials
+    private func syncWidgetData(for account: AnalyticsAccount) {
+        let token: String
+        switch account.providerType {
+        case .umami:
+            token = account.credentials.token ?? ""
+        case .plausible:
+            token = account.credentials.apiKey ?? ""
+        }
+
+        let sharedProviderType: SharedCredentials.ProviderType = account.providerType == .umami ? .umami : .plausible
+        SharedCredentials.save(
+            serverURL: account.serverURL,
+            token: token,
+            providerType: sharedProviderType,
+            sites: account.sites
+        )
+
+        syncAccountsToWidget()
     }
 
     /// Syncs all accounts to widget storage (encrypted)
