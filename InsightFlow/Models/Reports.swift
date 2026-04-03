@@ -38,13 +38,19 @@ struct FunnelStep: Codable, Identifiable, Sendable {
     let type: String       // "path" or "event"
     let value: String
     let visitors: Int
-    let dropoff: Int
+    let previous: Int?
+    let dropped: Int?
+    let dropoff: Double?    // API returns null for first step, fraction for others
+    let remaining: Double?
 
     var id: String { "\(type)-\(value)" }
 
     var dropoffRate: Double {
-        guard visitors + dropoff > 0 else { return 0 }
-        return Double(dropoff) / Double(visitors + dropoff) * 100
+        dropoff ?? 0
+    }
+
+    var droppedCount: Int {
+        dropped ?? 0
     }
 }
 
@@ -92,14 +98,37 @@ struct GoalReportItem: Identifiable, Sendable {
 
 // MARK: - Attribution Report
 
-struct AttributionItem: Codable, Identifiable, Sendable {
-    let source: String?
-    let medium: String?
-    let campaign: String?
-    let channel: String?
-    let visitors: Int
+struct AttributionResponse: Codable, Sendable {
+    let referrer: [AttributionEntry]?
+    let paidAds: [AttributionEntry]?
+    let utm_source: [AttributionEntry]?
+    let utm_medium: [AttributionEntry]?
+    let utm_campaign: [AttributionEntry]?
+    let utm_content: [AttributionEntry]?
+    let utm_term: [AttributionEntry]?
+    let total: AttributionTotal?
+}
 
-    var id: String { "\(source ?? "")-\(channel ?? "")" }
+struct AttributionEntry: Codable, Identifiable, Sendable {
+    let name: String
+    let value: Int
+
+    var id: String { name }
+}
+
+struct AttributionTotal: Codable, Sendable {
+    let pageviews: Int?
+    let visitors: Int?
+    let visits: Int?
+}
+
+/// Flat item for display in the UI
+struct AttributionItem: Identifiable, Sendable {
+    let category: String   // "Referrer", "Paid Ads", etc.
+    let name: String
+    let count: Int
+
+    var id: String { "\(category)-\(name)" }
 }
 
 

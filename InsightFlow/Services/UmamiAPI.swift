@@ -704,7 +704,25 @@ actor UmamiAPI: AnalyticsProvider {
         ]
 
         let data = try await postRequest(endpoint: "api/reports/attribution", body: body)
-        return try decoder.decode([AttributionItem].self, from: data)
+        let response = try decoder.decode(AttributionResponse.self, from: data)
+
+        var items: [AttributionItem] = []
+        for entry in response.referrer ?? [] {
+            items.append(AttributionItem(category: "Referrer", name: entry.name, count: entry.value))
+        }
+        for entry in response.paidAds ?? [] {
+            items.append(AttributionItem(category: "Paid Ads", name: entry.name, count: entry.value))
+        }
+        for entry in response.utm_source ?? [] {
+            items.append(AttributionItem(category: "UTM Source", name: entry.name, count: entry.value))
+        }
+        for entry in response.utm_medium ?? [] {
+            items.append(AttributionItem(category: "UTM Medium", name: entry.name, count: entry.value))
+        }
+        for entry in response.utm_campaign ?? [] {
+            items.append(AttributionItem(category: "UTM Campaign", name: entry.name, count: entry.value))
+        }
+        return items
     }
 
     func getMetrics(websiteId: String, dateRange: DateRange, type: MetricType, limit: Int = 10) async throws -> [MetricItem] {

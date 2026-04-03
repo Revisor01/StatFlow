@@ -125,25 +125,17 @@ struct AttributionRow: View {
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                if let channel = item.channel {
-                    Text(channel)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
+                Text(item.name)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
 
-                HStack(spacing: 6) {
-                    if let source = item.source {
-                        TagBadge(text: source, color: .blue)
-                    }
-                    if let medium = item.medium {
-                        TagBadge(text: medium, color: .purple)
-                    }
-                }
+                TagBadge(text: item.category, color: item.category == "Referrer" ? .blue : .purple)
             }
 
             Spacer()
 
-            Text("\(item.visitors)")
+            Text("\(item.count)")
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .monospacedDigit()
@@ -213,7 +205,7 @@ struct FunnelReportView: View {
                                     .font(.caption)
                                     .fontWeight(.semibold)
 
-                                if index > 0 && step.dropoff > 0 {
+                                if index > 0 && step.droppedCount > 0 {
                                     Text("-\(Int(step.dropoffRate * 100))% \(String(localized: "reports.funnel.dropoff"))")
                                         .font(.caption2)
                                         .foregroundStyle(.red)
