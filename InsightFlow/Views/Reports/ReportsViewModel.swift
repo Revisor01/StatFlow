@@ -8,6 +8,7 @@ class ReportsViewModel: ObservableObject {
     @Published var funnelData: [FunnelStep] = []
     @Published var utmData: [UTMReportItem] = []
     @Published var goalData: [GoalReportItem] = []
+    @Published var goalResults: [String: GoalReportResult] = [:]
     @Published var attributionData: [AttributionItem] = []
     @Published var isLoading: Bool = false
     @Published var isOffline = false
@@ -101,12 +102,13 @@ class ReportsViewModel: ObservableObject {
         error = nil
 
         do {
-            let params = parseParameters(report.parameters)
-            let steps = params?["steps"] as? [[String: String]] ?? []
+            let steps = report.parameters?.steps ?? []
+            let window = report.parameters?.window ?? 60
             funnelData = try await api.getFunnelReport(
                 websiteId: websiteId,
                 dateRange: dateRange,
-                steps: steps
+                steps: steps,
+                window: window
             )
         } catch {
             #if DEBUG
@@ -123,12 +125,25 @@ class ReportsViewModel: ObservableObject {
         error = nil
 
         do {
-            let params = parseParameters(report.parameters)
-            goalData = try await api.getGoalReport(
+            let goalType = report.parameters?.type ?? "event"
+            let goalValue = report.parameters?.value ?? ""
+
+            let result = try await api.getGoalReport(
                 websiteId: websiteId,
                 dateRange: dateRange,
-                goals: []
+                goalType: goalType,
+                goalValue: goalValue
             )
+            goalResults[report.id] = result
+
+            // Build GoalReportItem for display compatibility
+            let item = GoalReportItem(
+                type: goalType,
+                value: goalValue,
+                goal: result.total,
+                result: result.num
+            )
+            goalData = [item]
         } catch {
             #if DEBUG
             print("ReportsViewModel: loadGoalReport error: \(error)")
@@ -140,13 +155,4 @@ class ReportsViewModel: ObservableObject {
     }
 
     // MARK: - Helpers
-
-    private func parseParameters(_ jsonString: String?) -> [String: Any]? {
-        guard let jsonString, !jsonString.isEmpty,
-              let data = jsonString.data(using: .utf8) else {
-            return nil
-        }
-
-        return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-    }
 }

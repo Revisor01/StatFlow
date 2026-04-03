@@ -16,9 +16,20 @@ struct Report: Codable, Identifiable, Sendable, Hashable {
     let type: String
     let name: String
     let description: String?
-    let parameters: String?  // JSON string
+    let parameters: ReportParameters?
     let createdAt: String
     let updatedAt: String?
+}
+
+struct ReportParameters: Codable, Sendable, Hashable {
+    let type: String?
+    let value: String?
+    let startDate: String?
+    let endDate: String?
+    let steps: [[String: String]]?
+    let window: Int?
+    let model: String?
+    let step: String?
 }
 
 // MARK: - Funnel Report
@@ -52,6 +63,18 @@ struct UTMReportItem: Codable, Identifiable, Sendable {
 
 // MARK: - Goal Report
 
+/// Result from /api/reports/goal — single goal query returns {num, total}
+struct GoalReportResult: Codable, Sendable {
+    let num: Int
+    let total: Int
+
+    var completionRate: Double {
+        guard total > 0 else { return 0 }
+        return Double(num) / Double(total) * 100
+    }
+}
+
+/// Used in the UI to display goal data with metadata from the report definition
 struct GoalReportItem: Codable, Identifiable, Sendable {
     let type: String       // "path" or "event"
     let value: String

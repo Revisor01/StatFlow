@@ -624,7 +624,7 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode(ReportListResponse.self, from: data)
     }
 
-    func getFunnelReport(websiteId: String, dateRange: DateRange, steps: [[String: String]]) async throws -> [FunnelStep] {
+    func getFunnelReport(websiteId: String, dateRange: DateRange, steps: [[String: String]], window: Int = 60) async throws -> [FunnelStep] {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let dates = dateRange.dates
@@ -636,7 +636,8 @@ actor UmamiAPI: AnalyticsProvider {
             "parameters": [
                 "startDate": formatter.string(from: dates.start),
                 "endDate": formatter.string(from: dates.end),
-                "steps": steps
+                "steps": steps,
+                "window": window
             ]
         ]
 
@@ -663,7 +664,7 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode([UTMReportItem].self, from: data)
     }
 
-    func getGoalReport(websiteId: String, dateRange: DateRange, goals: [[String: Any]]) async throws -> [GoalReportItem] {
+    func getGoalReport(websiteId: String, dateRange: DateRange, goalType: String, goalValue: String) async throws -> GoalReportResult {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let dates = dateRange.dates
@@ -675,15 +676,16 @@ actor UmamiAPI: AnalyticsProvider {
             "parameters": [
                 "startDate": formatter.string(from: dates.start),
                 "endDate": formatter.string(from: dates.end),
-                "goals": goals
+                "type": goalType,
+                "value": goalValue
             ]
         ]
 
         let data = try await postRequest(endpoint: "api/reports/goal", body: body)
-        return try decoder.decode([GoalReportItem].self, from: data)
+        return try decoder.decode(GoalReportResult.self, from: data)
     }
 
-    func getAttributionReport(websiteId: String, dateRange: DateRange) async throws -> [AttributionItem] {
+    func getAttributionReport(websiteId: String, dateRange: DateRange, model: String = "last-click", type: String = "path", step: String = "/") async throws -> [AttributionItem] {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let dates = dateRange.dates
@@ -694,7 +696,10 @@ actor UmamiAPI: AnalyticsProvider {
             "filters": [:],
             "parameters": [
                 "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end)
+                "endDate": formatter.string(from: dates.end),
+                "model": model,
+                "type": type,
+                "step": step
             ]
         ]
 
