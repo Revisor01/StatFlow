@@ -46,7 +46,7 @@ Plans:
   4. In den Modalen (Website, Teams, Benutzer, Webseite) zeigen die Toolbar-Buttons nur Icons (X und Häkchen) statt Text
 **Plans**: 1 plan
 Plans:
-- [ ] 16-01-PLAN.md — Alle vier UI-Fixes: Kachelhöhe, Chevrons, Dove-Icon, Notification-Strings
+- [ ] 17-01-PLAN.md — Alle vier Fixes: Self-Hosted-String, ServerType-Selektor, X-Button, Admin-Sheet-Icons
 **UI hint**: yes
 
 ### Progress
@@ -54,4 +54,4 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 16. UI & Layout Fixes | 1/1 | Complete    | 2026-04-03 |
-| 17. Modale & Account-Flow | 0/? | Not started | - |
+| 17. Modale & Account-Flow | 0/1 | Not started | - |
