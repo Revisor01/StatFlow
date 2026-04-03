@@ -489,7 +489,7 @@
 
 // MARK: - Quick Actions
 "events.quickAction" = "Events";
-"events.quickAction.subtitle" = "Custom events";
+"events.quickAction.subtitle" = "Event tracking";
 "reports.quickAction" = "Reports";
 "reports.quickAction.subtitle" = "Analytics reports";
 

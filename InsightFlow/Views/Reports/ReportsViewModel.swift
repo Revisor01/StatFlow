@@ -26,8 +26,12 @@ class ReportsViewModel: ObservableObject {
         !funnelReports.isEmpty
     }
 
+    var goalReports: [Report] {
+        reports.filter { $0.type == "goal" }
+    }
+
     var hasGoalReports: Bool {
-        !reports.filter { $0.type == "goals" }.isEmpty
+        !goalReports.isEmpty
     }
 
     // MARK: - Init
