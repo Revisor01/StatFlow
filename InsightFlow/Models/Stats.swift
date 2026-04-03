@@ -451,12 +451,28 @@ struct EventDetail: Codable, Identifiable, Sendable {
 struct EventStatsResponse: Codable, Sendable {
     let events: Int
     let properties: Int
-    let records: Int
-    let comparison: EventStatsComparison?
+    let records: StringOrInt
+
+    var recordsCount: Int { records.intValue }
 }
 
-struct EventStatsComparison: Codable, Sendable {
-    let events: Int
-    let properties: Int
-    let records: Int
+/// Handles Umami API inconsistency where `records` can be either Int or String
+struct StringOrInt: Codable, Sendable {
+    let intValue: Int
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let intVal = try? container.decode(Int.self) {
+            intValue = intVal
+        } else if let strVal = try? container.decode(String.self), let parsed = Int(strVal) {
+            intValue = parsed
+        } else {
+            intValue = 0
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(intValue)
+    }
 }

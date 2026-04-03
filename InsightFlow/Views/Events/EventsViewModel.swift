@@ -11,8 +11,8 @@ class EventsViewModel: ObservableObject {
     @Published var error: String?
 
     // Detail-View properties
-    @Published var selectedEventProperties: [EventDataEvent] = []
-    @Published var selectedEventValues: [String: [EventDataValue]] = [:]
+    @Published var selectedEventProperties: [String] = []
+    @Published var selectedEventValues: [String: [EventDataFieldValue]] = [:]
 
     private let api = UmamiAPI.shared
 
@@ -80,38 +80,21 @@ class EventsViewModel: ObservableObject {
         selectedEventValues = [:]
 
         do {
-            let allEvents = try await api.getEventDataEvents(
+            // event-data/fields returns all property+value combinations across all events
+            let allFields = try await api.getEventDataFields(
                 websiteId: websiteId,
                 dateRange: dateRange
             )
-            let properties = allEvents.filter { $0.eventName == eventName }
-            selectedEventProperties = properties
 
-            // Load values for each distinct property
-            var valuesDict: [String: [EventDataValue]] = [:]
-            await withTaskGroup(of: (String, [EventDataValue]).self) { group in
-                let propertyNames = Set(properties.compactMap { $0.propertyName })
-                for propertyName in propertyNames {
-                    group.addTask {
-                        do {
-                            let values = try await self.api.getEventDataValues(
-                                websiteId: self.websiteId,
-                                dateRange: dateRange,
-                                eventName: eventName,
-                                propertyName: propertyName
-                            )
-                            return (propertyName, values)
-                        } catch {
-                            #if DEBUG
-                            print("EventDataValues error for \(propertyName): \(error)")
-                            #endif
-                            return (propertyName, [])
-                        }
-                    }
-                }
-                for await (propertyName, values) in group {
-                    valuesDict[propertyName] = values
-                }
+            // Group by propertyName, collect values per property
+            let propertyNames = Set(allFields.map { $0.propertyName })
+            selectedEventProperties = propertyNames.sorted()
+
+            var valuesDict: [String: [EventDataFieldValue]] = [:]
+            for name in propertyNames {
+                valuesDict[name] = allFields
+                    .filter { $0.propertyName == name }
+                    .sorted { $0.total > $1.total }
             }
             selectedEventValues = valuesDict
         } catch {
