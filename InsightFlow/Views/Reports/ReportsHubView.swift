@@ -71,7 +71,7 @@ struct ReportsHubView: View {
                 NavigationLink {
                     GoalReportView(
                         website: website,
-                        reports: viewModel.reports.filter { $0.type == "goals" },
+                        reports: viewModel.goalReports,
                         dateRange: selectedDateRange
                     )
                 } label: {
