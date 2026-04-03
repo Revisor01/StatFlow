@@ -75,17 +75,18 @@ struct GoalReportResult: Codable, Sendable {
 }
 
 /// Used in the UI to display goal data with metadata from the report definition
-struct GoalReportItem: Codable, Identifiable, Sendable {
+struct GoalReportItem: Identifiable, Sendable {
     let type: String       // "path" or "event"
     let value: String
-    let goal: Int
-    let result: Int
+    let name: String       // Display name from report definition
+    let goal: Int          // total visitors in period
+    let result: Int        // visitors who triggered the goal
 
     var id: String { "\(type)-\(value)" }
 
     var completionRate: Double {
         guard goal > 0 else { return 0 }
-        return Double(result) / Double(goal) * 100
+        return Double(result) / Double(goal)
     }
 }
 

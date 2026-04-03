@@ -124,35 +124,43 @@ class ReportsViewModel: ObservableObject {
         isLoading = false
     }
 
-    func loadGoalReport(report: Report, dateRange: DateRange) async {
+    func loadAllGoals(reports: [Report], dateRange: DateRange) async {
         isLoading = true
         error = nil
+        goalData = []
 
-        do {
-            let goalType = report.parameters?.type ?? "event"
-            let goalValue = report.parameters?.value ?? ""
-
-            let result = try await api.getGoalReport(
-                websiteId: websiteId,
-                dateRange: dateRange,
-                goalType: goalType,
-                goalValue: goalValue
-            )
-            goalResults[report.id] = result
-
-            // Build GoalReportItem for display compatibility
-            let item = GoalReportItem(
-                type: goalType,
-                value: goalValue,
-                goal: result.total,
-                result: result.num
-            )
-            goalData = [item]
-        } catch {
-            #if DEBUG
-            print("ReportsViewModel: loadGoalReport error: \(error)")
-            #endif
-            self.error = error.localizedDescription
+        await withTaskGroup(of: GoalReportItem?.self) { group in
+            for report in reports {
+                group.addTask {
+                    let goalType = report.parameters?.type ?? "event"
+                    let goalValue = report.parameters?.value ?? ""
+                    do {
+                        let result = try await self.api.getGoalReport(
+                            websiteId: self.websiteId,
+                            dateRange: dateRange,
+                            goalType: goalType,
+                            goalValue: goalValue
+                        )
+                        return GoalReportItem(
+                            type: goalType,
+                            value: goalValue,
+                            name: report.name,
+                            goal: result.total,
+                            result: result.num
+                        )
+                    } catch {
+                        #if DEBUG
+                        print("ReportsViewModel: loadGoalReport error for \(report.name): \(error)")
+                        #endif
+                        return nil
+                    }
+                }
+            }
+            for await item in group {
+                if let item {
+                    goalData.append(item)
+                }
+            }
         }
 
         isLoading = false
