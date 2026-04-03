@@ -43,15 +43,15 @@ struct CreateWebsiteSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("button.cancel") { dismiss() }
+                    Button { dismiss() } label: { Image(systemName: "xmark") }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("button.create") {
+                    Button {
                         Task {
                             await viewModel.createWebsite(name: name, domain: domain)
                             dismiss()
                         }
-                    }
+                    } label: { Image(systemName: "checkmark") }
                     .disabled(!isValid)
                 }
             }
@@ -77,17 +77,17 @@ struct CreateTeamSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("button.cancel") { dismiss() }
+                    Button { dismiss() } label: { Image(systemName: "xmark") }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("button.create") {
+                    Button {
                         Task {
                             await viewModel.createTeam(name: name)
                             // Reload teams to ensure data is up to date
                             await viewModel.loadTeams()
                             dismiss()
                         }
-                    }
+                    } label: { Image(systemName: "checkmark") }
                     .disabled(name.isEmpty)
                 }
             }
@@ -126,15 +126,15 @@ struct CreateUserSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("button.cancel") { dismiss() }
+                    Button { dismiss() } label: { Image(systemName: "xmark") }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("button.create") {
+                    Button {
                         Task {
                             await viewModel.createUser(username: username, password: password, role: role)
                             dismiss()
                         }
-                    }
+                    } label: { Image(systemName: "checkmark") }
                     .disabled(username.isEmpty || password.isEmpty)
                 }
             }
@@ -192,7 +192,7 @@ struct PlausibleTrackingCodeSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("button.done") { dismiss() }
+                    Button { dismiss() } label: { Image(systemName: "checkmark") }
                 }
             }
         }
@@ -252,7 +252,7 @@ struct TrackingCodeSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("button.done") { dismiss() }
+                    Button { dismiss() } label: { Image(systemName: "checkmark") }
                 }
             }
         }
@@ -352,7 +352,7 @@ struct ShareLinkSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("button.done") { dismiss() }
+                    Button { dismiss() } label: { Image(systemName: "checkmark") }
                 }
             }
         }
@@ -402,17 +402,17 @@ struct EditWebsiteSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("button.cancel") { dismiss() }
+                    Button { dismiss() } label: { Image(systemName: "xmark") }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("button.save") {
+                    Button {
                         Task {
                             isUpdating = true
                             await viewModel.updateWebsite(website, name: name)
                             isUpdating = false
                             dismiss()
                         }
-                    }
+                    } label: { Image(systemName: "checkmark") }
                     .disabled(name.isEmpty || isUpdating)
                 }
             }
@@ -509,7 +509,7 @@ struct TeamMemberSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("button.done") { dismiss() }
+                    Button { dismiss() } label: { Image(systemName: "checkmark") }
                 }
             }
         }
