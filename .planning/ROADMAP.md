@@ -14,5 +14,5 @@
 
 | Phase | Name | Plans | Status |
 |-------|------|-------|--------|
-| 17 | Modale Account-Flow | 1/1 | In Progress |
+| 17 | Modale Account-Flow | Complete    | 2026-04-03 |
 | 16 | UI & Layout Fixes | — | Planned |
