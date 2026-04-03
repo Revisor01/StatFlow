@@ -43,7 +43,6 @@ struct ReportsHubView: View {
                 NavigationLink {
                     FunnelReportView(
                         website: website,
-                        reports: viewModel.funnelReports,
                         dateRange: selectedDateRange
                     )
                 } label: {

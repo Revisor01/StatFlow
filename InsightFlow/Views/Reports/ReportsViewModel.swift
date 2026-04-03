@@ -124,6 +124,36 @@ class ReportsViewModel: ObservableObject {
         isLoading = false
     }
 
+    func loadFirstFunnel(dateRange: DateRange) async {
+        isLoading = true
+        error = nil
+
+        do {
+            if reports.isEmpty {
+                let response = try await api.getReports(websiteId: websiteId)
+                reports = response.data
+            }
+            let funnels = reports.filter { $0.type == "funnel" }
+            if let first = funnels.first {
+                let steps = first.parameters?.steps ?? []
+                let window = first.parameters?.window ?? 60
+                funnelData = try await api.getFunnelReport(
+                    websiteId: websiteId,
+                    dateRange: dateRange,
+                    steps: steps,
+                    window: window
+                )
+            }
+        } catch {
+            #if DEBUG
+            print("ReportsViewModel: loadFirstFunnel error: \(error)")
+            #endif
+            self.error = error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
     func loadAllGoals(dateRange: DateRange) async {
         isLoading = true
         error = nil

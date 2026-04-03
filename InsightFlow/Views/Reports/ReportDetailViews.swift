@@ -156,75 +156,39 @@ struct AttributionRow: View {
 
 struct FunnelReportView: View {
     let website: Website
-    let reports: [Report]
     let dateRange: DateRange
 
     @StateObject private var viewModel: ReportsViewModel
-    @State private var selectedReport: Report?
 
-    init(website: Website, reports: [Report], dateRange: DateRange) {
+    init(website: Website, dateRange: DateRange) {
         self.website = website
-        self.reports = reports
         self.dateRange = dateRange
         _viewModel = StateObject(wrappedValue: ReportsViewModel(websiteId: website.id))
     }
 
     var body: some View {
-        Group {
-            if reports.isEmpty {
-                ContentUnavailableView(
-                    String(localized: "reports.empty.funnel"),
-                    systemImage: "chart.bar.doc.horizontal",
-                    description: Text(String(localized: "reports.empty.funnel.description"))
-                )
-            } else {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        // Report picker
-                        if reports.count > 1 {
-                            GlassCard {
-                                Picker(String(localized: "reports.selectReport"), selection: $selectedReport) {
-                                    ForEach(reports) { report in
-                                        Text(report.name).tag(Optional(report))
-                                    }
-                                }
-                                .pickerStyle(.menu)
-                            }
-                            .padding(.horizontal)
-                        }
-
-                        // Funnel steps
-                        if viewModel.isLoading && viewModel.funnelData.isEmpty {
-                            ProgressView()
-                                .padding(40)
-                        } else if viewModel.funnelData.isEmpty {
-                            GlassCard {
-                                Text(String(localized: "reports.empty.funnel.description"))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
-                                    .padding()
-                            }
-                            .padding(.horizontal)
-                        } else {
-                            funnelStepsView
-                        }
-                    }
-                    .padding(.vertical)
+        ScrollView {
+            VStack(spacing: 16) {
+                if viewModel.isLoading && viewModel.funnelData.isEmpty {
+                    ProgressView()
+                        .padding(40)
+                } else if viewModel.funnelData.isEmpty && !viewModel.isLoading {
+                    ContentUnavailableView(
+                        String(localized: "reports.empty.funnel"),
+                        systemImage: "chart.bar.doc.horizontal",
+                        description: Text(String(localized: "reports.empty.funnel.description"))
+                    )
+                } else {
+                    funnelStepsView
                 }
             }
+            .padding(.vertical)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle(String(localized: "reports.funnel"))
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            selectedReport = reports.first
-        }
-        .onChange(of: selectedReport) { _, newReport in
-            guard let report = newReport else { return }
-            Task {
-                await viewModel.loadFunnelReport(report: report, dateRange: dateRange)
-            }
+        .task {
+            await viewModel.loadFirstFunnel(dateRange: dateRange)
         }
     }
 
