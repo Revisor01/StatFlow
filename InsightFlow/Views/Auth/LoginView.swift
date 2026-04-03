@@ -239,7 +239,7 @@ struct LoginView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(selectedProvider.displayName)
                         .font(.headline)
-                    Text(serverType == .cloud ? selectedProvider.cloudURL : "login.selfhosted.title")
+                    Text(serverType == .cloud ? selectedProvider.cloudURL : String(localized: "login.selfhosted.title"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
