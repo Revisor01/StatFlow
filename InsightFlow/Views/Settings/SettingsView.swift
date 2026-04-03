@@ -302,25 +302,13 @@ struct SettingsView: View {
             NavigationLink {
                 SetupGuideView()
             } label: {
-                HStack {
-                    Label(String(localized: "setupGuide.settings.link"), systemImage: "doc.text.magnifyingglass")
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
+                Label(String(localized: "setupGuide.settings.link"), systemImage: "doc.text.magnifyingglass")
             }
 
             NavigationLink {
                 AnalyticsGlossaryView()
             } label: {
-                HStack {
-                    Label(String(localized: "glossary.settings.link"), systemImage: "book.closed")
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
+                Label(String(localized: "glossary.settings.link"), systemImage: "book.closed")
             }
 
             // Umami Link
@@ -397,7 +385,6 @@ struct SettingsView: View {
                 HStack(spacing: 4) {
                     Text("Made with")
                     Image(systemName: "dove.fill")
-                        .foregroundStyle(.secondary)
                     Text("in Hennstedt")
                 }
                 Text("Friede. Schalom. Salam.")
