@@ -124,43 +124,49 @@ class ReportsViewModel: ObservableObject {
         isLoading = false
     }
 
-    func loadAllGoals(reports: [Report], dateRange: DateRange) async {
+    func loadAllGoals(dateRange: DateRange) async {
         isLoading = true
         error = nil
         goalData = []
 
-        await withTaskGroup(of: GoalReportItem?.self) { group in
-            for report in reports {
-                group.addTask {
-                    let goalType = report.parameters?.type ?? "event"
-                    let goalValue = report.parameters?.value ?? ""
-                    do {
-                        let result = try await self.api.getGoalReport(
-                            websiteId: self.websiteId,
-                            dateRange: dateRange,
-                            goalType: goalType,
-                            goalValue: goalValue
-                        )
-                        return GoalReportItem(
-                            type: goalType,
-                            value: goalValue,
-                            name: report.name,
-                            goal: result.total,
-                            result: result.num
-                        )
-                    } catch {
-                        #if DEBUG
-                        print("ReportsViewModel: loadGoalReport error for \(report.name): \(error)")
-                        #endif
-                        return nil
-                    }
-                }
+        do {
+            // Load reports if not already loaded
+            if reports.isEmpty {
+                let response = try await api.getReports(websiteId: websiteId)
+                reports = response.data
             }
-            for await item in group {
-                if let item {
+
+            let goals = reports.filter { $0.type == "goal" }
+
+            for report in goals {
+                let goalType = report.parameters?.type ?? "event"
+                let goalValue = report.parameters?.value ?? ""
+                do {
+                    let result = try await api.getGoalReport(
+                        websiteId: websiteId,
+                        dateRange: dateRange,
+                        goalType: goalType,
+                        goalValue: goalValue
+                    )
+                    let item = GoalReportItem(
+                        type: goalType,
+                        value: goalValue,
+                        name: report.name,
+                        goal: result.total,
+                        result: result.num
+                    )
                     goalData.append(item)
+                } catch {
+                    #if DEBUG
+                    print("ReportsViewModel: loadGoalReport error for \(report.name): \(error)")
+                    #endif
                 }
             }
+        } catch {
+            #if DEBUG
+            print("ReportsViewModel: loadAllGoals error: \(error)")
+            #endif
+            self.error = error.localizedDescription
         }
 
         isLoading = false

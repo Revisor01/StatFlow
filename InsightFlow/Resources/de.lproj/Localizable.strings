@@ -487,7 +487,8 @@
 "reports.funnel.dropoff" = "Absprung";
 "reports.goals.completion" = "Erfüllung";
 "reports.goals.of" = "von";
-"reports.goals.visitors" = "Besuchern";
+"reports.goals.visitors" = "Besucher*innen";
+"metrics.unknown" = "Unbekannt";
 "reports.selectReport" = "Report auswählen";
 
 // MARK: - Quick Actions

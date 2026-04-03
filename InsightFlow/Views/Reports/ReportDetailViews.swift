@@ -288,54 +288,39 @@ struct FunnelReportView: View {
 
 struct GoalReportView: View {
     let website: Website
-    let reports: [Report]
     let dateRange: DateRange
 
     @StateObject private var viewModel: ReportsViewModel
 
-    init(website: Website, reports: [Report], dateRange: DateRange) {
+    init(website: Website, dateRange: DateRange) {
         self.website = website
-        self.reports = reports
         self.dateRange = dateRange
         _viewModel = StateObject(wrappedValue: ReportsViewModel(websiteId: website.id))
     }
 
     var body: some View {
-        Group {
-            if reports.isEmpty {
-                ContentUnavailableView(
-                    String(localized: "reports.empty.goals"),
-                    systemImage: "target",
-                    description: Text(String(localized: "reports.empty.goals.description"))
-                )
-            } else {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        if viewModel.isLoading && viewModel.goalData.isEmpty {
-                            ProgressView()
-                                .padding(40)
-                        } else if viewModel.goalData.isEmpty {
-                            GlassCard {
-                                Text(String(localized: "reports.empty.goals.description"))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
-                                    .padding()
-                            }
-                            .padding(.horizontal)
-                        } else {
-                            goalItemsView
-                        }
-                    }
-                    .padding(.vertical)
+        ScrollView {
+            VStack(spacing: 16) {
+                if viewModel.isLoading && viewModel.goalData.isEmpty {
+                    ProgressView()
+                        .padding(40)
+                } else if viewModel.goalData.isEmpty && !viewModel.isLoading {
+                    ContentUnavailableView(
+                        String(localized: "reports.empty.goals"),
+                        systemImage: "target",
+                        description: Text(String(localized: "reports.empty.goals.description"))
+                    )
+                } else {
+                    goalItemsView
                 }
             }
+            .padding(.vertical)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle(String(localized: "reports.goals"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await viewModel.loadAllGoals(reports: reports, dateRange: dateRange)
+            await viewModel.loadAllGoals(dateRange: dateRange)
         }
     }
 
