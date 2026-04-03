@@ -10,9 +10,17 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 ## Current State
 
-**Latest shipped:** v2.5 Pre-Release Polish (completed 2026-03-29)
-**Current milestone:** v2.6 Design Polish
+**Latest shipped:** v2.6 Design Polish (completed 2026-04-03)
 **GitHub:** Revisor01/StatFlow
+
+### v2.6 Accomplishments
+- Dashboard-Kacheln gleich hoch (QuickActionCard maxHeight fix)
+- Doppelte Chevrons bei Analytics-NavigationLinks entfernt
+- Dove-Icon in Settings sichtbar gemacht
+- Notification-Strings klarer formuliert (DE+EN)
+- Self-Hosted String im Onboarding lokalisiert
+- ServerType-Selektor + X-Button in AddAccountView
+- Icon-only Toolbar-Buttons in allen 8 Admin-Sheets
 
 ### v2.5 Accomplishments
 - 4 kritische Bugs gefixt: Widget-Sync, Request-Cancellation, Cache-Cleanup, Loading-State
@@ -146,4 +154,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-29 — v2.6 Design Polish started*
+*Last updated: 2026-04-03 — v2.6 Design Polish completed*

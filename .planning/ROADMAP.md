@@ -7,12 +7,5 @@
 - ✅ **v2.2 Support & API Coverage** - 4 phases, 8 plans, completed 2026-03-28 ([archive](milestones/v2.2-ROADMAP.md))
 - ✅ **v2.3 API Data Screens & Analytics Setup** - 4 phases, 8 plans, completed 2026-03-28 ([archive](milestones/v2.3-ROADMAP.md))
 - ✅ **v2.4 Rename to StatFlow** - 1 phase, completed 2026-03-28
-
-## Phases
-
-### v2.6 Design Polish — Active
-
-| Phase | Name | Plans | Status |
-|-------|------|-------|--------|
-| 17 | Modale Account-Flow | Complete    | 2026-04-03 |
-| 16 | UI & Layout Fixes | — | Planned |
+- ✅ **v2.5 Pre-Release Polish** - 3 phases, 7 plans, completed 2026-03-29 ([archive](milestones/v2.5-ROADMAP.md))
+- ✅ **v2.6 Design Polish** - 2 phases, 2 plans, completed 2026-04-03 ([archive](milestones/v2.6-ROADMAP.md))
