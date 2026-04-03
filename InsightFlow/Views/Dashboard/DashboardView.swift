@@ -509,6 +509,7 @@ struct AddAccountView: View {
     // Plausible
     @State private var apiKey = ""
 
+    @State private var serverType: ServerType = .cloud
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -538,6 +539,36 @@ struct AddAccountView: View {
                     }
                 }
 
+                // Server Type Selection
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("login.serverType")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
+
+                    HStack(spacing: 12) {
+                        ForEach(ServerType.allCases, id: \.self) { type in
+                            ServerTypeButton(
+                                type: type,
+                                isSelected: serverType == type,
+                                providerColor: selectedProvider == .umami ? Color.orange : Color.blue
+                            ) {
+                                withAnimation(.spring(duration: 0.3)) {
+                                    serverType = type
+                                    if type == .cloud {
+                                        serverURL = selectedProvider == .umami
+                                            ? "https://cloud.umami.is"
+                                            : "https://plausible.io"
+                                    } else {
+                                        serverURL = ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Details Section
                 VStack(alignment: .leading, spacing: 16) {
                     Text("account.add.details")
@@ -552,13 +583,15 @@ struct AddAccountView: View {
                             .background(Color(.secondarySystemGroupedBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                        TextField("account.add.serverURL", text: $serverURL)
-                            .textContentType(.URL)
-                            .textInputAutocapitalization(.never)
-                            .keyboardType(.URL)
-                            .padding()
-                            .background(Color(.secondarySystemGroupedBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        if serverType == .selfHosted {
+                            TextField("account.add.serverURL", text: $serverURL)
+                                .textContentType(.URL)
+                                .textInputAutocapitalization(.never)
+                                .keyboardType(.URL)
+                                .padding()
+                                .background(Color(.secondarySystemGroupedBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
                     }
                 }
 
@@ -637,14 +670,23 @@ struct AddAccountView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle("account.add.title")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+            }
+        }
     }
 
     private var isFormValid: Bool {
-        if serverURL.isEmpty { return false }
+        let hasValidServer = serverType == .cloud || !serverURL.isEmpty
         if selectedProvider == .umami {
-            return !username.isEmpty && !password.isEmpty
+            return hasValidServer && !username.isEmpty && !password.isEmpty
         } else {
-            return !apiKey.isEmpty
+            return hasValidServer && !apiKey.isEmpty
         }
     }
 
@@ -653,7 +695,9 @@ struct AddAccountView: View {
         errorMessage = nil
 
         do {
-            var normalizedURL = serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
+            var normalizedURL = serverType == .cloud
+                ? (selectedProvider == .umami ? "https://cloud.umami.is" : "https://plausible.io")
+                : serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
             while normalizedURL.hasSuffix("/") { normalizedURL.removeLast() }
             if !normalizedURL.lowercased().hasPrefix("http") {
                 normalizedURL = "https://" + normalizedURL
