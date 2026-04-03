@@ -35,6 +35,15 @@ struct EventDataField: Codable, Identifiable, Sendable {
     var id: String { propertyName }
 }
 
+struct EventDataFieldValue: Codable, Identifiable, Sendable {
+    let propertyName: String
+    let dataType: Int
+    let value: String
+    let total: Int
+
+    var id: String { "\(propertyName)-\(value)" }
+}
+
 struct EventDataProperty: Codable, Identifiable, Sendable {
     let eventName: String
     let propertyName: String

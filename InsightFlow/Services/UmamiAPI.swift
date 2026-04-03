@@ -357,7 +357,7 @@ actor UmamiAPI: AnalyticsProvider {
         let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
 
         let data = try await request(
-            endpoint: "api/websites/\(websiteId)/events/stats",
+            endpoint: "api/websites/\(websiteId)/event-data/stats",
             queryItems: [
                 URLQueryItem(name: "startAt", value: String(startAt)),
                 URLQueryItem(name: "endAt", value: String(endAt))
@@ -368,19 +368,19 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Event Data
 
-    func getEventDataEvents(websiteId: String, dateRange: DateRange) async throws -> [EventDataEvent] {
+    func getEventDataFields(websiteId: String, dateRange: DateRange) async throws -> [EventDataFieldValue] {
         let dates = dateRange.dates
         let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
         let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
 
         let data = try await request(
-            endpoint: "api/websites/\(websiteId)/event-data/events",
+            endpoint: "api/websites/\(websiteId)/event-data/fields",
             queryItems: [
                 URLQueryItem(name: "startAt", value: String(startAt)),
                 URLQueryItem(name: "endAt", value: String(endAt))
             ]
         )
-        return try decoder.decode([EventDataEvent].self, from: data)
+        return try decoder.decode([EventDataFieldValue].self, from: data)
     }
 
     func getEventDataValues(websiteId: String, dateRange: DateRange, eventName: String, propertyName: String) async throws -> [EventDataValue] {

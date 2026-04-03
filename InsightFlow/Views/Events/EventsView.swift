@@ -148,7 +148,7 @@ struct EventsView: View {
                 Divider()
                     .frame(height: 36)
                 StatPill(
-                    value: "\(stats.records)",
+                    value: "\(stats.recordsCount)",
                     label: String(localized: "events.stats.records"),
                     icon: "doc.text.fill",
                     color: .orange
@@ -296,7 +296,7 @@ struct EventDetailView: View {
 
     private var propertiesSection: some View {
         VStack(spacing: 12) {
-            let distinctProperties = Array(Set(viewModel.selectedEventProperties.compactMap { $0.propertyName })).sorted()
+            let distinctProperties = viewModel.selectedEventProperties
 
             if distinctProperties.isEmpty {
                 GlassCard {
