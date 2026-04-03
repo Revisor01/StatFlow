@@ -485,6 +485,8 @@
 "reports.funnel.visitors" = "Visitors";
 "reports.funnel.dropoff" = "Dropoff";
 "reports.goals.completion" = "Completion";
+"reports.goals.of" = "of";
+"reports.goals.visitors" = "visitors";
 "reports.selectReport" = "Select Report";
 
 // MARK: - Quick Actions

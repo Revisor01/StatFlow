@@ -292,7 +292,6 @@ struct GoalReportView: View {
     let dateRange: DateRange
 
     @StateObject private var viewModel: ReportsViewModel
-    @State private var selectedReport: Report?
 
     init(website: Website, reports: [Report], dateRange: DateRange) {
         self.website = website
@@ -312,20 +311,6 @@ struct GoalReportView: View {
             } else {
                 ScrollView {
                     VStack(spacing: 16) {
-                        // Report picker
-                        if reports.count > 1 {
-                            GlassCard {
-                                Picker(String(localized: "reports.selectReport"), selection: $selectedReport) {
-                                    ForEach(reports) { report in
-                                        Text(report.name).tag(Optional(report))
-                                    }
-                                }
-                                .pickerStyle(.menu)
-                            }
-                            .padding(.horizontal)
-                        }
-
-                        // Goal items
                         if viewModel.isLoading && viewModel.goalData.isEmpty {
                             ProgressView()
                                 .padding(40)
@@ -349,60 +334,58 @@ struct GoalReportView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle(String(localized: "reports.goals"))
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            selectedReport = reports.first
-        }
-        .onChange(of: selectedReport) { _, newReport in
-            guard let report = newReport else { return }
-            Task {
-                await viewModel.loadGoalReport(report: report, dateRange: dateRange)
-            }
+        .task {
+            await viewModel.loadAllGoals(reports: reports, dateRange: dateRange)
         }
     }
 
     @ViewBuilder
     private var goalItemsView: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                ForEach(viewModel.goalData) { item in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(item.value)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .lineLimit(1)
+        ForEach(viewModel.goalData) { item in
+            GlassCard {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "target")
+                            .font(.title3)
+                            .foregroundStyle(.orange)
 
-                            Spacer()
+                        Text(item.name)
+                            .font(.headline)
+                            .lineLimit(2)
 
-                            Text("\(item.result)/\(item.goal)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .monospacedDigit()
-                        }
-
-                        HStack {
-                            ProgressView(value: min(item.completionRate, 1.0))
-                                .tint(item.completionRate >= 1.0 ? .green : .orange)
-
-                            Text(String(format: "%.0f%%", item.completionRate * 100))
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(item.completionRate >= 1.0 ? .green : .orange)
-                                .frame(width: 36, alignment: .trailing)
-                        }
-
-                        Text(String(localized: "reports.goals.completion"))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        Spacer()
                     }
 
-                    if item.id != viewModel.goalData.last?.id {
-                        Divider()
+                    HStack {
+                        ProgressView(value: min(item.completionRate, 1.0))
+                            .tint(item.completionRate >= 0.5 ? .green : .orange)
+
+                        Text(String(format: "%.1f%%", item.completionRate * 100))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(item.completionRate >= 0.5 ? .green : .orange)
+                            .monospacedDigit()
+                            .frame(width: 52, alignment: .trailing)
+                    }
+
+                    HStack {
+                        Text("\(item.result)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Text(String(localized: "reports.goals.of"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Text("\(item.goal)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        Text(String(localized: "reports.goals.visitors"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
+            .padding(.horizontal)
         }
-        .padding(.horizontal)
     }
 }
 
