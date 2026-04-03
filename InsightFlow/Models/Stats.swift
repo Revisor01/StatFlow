@@ -117,11 +117,11 @@ struct TimeSeriesPoint: Codable, Identifiable, Sendable {
 }
 
 struct MetricItem: Codable, Identifiable, Sendable {
-    let x: String
+    let x: String?
     let y: Int
 
-    var id: String { x }
-    var name: String { x }
+    var id: String { x ?? "unknown" }
+    var name: String { x ?? String(localized: "metrics.unknown") }
     var value: Int { y }
 }
 

@@ -487,6 +487,7 @@
 "reports.goals.completion" = "Completion";
 "reports.goals.of" = "of";
 "reports.goals.visitors" = "visitors";
+"metrics.unknown" = "Unknown";
 "reports.selectReport" = "Select Report";
 
 // MARK: - Quick Actions
