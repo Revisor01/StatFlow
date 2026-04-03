@@ -10,4 +10,9 @@
 
 ## Phases
 
-*No active milestone. Run `/gsd:new-milestone` to start the next one.*
+### v2.6 Design Polish — Active
+
+| Phase | Name | Plans | Status |
+|-------|------|-------|--------|
+| 17 | Modale Account-Flow | 1/1 | In Progress |
+| 16 | UI & Layout Fixes | — | Planned |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Rename to StatFlow
-status: planning
-stopped_at: Milestone v2.4 initialized
-last_updated: "2026-03-28T22:04:29.836Z"
-last_activity: 2026-03-28
+status: in-progress
+stopped_at: "Completed 17-modale-account-flow/17-01-PLAN.md"
+last_updated: "2026-04-03T00:15:00Z"
+last_activity: 2026-04-03
 progress:
   total_phases: 1
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 1
+  completed_plans: 1
 ---
 
 # Project State
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-03-28)
 
 ## Current Position
 
-Phase: 12
-Plan: Not started
-Status: Ready for planning
-Last activity: 2026-03-28
+Phase: 17
+Plan: 17-01 Complete
+Status: In Progress
+Last activity: 2026-04-03
 
 ## Accumulated Context
 
@@ -35,6 +35,8 @@ Last activity: 2026-03-28
 
 - App-Name: StatFlow (ersetzt PrivacyFlow/InsightFlow)
 - Bundle ID Prefix: de.godsapp.statflow
+- ServerTypeButton aus LoginView in AddAccountView wiederverwendet
+- Icon-only Toolbar-Buttons als Standard fuer alle Admin-Sheets (Image(systemName:))
 
 ### Blockers/Concerns
 
@@ -42,6 +44,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Milestone v2.4 initialized
+Last session: 2026-04-03
+Stopped at: Completed 17-modale-account-flow/17-01-PLAN.md
 Resume file: None
