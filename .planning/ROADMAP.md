@@ -53,5 +53,5 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 16. UI & Layout Fixes | 1/1 | Complete   | 2026-04-03 |
+| 16. UI & Layout Fixes | 1/1 | Complete    | 2026-04-03 |
 | 17. Modale & Account-Flow | 0/? | Not started | - |

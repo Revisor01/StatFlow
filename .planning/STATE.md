@@ -4,7 +4,7 @@ milestone: v2.6
 milestone_name: Design Polish
 status: verifying
 stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-04-03T19:46:39.787Z"
+last_updated: "2026-04-03T19:49:46.340Z"
 last_activity: 2026-04-03
 progress:
   total_phases: 2
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-03-29)
 
 ## Current Position
 
-Phase: 16 (UI & Layout Fixes) — EXECUTING
-Plan: 1 of 1
+Phase: 17
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-04-03
 
