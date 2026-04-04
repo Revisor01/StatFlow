@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 // MARK: - ViewModel
 
@@ -103,9 +104,7 @@ class ComparisonViewModel: ObservableObject {
 
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("Comparison error: \(error)")
-                #endif
+                Logger.ui.error("Comparison error: \(error.localizedDescription)")
             }
         }
         loadingTask = task

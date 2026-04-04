@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 @MainActor
 class PagesViewModel: ObservableObject {
@@ -32,9 +33,7 @@ class PagesViewModel: ObservableObject {
                 topPages = result
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("Failed to load top pages: \(error)")
-                #endif
+                Logger.ui.error("Failed to load top pages: \(error.localizedDescription)")
             }
 
             do {
@@ -43,9 +42,7 @@ class PagesViewModel: ObservableObject {
                 pageTitles = result
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("Failed to load page titles: \(error)")
-                #endif
+                Logger.ui.error("Failed to load page titles: \(error.localizedDescription)")
             }
 
             guard !Task.isCancelled else { return }

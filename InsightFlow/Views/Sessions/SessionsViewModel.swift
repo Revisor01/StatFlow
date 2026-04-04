@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 // MARK: - ViewModels
 
@@ -43,9 +44,7 @@ class SessionsViewModel: ObservableObject {
                 hasMore = sessions.count < totalCount
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("Sessions error: \(error)")
-                #endif
+                Logger.ui.error("Sessions error: \(error.localizedDescription)")
                 if error.isNetworkError {
                     isOffline = true
                 }
@@ -71,9 +70,7 @@ class SessionsViewModel: ObservableObject {
             sessions.append(contentsOf: response.data)
             hasMore = sessions.count < totalCount
         } catch {
-            #if DEBUG
-            print("Sessions error: \(error)")
-            #endif
+            Logger.ui.error("Sessions loadMore error: \(error.localizedDescription)")
         }
 
         isLoading = false
@@ -117,9 +114,7 @@ class SessionDetailViewModel: ObservableObject {
                 activities = result
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("Activity error: \(error)")
-                #endif
+                Logger.ui.error("Activity error: \(error.localizedDescription)")
             }
         }
         loadingTask = task
@@ -158,9 +153,7 @@ class JourneyViewModel: ObservableObject {
                 journeys = result
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("Journey error: \(error)")
-                #endif
+                Logger.ui.error("Journey error: \(error.localizedDescription)")
             }
         }
         loadingTask = task

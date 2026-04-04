@@ -1,3 +1,4 @@
+import os
 import SwiftUI
 
 struct AddPlausibleSiteView: View {
@@ -83,8 +84,6 @@ struct AddPlausibleSiteView: View {
 
 #Preview {
     AddPlausibleSiteView {
-        #if DEBUG
-        print("Site added")
-        #endif
+        Logger.ui.debug("Site added")
     }
 }

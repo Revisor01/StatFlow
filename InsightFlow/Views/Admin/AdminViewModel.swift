@@ -1,3 +1,4 @@
+import os
 import SwiftUI
 
 // MARK: - ViewModel
@@ -75,9 +76,7 @@ class AdminViewModel: ObservableObject {
             teams = result
         } catch {
             guard !Task.isCancelled else { return }
-            #if DEBUG
-            print("Teams error: \(error)")
-            #endif
+            Logger.ui.error("Teams error: \(error.localizedDescription)")
         }
     }
 
@@ -88,9 +87,7 @@ class AdminViewModel: ObservableObject {
             users = result
         } catch {
             guard !Task.isCancelled else { return }
-            #if DEBUG
-            print("Users error: \(error)")
-            #endif
+            Logger.ui.error("Users error: \(error.localizedDescription)")
         }
     }
 

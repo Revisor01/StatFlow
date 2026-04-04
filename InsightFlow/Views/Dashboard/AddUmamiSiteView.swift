@@ -1,3 +1,4 @@
+import os
 import SwiftUI
 
 struct AddUmamiSiteView: View {
@@ -83,8 +84,6 @@ struct AddUmamiSiteView: View {
 
 #Preview {
     AddUmamiSiteView {
-        #if DEBUG
-        print("Site added")
-        #endif
+        Logger.ui.debug("Site added")
     }
 }

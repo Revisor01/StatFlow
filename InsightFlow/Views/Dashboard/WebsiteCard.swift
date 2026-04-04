@@ -1,5 +1,6 @@
 import SwiftUI
 import Charts
+import os
 
 // MARK: - Flow Layout
 
@@ -576,9 +577,7 @@ struct DashboardShareLinkSheet: View {
                                 } catch {
                                     // Revert toggle on error
                                     isShareEnabled = !newValue
-                                    #if DEBUG
-                                    print("Share link error: \(error)")
-                                    #endif
+                                    Logger.ui.error("Share link error: \(error.localizedDescription)")
                                 }
                                 isUpdating = false
                             }

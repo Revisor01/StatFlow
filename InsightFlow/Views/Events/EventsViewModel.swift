@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 @MainActor
 class EventsViewModel: ObservableObject {
@@ -43,9 +44,7 @@ class EventsViewModel: ObservableObject {
                         }
                     } catch {
                         guard !Task.isCancelled else { return }
-                        #if DEBUG
-                        print("Events error: \(error)")
-                        #endif
+                        Logger.ui.error("Events error: \(error.localizedDescription)")
                         await MainActor.run {
                             if error.isNetworkError {
                                 self.isOffline = true
@@ -68,9 +67,7 @@ class EventsViewModel: ObservableObject {
                         }
                     } catch {
                         guard !Task.isCancelled else { return }
-                        #if DEBUG
-                        print("EventStats error: \(error)")
-                        #endif
+                        Logger.ui.error("EventStats error: \(error.localizedDescription)")
                     }
                 }
             }
@@ -108,9 +105,7 @@ class EventsViewModel: ObservableObject {
                 selectedEventValues = valuesDict
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("EventDetail error: \(error)")
-                #endif
+                Logger.ui.error("EventDetail error: \(error.localizedDescription)")
                 self.error = error.localizedDescription
             }
         }

@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 @MainActor
 class ReportsViewModel: ObservableObject {
@@ -58,9 +59,7 @@ class ReportsViewModel: ObservableObject {
                 reports = response.data
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("ReportsViewModel: loadReports error: \(error)")
-                #endif
+                Logger.ui.error("loadReports error: \(error.localizedDescription)")
                 if error.isNetworkError {
                     self.isOffline = true
                 } else {
@@ -85,9 +84,7 @@ class ReportsViewModel: ObservableObject {
                 utmData = result
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("ReportsViewModel: loadUTMReport error: \(error)")
-                #endif
+                Logger.ui.error("loadUTMReport error: \(error.localizedDescription)")
                 self.error = error.localizedDescription
             }
         }
@@ -108,9 +105,7 @@ class ReportsViewModel: ObservableObject {
                 attributionData = result
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("ReportsViewModel: loadAttributionReport error: \(error)")
-                #endif
+                Logger.ui.error("loadAttributionReport error: \(error.localizedDescription)")
                 self.error = error.localizedDescription
             }
         }
@@ -138,9 +133,7 @@ class ReportsViewModel: ObservableObject {
                 funnelData = result
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("ReportsViewModel: loadFunnelReport error: \(error)")
-                #endif
+                Logger.ui.error("loadFunnelReport error: \(error.localizedDescription)")
                 self.error = error.localizedDescription
             }
         }
@@ -176,9 +169,7 @@ class ReportsViewModel: ObservableObject {
                 }
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("ReportsViewModel: loadFirstFunnel error: \(error)")
-                #endif
+                Logger.ui.error("loadFirstFunnel error: \(error.localizedDescription)")
                 self.error = error.localizedDescription
             }
         }
@@ -226,16 +217,12 @@ class ReportsViewModel: ObservableObject {
                         goalData.append(item)
                     } catch {
                         guard !Task.isCancelled else { return }
-                        #if DEBUG
-                        print("ReportsViewModel: loadGoalReport error for \(report.name): \(error)")
-                        #endif
+                        Logger.ui.error("loadGoalReport error for \(report.name): \(error.localizedDescription)")
                     }
                 }
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("ReportsViewModel: loadAllGoals error: \(error)")
-                #endif
+                Logger.ui.error("loadAllGoals error: \(error.localizedDescription)")
                 self.error = error.localizedDescription
             }
         }

@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import os
 
 // MARK: - ViewModel
 
@@ -80,9 +81,7 @@ class CompareViewModel: ObservableObject {
 
         } catch {
             guard !Task.isCancelled else { return }
-            #if DEBUG
-            print("Plausible Compare error: \(error)")
-            #endif
+            Logger.ui.error("Plausible Compare error: \(error.localizedDescription)")
         }
     }
 
@@ -106,9 +105,7 @@ class CompareViewModel: ObservableObject {
 
         } catch {
             guard !Task.isCancelled else { return }
-            #if DEBUG
-            print("Compare error: \(error)")
-            #endif
+            Logger.ui.error("Compare error: \(error.localizedDescription)")
         }
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 @MainActor
 class SettingsViewModel: ObservableObject {
@@ -46,9 +47,7 @@ class SettingsViewModel: ObservableObject {
                     }
                 } catch {
                     guard !Task.isCancelled else { return }
-                    #if DEBUG
-                    print("Failed to load websites for account \(account.displayName): \(error)")
-                    #endif
+                    Logger.ui.error("Failed to load websites for account \(account.displayName): \(error.localizedDescription)")
                 }
 
                 if !accountWebsites.isEmpty {

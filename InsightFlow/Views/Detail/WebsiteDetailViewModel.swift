@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 @MainActor
 class WebsiteDetailViewModel: ObservableObject {
@@ -103,9 +104,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             activeVisitors = result
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load active visitors: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load active visitors: \(error.localizedDescription)") }
         }
     }
 
@@ -130,9 +129,7 @@ class WebsiteDetailViewModel: ObservableObject {
             pageviewsData = filledPageviews
             sessionsData = filledSessions
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load pageviews: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load pageviews: \(error.localizedDescription)") }
         }
     }
 
@@ -232,9 +229,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             topPages = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load top pages: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load top pages: \(error.localizedDescription)") }
         }
     }
 
@@ -245,9 +240,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             pageTitles = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load page titles: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load page titles: \(error.localizedDescription)") }
         }
     }
 
@@ -258,9 +251,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             referrers = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load referrers: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load referrers: \(error.localizedDescription)") }
         }
     }
 
@@ -271,9 +262,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             countries = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load countries: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load countries: \(error.localizedDescription)") }
         }
     }
 
@@ -284,9 +273,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             regions = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load regions: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load regions: \(error.localizedDescription)") }
         }
     }
 
@@ -297,9 +284,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             cities = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load cities: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load cities: \(error.localizedDescription)") }
         }
     }
 
@@ -310,9 +295,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             devices = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load devices: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load devices: \(error.localizedDescription)") }
         }
     }
 
@@ -323,9 +306,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             browsers = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load browsers: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load browsers: \(error.localizedDescription)") }
         }
     }
 
@@ -336,9 +317,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             operatingSystems = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load operating systems: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load operating systems: \(error.localizedDescription)") }
         }
     }
 
@@ -349,9 +328,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             languages = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load languages: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load languages: \(error.localizedDescription)") }
         }
     }
 
@@ -362,9 +339,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             screens = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load screens: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load screens: \(error.localizedDescription)") }
         }
     }
 
@@ -375,9 +350,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             events = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load events: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load events: \(error.localizedDescription)") }
         }
     }
 
@@ -389,9 +362,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             entryPages = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load entry pages: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load entry pages: \(error.localizedDescription)") }
         }
     }
 
@@ -403,9 +374,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             exitPages = items.map { MetricItem(x: $0.name, y: $0.value) }
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load exit pages: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load exit pages: \(error.localizedDescription)") }
         }
     }
 
@@ -417,9 +386,7 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             goals = conversions
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load goals: \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load goals: \(error.localizedDescription)") }
         }
     }
 

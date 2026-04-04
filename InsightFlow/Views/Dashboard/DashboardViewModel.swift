@@ -1,3 +1,4 @@
+import os
 import SwiftUI
 
 @MainActor
@@ -105,9 +106,7 @@ class DashboardViewModel: ObservableObject {
                 }
                 allWebsites.append(contentsOf: accountWebsites)
             } catch {
-                #if DEBUG
-                print("loadAllAccountsData: failed for account \(account.displayName): \(error)")
-                #endif
+                Logger.ui.error("loadAllAccountsData: failed for account \(account.displayName): \(error.localizedDescription)")
                 // Continue loading other accounts
             }
         }
@@ -248,9 +247,7 @@ class DashboardViewModel: ObservableObject {
             do {
                 try await umamiAPI.deleteWebsite(websiteId: websiteId)
             } catch {
-                #if DEBUG
-                print("Failed to delete Umami website: \(error)")
-                #endif
+                Logger.ui.error("Failed to delete Umami website: \(error.localizedDescription)")
                 return
             }
         }
@@ -292,9 +289,7 @@ class DashboardViewModel: ObservableObject {
             // Cache die Stats
             cache.saveStats(CachedStats(from: analyticsStats), websiteId: websiteId, dateRangeId: dateRangeId)
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load stats for \(websiteId): \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load stats for \(websiteId): \(error.localizedDescription)") }
         }
     }
 
@@ -309,9 +304,7 @@ class DashboardViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             activeVisitors[websiteId] = count
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load active visitors for \(websiteId): \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load active visitors for \(websiteId): \(error.localizedDescription)") }
         }
     }
 
@@ -338,9 +331,7 @@ class DashboardViewModel: ObservableObject {
             // Cache die Sparkline-Daten
             cache.saveSparkline(chartPoints.toCached(), websiteId: websiteId, dateRangeId: dateRangeId)
         } catch {
-            #if DEBUG
-            if !Task.isCancelled { print("Failed to load sparkline for \(websiteId): \(error)") }
-            #endif
+            if !Task.isCancelled { Logger.ui.error("Failed to load sparkline for \(websiteId): \(error.localizedDescription)") }
         }
     }
 

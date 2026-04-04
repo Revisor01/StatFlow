@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 // MARK: - ViewModel
 
@@ -73,9 +74,7 @@ class RealtimeViewModel: ObservableObject {
 
         } catch {
             guard !Task.isCancelled else { return }
-            #if DEBUG
-            print("Plausible Realtime error: \(error)")
-            #endif
+            Logger.ui.error("Plausible Realtime error: \(error.localizedDescription)")
         }
     }
 
@@ -107,9 +106,7 @@ class RealtimeViewModel: ObservableObject {
 
         } catch {
             guard !Task.isCancelled else { return }
-            #if DEBUG
-            print("Realtime error: \(error)")
-            #endif
+            Logger.ui.error("Realtime error: \(error.localizedDescription)")
         }
     }
 }
@@ -147,9 +144,7 @@ class LiveEventDetailViewModel: ObservableObject {
                 activities = result
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("Live session activity error: \(error)")
-                #endif
+                Logger.ui.error("Live session activity error: \(error.localizedDescription)")
             }
         }
         loadingTask = task

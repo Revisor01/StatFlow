@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 @MainActor
 class RetentionViewModel: ObservableObject {
@@ -65,9 +66,7 @@ class RetentionViewModel: ObservableObject {
                 retentionRows = result
             } catch {
                 guard !Task.isCancelled else { return }
-                #if DEBUG
-                print("Retention error: \(error)")
-                #endif
+                Logger.ui.error("Retention error: \(error.localizedDescription)")
                 retentionRows = []
             }
         }
