@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 19-02-PLAN.md
-last_updated: "2026-04-04T20:40:31.532Z"
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-04-04T21:03:02.732Z"
 last_activity: 2026-04-04 — REFACTOR-01 + REFACTOR-05 completed
 progress:
-  total_phases: 16
+  total_phases: 17
   completed_phases: 13
   total_plans: 24
-  completed_plans: 29
+  completed_plans: 30
 ---
 
 # Project State
@@ -43,6 +43,7 @@ Last activity: 2026-04-04 — REFACTOR-01 + REFACTOR-05 completed
 - [Phase 19]: Error+Network.swift extension as single source of truth for network error detection
 - [Phase 19]: LazyVStack only for homogeneous ForEach with large lists; VStack for conditional content
 - [Phase 19]: nonisolated(unsafe) for shared DateFormatter static lets under Swift strict concurrency
+- [Phase 20]: Pure ViewModel extraction: 8 VMs into dedicated files, no logic changes
 
 ### Blockers/Concerns
 
@@ -50,6 +51,6 @@ None — alle 12 Punkte in Requirements erfasst.
 
 ## Session Continuity
 
-Last session: 2026-04-04T20:40:31.530Z
-Stopped at: Completed 19-02-PLAN.md
+Last session: 2026-04-04T21:03:02.730Z
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None
