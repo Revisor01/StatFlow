@@ -70,6 +70,12 @@ final class KeychainServiceTests: XCTestCase {
         XCTAssertNil(loaded, "deleteAll() muss alle Legacy-Keys entfernen")
     }
 
+    func testKeychainErrorEncodingFailed() {
+        let error = KeychainError.encodingFailed
+        XCTAssertNotNil(error.errorDescription)
+        XCTAssertTrue(error.errorDescription!.contains("UTF-8"))
+    }
+
     func testApiKeyCredentialType() throws {
         let apiKeyAccountId = "test-apikey-\(UUID().uuidString)"
         defer { KeychainService.deleteCredentials(for: apiKeyAccountId) }

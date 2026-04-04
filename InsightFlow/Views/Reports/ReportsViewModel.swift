@@ -15,7 +15,7 @@ class ReportsViewModel: ObservableObject {
     @Published var error: String?
 
     private var loadingTask: Task<Void, Never>?
-    private let api = UmamiAPI.shared
+    private let api: UmamiAPI
 
     // MARK: - Computed Properties
 
@@ -37,8 +37,9 @@ class ReportsViewModel: ObservableObject {
 
     // MARK: - Init
 
-    init(websiteId: String) {
+    init(websiteId: String, api: UmamiAPI = .shared) {
         self.websiteId = websiteId
+        self.api = api
     }
 
     // MARK: - Data Loading

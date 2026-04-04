@@ -15,10 +15,11 @@ class SessionsViewModel: ObservableObject {
     private var currentPage = 1
     private var totalCount = 0
     private let pageSize = 20
-    private let api = UmamiAPI.shared
+    private let api: UmamiAPI
 
-    init(websiteId: String) {
+    init(websiteId: String, api: UmamiAPI = .shared) {
         self.websiteId = websiteId
+        self.api = api
     }
 
     func loadData(dateRange: DateRange) async {
@@ -92,11 +93,12 @@ class SessionDetailViewModel: ObservableObject {
     @Published var isLoading = false
 
     private var loadingTask: Task<Void, Never>?
-    private let api = UmamiAPI.shared
+    private let api: UmamiAPI
 
-    init(websiteId: String, sessionId: String) {
+    init(websiteId: String, sessionId: String, api: UmamiAPI = .shared) {
         self.websiteId = websiteId
         self.sessionId = sessionId
+        self.api = api
     }
 
     func loadActivity(dateRange: DateRange) async {
@@ -133,10 +135,11 @@ class JourneyViewModel: ObservableObject {
     @Published var isLoading = false
 
     private var loadingTask: Task<Void, Never>?
-    private let api = UmamiAPI.shared
+    private let api: UmamiAPI
 
-    init(websiteId: String) {
+    init(websiteId: String, api: UmamiAPI = .shared) {
         self.websiteId = websiteId
+        self.api = api
     }
 
     func loadJourneys(dateRange: DateRange) async {

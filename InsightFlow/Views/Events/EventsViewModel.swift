@@ -15,10 +15,11 @@ class EventsViewModel: ObservableObject {
     @Published var selectedEventValues: [String: [EventDataFieldValue]] = [:]
 
     private var loadingTask: Task<Void, Never>?
-    private let api = UmamiAPI.shared
+    private let api: UmamiAPI
 
-    init(websiteId: String) {
+    init(websiteId: String, api: UmamiAPI = .shared) {
         self.websiteId = websiteId
+        self.api = api
     }
 
     func loadEvents(dateRange: DateRange) async {

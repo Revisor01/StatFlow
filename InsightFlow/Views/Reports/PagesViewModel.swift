@@ -10,10 +10,11 @@ class PagesViewModel: ObservableObject {
     @Published var isLoading = false
 
     private var loadingTask: Task<Void, Never>?
-    private let api = UmamiAPI.shared
+    private let api: UmamiAPI
 
-    init(websiteId: String) {
+    init(websiteId: String, api: UmamiAPI = .shared) {
         self.websiteId = websiteId
+        self.api = api
     }
 
     func loadData(dateRange: DateRange) async {

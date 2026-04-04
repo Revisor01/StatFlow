@@ -6,8 +6,13 @@ class SettingsViewModel: ObservableObject {
     @Published var websitesByAccount: [(account: AnalyticsAccount, websites: [Website])] = []
 
     private var loadingTask: Task<Void, Never>?
-    private let umamiAPI = UmamiAPI.shared
-    private let plausibleAPI = PlausibleAPI.shared
+    private let umamiAPI: UmamiAPI
+    private let plausibleAPI: PlausibleAPI
+
+    init(umamiAPI: UmamiAPI = .shared, plausibleAPI: PlausibleAPI = .shared) {
+        self.umamiAPI = umamiAPI
+        self.plausibleAPI = plausibleAPI
+    }
 
     func loadWebsites() async {
         loadingTask?.cancel()

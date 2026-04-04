@@ -15,7 +15,9 @@ enum KeychainService: Sendable {
     }
 
     static func save(_ value: String, for key: Key) throws {
-        let data = value.data(using: .utf8)!
+        guard let data = value.data(using: .utf8) else {
+            throw KeychainError.encodingFailed
+        }
 
         // Delete existing item first
         let deleteQuery: [String: Any] = [
@@ -86,7 +88,9 @@ enum KeychainService: Sendable {
 
     static func saveCredential(_ value: String, type: CredentialType, accountId: String) throws {
         let accountKey = "\(type.rawValue)_\(accountId)"
-        let data = value.data(using: .utf8)!
+        guard let data = value.data(using: .utf8) else {
+            throw KeychainError.encodingFailed
+        }
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -140,11 +144,14 @@ enum KeychainService: Sendable {
 
 enum KeychainError: LocalizedError {
     case saveFailed(OSStatus)
+    case encodingFailed
 
     var errorDescription: String? {
         switch self {
         case .saveFailed(let status):
             return "Keychain Speicherfehler: \(status)"
+        case .encodingFailed:
+            return "Wert konnte nicht als UTF-8 kodiert werden"
         }
     }
 }

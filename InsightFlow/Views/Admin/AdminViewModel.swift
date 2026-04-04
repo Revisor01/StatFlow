@@ -16,8 +16,13 @@ class AdminViewModel: ObservableObject {
     @Published var showCreateUser = false
 
     private var loadingTask: Task<Void, Never>?
-    private let umamiAPI = UmamiAPI.shared
-    private let plausibleAPI = PlausibleAPI.shared
+    private let umamiAPI: UmamiAPI
+    private let plausibleAPI: PlausibleAPI
+
+    init(umamiAPI: UmamiAPI = .shared, plausibleAPI: PlausibleAPI = .shared) {
+        self.umamiAPI = umamiAPI
+        self.plausibleAPI = plausibleAPI
+    }
 
     var currentProvider: AnalyticsProviderType? {
         if let providerString = KeychainService.load(for: .providerType) {
