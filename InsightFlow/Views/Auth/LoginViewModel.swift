@@ -5,6 +5,14 @@ class LoginViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    private let umamiAPI: UmamiAPI
+    private let plausibleAPI: PlausibleAPI
+
+    init(umamiAPI: UmamiAPI = .shared, plausibleAPI: PlausibleAPI = .shared) {
+        self.umamiAPI = umamiAPI
+        self.plausibleAPI = plausibleAPI
+    }
+
     // MARK: - Umami Login
 
     func login(serverURL: String, username: String, password: String, accountName: String = "") async {
@@ -17,7 +25,7 @@ class LoginViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let token = try await UmamiAPI.shared.login(baseURL: url, username: username, password: password)
+            let token = try await umamiAPI.login(baseURL: url, username: username, password: password)
 
             let account = AnalyticsAccount(
                 name: accountName.isEmpty ? username : accountName,
@@ -43,7 +51,7 @@ class LoginViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            try await PlausibleAPI.shared.authenticate(
+            try await plausibleAPI.authenticate(
                 serverURL: serverURL,
                 credentials: .plausible(apiKey: apiKey)
             )

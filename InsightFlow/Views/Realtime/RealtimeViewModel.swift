@@ -14,15 +14,17 @@ class RealtimeViewModel: ObservableObject {
     @Published var recentEvents: [RealtimeEvent] = []
 
     private var pollingTask: Task<Void, Never>?
-    private let umamiAPI = UmamiAPI.shared
-    private let plausibleAPI = PlausibleAPI.shared
+    private let umamiAPI: UmamiAPI
+    private let plausibleAPI: PlausibleAPI
 
     var isPlausible: Bool {
         AnalyticsManager.shared.providerType == .plausible
     }
 
-    init(websiteId: String) {
+    init(websiteId: String, umamiAPI: UmamiAPI = .shared, plausibleAPI: PlausibleAPI = .shared) {
         self.websiteId = websiteId
+        self.umamiAPI = umamiAPI
+        self.plausibleAPI = plausibleAPI
     }
 
     func startPolling() async {
@@ -120,12 +122,13 @@ class LiveEventDetailViewModel: ObservableObject {
     @Published var activities: [SessionActivity] = []
     @Published var isLoading = false
 
-    private let api = UmamiAPI.shared
+    private let api: UmamiAPI
     private var loadingTask: Task<Void, Never>?
 
-    init(websiteId: String, sessionId: String) {
+    init(websiteId: String, sessionId: String, api: UmamiAPI = .shared) {
         self.websiteId = websiteId
         self.sessionId = sessionId
+        self.api = api
     }
 
     func loadActivity() async {

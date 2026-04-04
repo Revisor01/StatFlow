@@ -16,15 +16,17 @@ class CompareViewModel: ObservableObject {
     @Published var isLoading = false
 
     private var loadingTask: Task<Void, Never>?
-    private let umamiAPI = UmamiAPI.shared
-    private let plausibleAPI = PlausibleAPI.shared
+    private let umamiAPI: UmamiAPI
+    private let plausibleAPI: PlausibleAPI
 
     private var isPlausible: Bool {
         AnalyticsManager.shared.providerType == .plausible
     }
 
-    init(websiteId: String) {
+    init(websiteId: String, umamiAPI: UmamiAPI = .shared, plausibleAPI: PlausibleAPI = .shared) {
         self.websiteId = websiteId
+        self.umamiAPI = umamiAPI
+        self.plausibleAPI = plausibleAPI
     }
 
     func loadComparison(dateRange1: DateRange, dateRange2: DateRange) async {

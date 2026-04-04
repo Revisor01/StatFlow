@@ -17,9 +17,9 @@ class DashboardViewModel: ObservableObject {
         }
     }
 
-    private let umamiAPI = UmamiAPI.shared
-    private let plausibleAPI = PlausibleAPI.shared
-    private let cache = AnalyticsCacheService.shared
+    private let umamiAPI: UmamiAPI
+    private let plausibleAPI: PlausibleAPI
+    private let cache: AnalyticsCacheService
     private var currentDateRange: DateRange = .today
 
     /// Sortierte Websites basierend auf gespeicherter Reihenfolge
@@ -35,7 +35,10 @@ class DashboardViewModel: ObservableObject {
         }
     }
 
-    init() {
+    init(umamiAPI: UmamiAPI = .shared, plausibleAPI: PlausibleAPI = .shared, cache: AnalyticsCacheService = .shared) {
+        self.umamiAPI = umamiAPI
+        self.plausibleAPI = plausibleAPI
+        self.cache = cache
         loadWebsiteOrder()
     }
 
