@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 18-03-PLAN.md
+stopped_at: Completed 19-01-PLAN.md
 last_updated: "2026-04-04T20:19:21.443Z"
-last_activity: 2026-04-04 — BUG-01/TASK-01 + BUG-02 fixed
+last_activity: 2026-04-04 — REFACTOR-01 + REFACTOR-05 deduplicated
 progress:
   total_phases: 15
   completed_phases: 13
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 ## Current Position
 
-Phase: 18-aktive-bugs-kritische-fixes
-Plan: 01+02 (completed)
-Status: Plan 01+02 complete — @ObservedObject fix + task cancellation + online-first cache
-Last activity: 2026-04-04 — BUG-01/TASK-01 + BUG-02 fixed
+Phase: 19-architektur-robustheit
+Plan: 01 (completed)
+Status: Plan 01 complete — isNetworkError dedup + LazyVStack audit
+Last activity: 2026-04-04 — REFACTOR-01 + REFACTOR-05 completed
 
 ## Accumulated Context
 
@@ -40,6 +40,8 @@ Last activity: 2026-04-04 — BUG-01/TASK-01 + BUG-02 fixed
 - DashboardViewModel: loadingTask-Pattern mit Task.isCancelled Guards implementiert
 - Cache-Limits: 50MB Eviction, 24h Offline-Display-TTL
 - [Phase 18]: Option A (configureProviderForAccount) chosen over suppress flag for multi-account iteration
+- [Phase 19]: Error+Network.swift extension as single source of truth for network error detection
+- [Phase 19]: LazyVStack only for homogeneous ForEach with large lists; VStack for conditional content
 
 ### Blockers/Concerns
 
@@ -47,6 +49,6 @@ None — alle 12 Punkte in Requirements erfasst.
 
 ## Session Continuity
 
-Last session: 2026-04-04T20:19:21.440Z
-Stopped at: Completed 18-03-PLAN.md
+Last session: 2026-04-04T20:31:44Z
+Stopped at: Completed 19-01-PLAN.md
 Resume file: None
