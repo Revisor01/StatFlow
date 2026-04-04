@@ -876,8 +876,8 @@ class DashboardViewModel: ObservableObject {
 
         for account in accounts {
             do {
-                // Apply this account's credentials temporarily
-                await AccountManager.shared.setActiveAccount(account)
+                // Configure API for this account WITHOUT switching global state (BUG-03 fix)
+                await AccountManager.shared.configureProviderForAccount(account)
 
                 var accountWebsites: [Website] = []
                 if account.providerType == .plausible {
@@ -903,13 +903,12 @@ class DashboardViewModel: ObservableObject {
 
         websites = allWebsites
 
-        // Load stats for all websites concurrently (credentials are applied per-account above,
-        // but stats load uses the currently configured API; we reload per-account)
+        // Load stats for all websites concurrently per account (BUG-03: no global account switch)
         for account in accounts {
             let accountWebsites = allWebsites.filter { accountMap[$0.id]?.id == account.id }
             guard !accountWebsites.isEmpty else { continue }
 
-            await AccountManager.shared.setActiveAccount(account)
+            await AccountManager.shared.configureProviderForAccount(account)
             await withTaskGroup(of: Void.self) { group in
                 for website in accountWebsites {
                     group.addTask { await self.loadWebsiteData(website, dateRange: dateRange) }
@@ -917,7 +916,7 @@ class DashboardViewModel: ObservableObject {
             }
         }
 
-        // Restore original active account
+        // Restore original active account with full side effects (widget reload, notifications — once)
         if let original = originalAccount {
             await AccountManager.shared.setActiveAccount(original)
         }

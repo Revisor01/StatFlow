@@ -361,6 +361,7 @@ class RealtimeViewModel: ObservableObject {
 
             let (v, pv, p, c) = try await (visitors, pageviews, pages, countriesData)
 
+            guard !Task.isCancelled else { return }
             activeVisitors = v
             totalPageviews = pv
             totalEvents = 0 // Plausible doesn't track custom events in realtime the same way
@@ -369,6 +370,7 @@ class RealtimeViewModel: ObservableObject {
             recentEvents = [] // Plausible doesn't provide individual events
 
         } catch {
+            guard !Task.isCancelled else { return }
             #if DEBUG
             print("Plausible Realtime error: \(error)")
             #endif
@@ -378,6 +380,8 @@ class RealtimeViewModel: ObservableObject {
     private func refreshUmami() async {
         do {
             let data = try await umamiAPI.getRealtime(websiteId: websiteId)
+
+            guard !Task.isCancelled else { return }
 
             // Aktive Besucher = unique Sessions in den letzten 5 Minuten
             let fiveMinutesAgo = Date().addingTimeInterval(-300)
@@ -400,6 +404,7 @@ class RealtimeViewModel: ObservableObject {
                 .sorted { $0.createdDate > $1.createdDate }
 
         } catch {
+            guard !Task.isCancelled else { return }
             #if DEBUG
             print("Realtime error: \(error)")
             #endif
@@ -608,6 +613,7 @@ class LiveEventDetailViewModel: ObservableObject {
     @Published var isLoading = false
 
     private let api = UmamiAPI.shared
+    private var loadingTask: Task<Void, Never>?
 
     init(websiteId: String, sessionId: String) {
         self.websiteId = websiteId
@@ -615,21 +621,33 @@ class LiveEventDetailViewModel: ObservableObject {
     }
 
     func loadActivity() async {
-        isLoading = true
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            activities = try await api.getSessionActivity(
-                websiteId: websiteId,
-                sessionId: sessionId,
-                dateRange: .today
-            )
-        } catch {
-            #if DEBUG
-            print("Live session activity error: \(error)")
-            #endif
+            do {
+                let result = try await api.getSessionActivity(
+                    websiteId: websiteId,
+                    sessionId: sessionId,
+                    dateRange: .today
+                )
+                guard !Task.isCancelled else { return }
+                activities = result
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("Live session activity error: \(error)")
+                #endif
+            }
         }
+        loadingTask = task
+        await task.value
+    }
 
-        isLoading = false
+    func cancelLoading() {
+        loadingTask?.cancel()
+        loadingTask = nil
     }
 }
 

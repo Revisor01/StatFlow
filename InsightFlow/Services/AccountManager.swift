@@ -257,6 +257,40 @@ class AccountManager: ObservableObject {
         )
     }
 
+    // MARK: - Lightweight Provider Configuration (no side effects)
+
+    /// Configures API provider for a specific account WITHOUT changing global state.
+    /// Does NOT: update activeAccount, post notifications, reload widgets.
+    /// Used by loadAllAccountsData to iterate accounts without side effects.
+    func configureProviderForAccount(_ account: AnalyticsAccount) async {
+        // Write credentials to Keychain so API actors can read them
+        try? KeychainService.save(account.serverURL, for: .serverURL)
+        try? KeychainService.save(account.providerType.rawValue, for: .providerType)
+
+        switch account.providerType {
+        case .umami:
+            if let token = account.credentials.token {
+                try? KeychainService.save(token, for: .token)
+            }
+            // Reconfigure UmamiAPI actor with these credentials
+            await UmamiAPI.shared.reconfigureFromKeychain()
+            AnalyticsManager.shared.setProvider(UmamiAPI.shared)
+
+        case .plausible:
+            if let apiKey = account.credentials.apiKey {
+                try? KeychainService.save(apiKey, for: .apiKey)
+            }
+            if let sites = account.sites, !sites.isEmpty {
+                PlausibleSitesManager.shared.setSitesWithoutPersist(sites)
+            } else {
+                PlausibleSitesManager.shared.clearAll()
+            }
+            await PlausibleAPI.shared.reconfigureFromKeychain()
+            AnalyticsManager.shared.setProvider(PlausibleAPI.shared)
+        }
+        // NO NotificationCenter post, NO widget reload
+    }
+
     // MARK: - Apply Credentials
 
     private func applyAccountCredentials(_ account: AnalyticsAccount) async {
