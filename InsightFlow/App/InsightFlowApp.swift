@@ -13,7 +13,7 @@ struct PrivacyFlowApp: App {
         // Cache-Cleanup im Hintergrund beim App-Start (FIX-03)
         Task.detached(priority: .background) {
             AnalyticsCacheService.shared.clearStaleEntries(olderThan: 7)
-            let maxCacheSize: Int64 = 100 * 1024 * 1024 // 100MB
+            let maxCacheSize: Int64 = 50 * 1024 * 1024 // 50MB
             if AnalyticsCacheService.shared.cacheSize() > maxCacheSize {
                 AnalyticsCacheService.shared.evictOldestEntries(maxSize: maxCacheSize)
             }

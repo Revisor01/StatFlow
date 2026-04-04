@@ -12,6 +12,9 @@ final class AnalyticsCacheService: @unchecked Sendable {
     private let defaultTTL: TimeInterval = 3600 // 1 Stunde
     private let sparklineTTL: TimeInterval = 900 // 15 Minuten für Sparklines
 
+    /// Maximum age for cache data to be shown in offline mode (24 hours)
+    static let offlineDisplayTTL: TimeInterval = 24 * 60 * 60
+
     private let overrideCacheDirectory: URL?
 
     private var cacheDirectory: URL? {
@@ -291,6 +294,14 @@ final class AnalyticsCacheService: @unchecked Sendable {
             print("AnalyticsCacheService: Evicted \(deletedCount) entries (cache was over \(maxSize) bytes)")
         }
         #endif
+    }
+
+    /// Check if cached data is recent enough to display in offline mode (< 24h old)
+    func isValidForOfflineDisplay<T: Codable>(forKey key: String, type: T.Type) -> (data: T, cachedAt: Date)? {
+        guard let cached = load(forKey: key, type: type) else { return nil }
+        let age = Date().timeIntervalSince(cached.cachedAt)
+        guard age < Self.offlineDisplayTTL else { return nil }
+        return (cached.data, cached.cachedAt)
     }
 
     /// Formatierte Cache-Größe
