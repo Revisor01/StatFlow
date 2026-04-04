@@ -43,6 +43,8 @@
 "dashboard.empty.plausible" = "Füge deine erste Website hinzu, um Statistiken zu sehen.";
 "dashboard.empty.umami" = "Du hast noch keine Websites in deinem Umami-Account.";
 "dashboard.offline" = "Offline – zeige gecachte Daten";
+"dashboard.offlineData %@" = "Offline – Letzte Daten von %@";
+"dashboard.offlineExpired" = "Offline – gecachte Daten sind zu alt";
 "detail.offline" = "Offline – Daten nicht verfügbar";
 "dashboard.reorder.hint" = "Halte und ziehe um die Reihenfolge zu andern";
 "dashboard.edit.button" = "Dashboard anpassen";

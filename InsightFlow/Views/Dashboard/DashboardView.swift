@@ -307,8 +307,13 @@ struct DashboardView: View {
         HStack(spacing: 8) {
             Image(systemName: "wifi.slash")
                 .font(.subheadline)
-            Text("dashboard.offline")
-                .font(.subheadline)
+            if let cacheDate = viewModel.offlineCacheDate {
+                Text("dashboard.offlineData \(cacheDate, format: .relative(presentation: .named))")
+                    .font(.subheadline)
+            } else {
+                Text("dashboard.offline")
+                    .font(.subheadline)
+            }
             Spacer()
         }
         .padding(.horizontal, 12)
@@ -796,6 +801,8 @@ class DashboardViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
     @Published var isOffline = false
+    @Published var offlineCacheDate: Date?
+    private var loadingTask: Task<Void, Never>?
     @Published var websiteOrder: [String] = [] {
         didSet {
             saveWebsiteOrder()
@@ -822,6 +829,11 @@ class DashboardViewModel: ObservableObject {
 
     init() {
         loadWebsiteOrder()
+    }
+
+    func cancelLoading() {
+        loadingTask?.cancel()
+        loadingTask = nil
     }
 
     private var orderKey: String {
@@ -915,87 +927,101 @@ class DashboardViewModel: ObservableObject {
     }
 
     func loadData(dateRange: DateRange, clearFirst: Bool = false) async {
-        if clearFirst {
-            websites = []
-            stats = [:]
-            sparklineData = [:]
-            activeVisitors = [:]
+        loadingTask?.cancel()
+        let task = Task {
+            if clearFirst {
+                websites = []
+                stats = [:]
+                sparklineData = [:]
+                activeVisitors = [:]
+            }
+            isLoading = true
+            currentDateRange = dateRange
+            isOffline = false
+            offlineCacheDate = nil
+            defer { if !Task.isCancelled { isLoading = false } }
+
+            // Lade die Website-Reihenfolge für den aktuellen Account
+            loadWebsiteOrder()
+
+            // Online-First: ALWAYS fetch fresh from API, NO cache preload
+            do {
+                if isPlausible {
+                    let analyticsWebsites = try await plausibleAPI.getAnalyticsWebsites()
+                    guard !Task.isCancelled else { return }
+                    websites = analyticsWebsites.map { site in
+                        Website(id: site.id, name: site.name, domain: site.domain, shareId: nil, teamId: nil, resetAt: nil, createdAt: nil)
+                    }
+                    // Cache die Websites
+                    cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
+                } else {
+                    let freshWebsites = try await umamiAPI.getWebsites()
+                    guard !Task.isCancelled else { return }
+                    websites = freshWebsites
+                    // Cache die Websites
+                    let analyticsWebsites = freshWebsites.map { site in
+                        AnalyticsWebsite(id: site.id, name: site.name, domain: site.domain ?? site.name, shareId: site.shareId, provider: .umami)
+                    }
+                    cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
+                }
+
+                guard !Task.isCancelled else { return }
+                await withTaskGroup(of: Void.self) { group in
+                    for website in websites {
+                        group.addTask { await self.loadWebsiteData(website, dateRange: dateRange) }
+                    }
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
+                                     (error as? URLError)?.code == .networkConnectionLost ||
+                                     (error as? URLError)?.code == .timedOut ||
+                                     (error as? URLError)?.code == .cannotFindHost ||
+                                     (error as? URLError)?.code == .cannotConnectToHost
+
+                if isNetworkError {
+                    // ONLY load cache as offline fallback
+                    loadFromCache(dateRange: dateRange)
+                    isOffline = true
+                } else {
+                    self.error = error.localizedDescription
+                }
+            }
         }
-        isLoading = true
-        currentDateRange = dateRange
-        isOffline = false
-
-        // Lade die Website-Reihenfolge für den aktuellen Account
-        loadWebsiteOrder()
-
-        // 1. Lade zuerst aus dem Cache für sofortige Anzeige
-        loadFromCache(dateRange: dateRange)
-
-        // 2. Dann versuche frische Daten zu laden
-        do {
-            if isPlausible {
-                let analyticsWebsites = try await plausibleAPI.getAnalyticsWebsites()
-                websites = analyticsWebsites.map { site in
-                    Website(id: site.id, name: site.name, domain: site.domain, shareId: nil, teamId: nil, resetAt: nil, createdAt: nil)
-                }
-                // Cache die Websites
-                cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
-            } else {
-                websites = try await umamiAPI.getWebsites()
-                // Cache die Websites
-                let analyticsWebsites = websites.map { site in
-                    AnalyticsWebsite(id: site.id, name: site.name, domain: site.domain ?? site.name, shareId: site.shareId, provider: .umami)
-                }
-                cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
-            }
-
-            await withTaskGroup(of: Void.self) { group in
-                for website in websites {
-                    group.addTask { await self.loadWebsiteData(website, dateRange: dateRange) }
-                }
-            }
-
-            isLoading = false
-        } catch {
-            // Prüfe ob es sich um einen echten Netzwerkfehler handelt
-            let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
-                                 (error as? URLError)?.code == .networkConnectionLost ||
-                                 (error as? URLError)?.code == .timedOut ||
-                                 (error as? URLError)?.code == .cannotFindHost ||
-                                 (error as? URLError)?.code == .cannotConnectToHost
-
-            if websites.isEmpty {
-                self.error = error.localizedDescription
-            } else if isNetworkError {
-                // Nur bei echtem Netzwerkfehler Offline-Indikator zeigen
-                isOffline = true
-            }
-            // Bei anderen Fehlern (z.B. API-Fehler) keinen Offline-Banner zeigen
-            isLoading = false
-        }
+        loadingTask = task
+        await task.value
     }
 
-    /// Lädt Daten aus dem lokalen Cache
+    /// Lädt Daten aus dem lokalen Cache (nur als Offline-Fallback, max 24h alt)
     private func loadFromCache(dateRange: DateRange) {
-        // Lade gecachte Websites
-        if let cachedWebsites = cache.loadWebsites(accountId: currentAccountId) {
-            let analyticsWebsites = cachedWebsites.data.toAnalyticsWebsites()
-            websites = analyticsWebsites.map { site in
-                Website(id: site.id, name: site.name, domain: site.domain, shareId: site.shareId, teamId: nil, resetAt: nil, createdAt: nil)
+        let websitesKey = "websites_\(currentAccountId)"
+        guard let result = cache.isValidForOfflineDisplay(forKey: websitesKey, type: [CachedWebsite].self) else {
+            // Cache zu alt (> 24h) oder nicht vorhanden — keine Offline-Anzeige
+            self.error = String(localized: "dashboard.offlineExpired")
+            return
+        }
+
+        let analyticsWebsites = result.data.toAnalyticsWebsites()
+        websites = analyticsWebsites.map { site in
+            Website(id: site.id, name: site.name, domain: site.domain, shareId: site.shareId, teamId: nil, resetAt: nil, createdAt: nil)
+        }
+        offlineCacheDate = result.cachedAt
+
+        // Lade gecachte Stats und Sparklines für sofortige Anzeige
+        for website in websites {
+            let dateRangeId = dateRange.preset.rawValue
+
+            // Stats laden
+            if let cachedStats = cache.loadStats(websiteId: website.id, dateRangeId: dateRangeId) {
+                stats[website.id] = cachedStats.data.toAnalyticsStats().toWebsiteStats()
             }
 
-            // Lade gecachte Sparklines für sofortige Anzeige (Stats kommen schnell von der API)
-            for website in websites {
-                let dateRangeId = dateRange.preset.rawValue
-
-                // Sparkline laden — nur gültigen Cache verwenden
-                if let cachedSparkline = cache.loadSparkline(websiteId: website.id, dateRangeId: dateRangeId),
-                   !cachedSparkline.isExpired {
-                    let points = cachedSparkline.data.toAnalyticsChartPoints()
-                    let formatter = ISO8601DateFormatter()
-                    sparklineData[website.id] = points.map { point in
-                        TimeSeriesPoint(x: formatter.string(from: point.date), y: point.value)
-                    }
+            // Sparkline laden
+            if let cachedSparkline = cache.loadSparkline(websiteId: website.id, dateRangeId: dateRangeId) {
+                let points = cachedSparkline.data.toAnalyticsChartPoints()
+                let formatter = ISO8601DateFormatter()
+                sparklineData[website.id] = points.map { point in
+                    TimeSeriesPoint(x: formatter.string(from: point.date), y: point.value)
                 }
             }
         }
