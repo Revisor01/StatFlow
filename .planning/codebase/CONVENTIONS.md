@@ -1,218 +1,276 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-03-28
+**Last updated:** 2026-04-04
 
 ## Naming Patterns
 
 **Files:**
-- View files: `{Feature}View.swift` (e.g., `DashboardView.swift`, `LoginView.swift`)
-- ViewModel files: `{Feature}ViewModel.swift` (e.g., `LoginViewModel.swift`, `WebsiteDetailViewModel.swift`)
-- Service/API files: `{Service}API.swift` or `{Service}Service.swift` (e.g., `UmamiAPI.swift`, `NotificationManager.swift`, `AccountManager.swift`)
-- Model files: `{Entity}.swift` (e.g., `Website.swift`, `Stats.swift`, `DateRange.swift`)
-- Extension files: `{Type}+Extensions.swift` (e.g., `View+Extensions.swift`)
-- Test files: `{Feature}Tests.swift` (e.g., `DateRangeTests.swift`, `AccountManagerTests.swift`)
+- Views: PascalCase matching the struct name (`DashboardView.swift`, `WebsiteCard.swift`)
+- ViewModels: PascalCase with `ViewModel` suffix (`WebsiteDetailViewModel.swift`, `ReportsViewModel.swift`)
+- Models: PascalCase noun matching primary type (`Website.swift`, `Stats.swift`, `Reports.swift`)
+- Services: PascalCase with purpose suffix (`KeychainService.swift`, `AnalyticsCacheService.swift`, `AccountManager.swift`)
+- Extensions: `TypeName+Extensions.swift` (`View+Extensions.swift`)
+- Tests: `{Feature}Tests.swift` (`DateRangeTests.swift`, `AccountManagerTests.swift`)
 
-**Functions and Methods:**
-- camelCase with descriptive action verbs
-- Load/fetch operations: `load{Entity}()`, `fetch{Entity}()` (e.g., `loadStats()`, `getWebsites()`)
-- Format/transform operations: `{verb}{Data}()` (e.g., `fillMissingTimeSlots()`, `formatDate()`)
-- Private helper functions: prefixed with `private func` (e.g., `private func handleDeepLink()`)
-- Async functions: `async` keyword required for concurrent operations (e.g., `async func loadData()`)
-- Computed properties use lowercase naming matching their purpose
+**Types:**
+- Structs for data models: `Website`, `StatValue`, `MetricItem`, `AnalyticsWebsite`
+- Classes for ViewModels: `WebsiteDetailViewModel`, `ReportsViewModel`, `LoginViewModel`
+- Enums for fixed sets: `MetricType`, `DateRangePreset`, `APIError`, `AnalyticsProviderType`
+- Actors for thread-safe API clients: `UmamiAPI`, `PlausibleAPI`
+- Protocols: adjective/noun style (`AnalyticsProvider`)
 
-**Variables and Properties:**
-- Published properties in ViewModels: `@Published var {noun}` (e.g., `@Published var isLoading = false`, `@Published var stats: WebsiteStats?`)
-- State properties in Views: `@State private var {noun}` (e.g., `@State private var phase: CGFloat = 0`)
-- Instance variables: camelCase (e.g., `activeVisitors`, `pageviewsData`)
-- Constants in enums: `lowerCamelCase` (e.g., `.today`, `.last7Days`, `.umami`)
+**Functions:**
+- camelCase verbs: `loadData()`, `getWebsites()`, `saveCredential()`
+- Async data loaders prefixed `load`: `loadStats()`, `loadActiveVisitors()`, `loadTopPages()`
+- API methods prefixed `get`: `getMetrics()`, `getStats()`, `getPageviews()`
+- Boolean computed properties: `isPositiveChange`, `isPageview`, `isOffline`, `hasFunnelReports`
 
-**Types and Enums:**
-- Type names: PascalCase (e.g., `WebsiteStats`, `DateRange`, `LoginViewModel`)
-- Enum names: PascalCase (e.g., `AnalyticsProviderType`, `DateRangePreset`)
-- Enum cases: camelCase (e.g., `.cloud`, `.selfHosted`, `.plausible`)
-- Protocol names: PascalCase with "Provider" or "Service" suffix (e.g., `AnalyticsProvider`)
+**Variables:**
+- camelCase: `websiteId`, `dateRange`, `activeVisitors`
+- Private stored properties in actors: underscore prefix (`_baseURL`, `_token`)
+- Published properties: no prefix, descriptive names (`stats`, `isLoading`, `error`)
+- Enum cases: lowerCamelCase (`.today`, `.last7Days`, `.selfHosted`)
+
+**Localization Keys:**
+- Dot-separated hierarchical: `"dashboard.visitors"`, `"button.cancel"`, `"daterange.today"`
+- Category prefix matching feature area: `dashboard.`, `settings.`, `addSite.`, `login.`, `daterange.`
 
 ## Code Style
 
 **Formatting:**
-- Xcode default indentation (4 spaces)
-- Line length: No strict limit enforced, but aim for readability
-- Brace style: Opening braces on same line (K&R style)
-- Spacing: One blank line between logical sections
+- No external formatter (SwiftLint/SwiftFormat not configured)
+- 4-space indentation (Xcode default)
+- Opening braces on same line (K&R style)
+- One blank line between logical sections
+- Consistent use of trailing closures for SwiftUI modifiers
 
 **Linting:**
-- No explicit linter configured (SwiftLint not detected)
-- Relying on Xcode warnings and manual code review
+- No linting tools configured
+- Conventions enforced by code review and consistency
 
-**Type Annotations:**
-- Explicit return types required for all functions/methods
-- Type inference used for local variables where obvious
-- Generic type parameters clearly named (e.g., `<T>`, `<Provider>`)
+## Section Organization (MARK Comments)
+
+Use `// MARK: -` extensively to organize code sections. ~276 occurrences across 42 files.
+
+**In API clients** (`InsightFlow/Services/UmamiAPI.swift`, `InsightFlow/Services/PlausibleAPI.swift`):
+```swift
+// MARK: - AnalyticsProvider Protocol
+// MARK: - AnalyticsProvider - Authentication
+// MARK: - AnalyticsProvider - Websites
+// MARK: - AnalyticsProvider - Stats
+// MARK: - Authentication
+// MARK: - Websites
+// MARK: - Stats
+// MARK: - Events
+// MARK: - Sessions
+// MARK: - Reports
+// MARK: - Private
+```
+
+**In ViewModels:**
+```swift
+// MARK: - Computed Properties
+// MARK: - Init
+// MARK: - Data Loading
+```
+
+**In Tests:**
+```swift
+// MARK: - Setup / Teardown
+// MARK: - Helper
+// MARK: - Tests
+```
 
 ## Import Organization
 
 **Order:**
-1. System frameworks: `import SwiftUI`, `import Foundation`, `import Charts`
-2. System-specific: `import BackgroundTasks`, `import UserNotifications`, `import Security`
-3. Third-party libraries: (Currently SwiftUI/Apple frameworks only)
+1. `Foundation`
+2. Apple frameworks (`SwiftUI`, `Security`, `WidgetKit`, `Combine`, `Charts`)
+3. No third-party imports -- zero external dependencies for app target
 
-**Path Aliases:**
-- No path aliases detected; relative imports used
-- @testable imports in tests: `@testable import InsightFlow`
-
-**Example Pattern:**
-```swift
-import SwiftUI
-import BackgroundTasks
-import UserNotifications
-
-@main
-struct InsightFlowApp: App {
-    // ...
-}
-```
+**No path aliases.** All imports are framework-level. Tests use `@testable import InsightFlow`.
 
 ## Error Handling
 
-**Patterns:**
-- Custom error enums: `APIError`, `PlausibleError`
-- Catch blocks distinguish between error types using `error as ErrorType`
-- Error messages: `errorMessage: String?` in ViewModels for UI display
-- Guard statements for early returns on invalid state
-- Deferred operations using `defer { isLoading = false }` for cleanup
+**API Errors:**
+- Dedicated `APIError` enum in `InsightFlow/Services/UmamiAPI.swift` (line 866)
+- Cases: `.notConfigured`, `.invalidURL`, `.invalidResponse`, `.authenticationFailed`, `.unauthorized`, `.serverError(Int)`
+- Conforms to `LocalizedError` with German error descriptions
+- Keychain errors: `KeychainError` enum in `InsightFlow/Services/KeychainService.swift` (line 141)
 
-**Example Pattern:**
+**ViewModel Error Handling Pattern (reference):**
 ```swift
+// Standard pattern used across all ViewModels:
 do {
-    let token = try await UmamiAPI.shared.login(baseURL: url, username: username, password: password)
-    // Success path
-} catch let error as APIError {
-    errorMessage = error.errorDescription
+    let result = try await provider.someMethod()
+    guard !Task.isCancelled else { return }
+    self.property = result
 } catch {
-    errorMessage = error.localizedDescription
+    guard !Task.isCancelled else { return }
+    let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
+                         (error as? URLError)?.code == .networkConnectionLost ||
+                         (error as? URLError)?.code == .timedOut ||
+                         (error as? URLError)?.code == .cannotFindHost ||
+                         (error as? URLError)?.code == .cannotConnectToHost
+    if isNetworkError {
+        isOffline = true
+    } else {
+        self.error = error.localizedDescription
+    }
 }
 ```
 
+**Non-critical load failures:** Silently caught with `#if DEBUG` print statements (87 total `#if DEBUG` blocks). Only the primary `loadStats()` sets the `error` property; individual metric loads fail silently.
+
+**Task Cancellation:** Always check `guard !Task.isCancelled else { return }` after each `await` before updating UI state. See `InsightFlow/Views/Detail/WebsiteDetailViewModel.swift` for the canonical pattern.
+
 ## Logging
 
-**Framework:** `print()` in DEBUG mode only
+**Framework:** `print()` wrapped in `#if DEBUG` guards -- no production logging.
 
-**Patterns:**
+**Pattern:**
 ```swift
 #if DEBUG
-print("Failed to load active visitors: \(error)")
+print("ClassName.methodName: description \(variable)")
 #endif
 ```
 
-**When to Log:**
-- Non-critical failures (e.g., background refresh failures)
-- Conditional on DEBUG build flag
-- Never log sensitive data (tokens, credentials, user identifiers beyond IDs)
+**When to log:**
+- API response bodies (truncated to 500 chars): `print("UmamiAPI.getMetrics(\(type.rawValue)): \(jsonString.prefix(500))")`
+- Error descriptions in non-critical catch blocks
+- Cache operations (save/load/clear)
+
+## Localization
+
+**Approach:** Apple `String(localized:)` API with `.strings` files. ~346 usages across 32 files.
+
+**Languages:** English (`en.lproj`) and German (`de.lproj`), ~600 keys each.
+
+**Files:**
+- `InsightFlow/Resources/en.lproj/Localizable.strings`
+- `InsightFlow/Resources/de.lproj/Localizable.strings`
+- Widget: `InsightFlowWidget/Resources/en.lproj/Localizable.strings` and `de.lproj/`
+
+**Usage pattern:**
+```swift
+// Standard:
+String(localized: "dashboard.visitors")
+String(localized: "error.invalidURL")
+
+// With default value:
+String(localized: "daterange.lastYear", defaultValue: "Last Year")
+```
+
+**Known inconsistency:** Some strings are hardcoded German instead of localized:
+- `APIError.errorDescription` values in `InsightFlow/Services/UmamiAPI.swift`
+- `MetricType.displayName` values in `InsightFlow/Models/Stats.swift`
+- `RealtimeEvent.timeAgo` in `InsightFlow/Models/Stats.swift` (uses "jetzt", "Min")
+
+**Key naming convention:** `"category.subcategory"` or `"category.subcategory.detail"`.
+
+## Concurrency Model
+
+**Actors for API clients:** `UmamiAPI` and `PlausibleAPI` are Swift actors with `static let shared` singletons.
+
+**@MainActor for ViewModels and managers:**
+```swift
+@MainActor
+class WebsiteDetailViewModel: ObservableObject { ... }
+
+@MainActor
+class AnalyticsManager: ObservableObject { ... }
+```
+
+**Task cancellation pattern (canonical, from `WebsiteDetailViewModel`):**
+```swift
+private var loadingTask: Task<Void, Never>?
+
+func loadData(dateRange: DateRange) async {
+    loadingTask?.cancel()
+    let task = Task {
+        isLoading = true
+        defer { if !Task.isCancelled { isLoading = false } }
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.loadSomething() }
+            // ...parallel loads
+        }
+    }
+    loadingTask = task
+    await task.value
+}
+
+func cancelLoading() {
+    loadingTask?.cancel()
+    loadingTask = nil
+}
+```
+
+**Sendable conformance:** All model structs conform to `Sendable`. The cache service uses `@unchecked Sendable`.
+
+## Singleton Pattern
+
+Use `static let shared` for service singletons:
+- `UmamiAPI.shared` -- `InsightFlow/Services/UmamiAPI.swift` (actor)
+- `PlausibleAPI.shared` -- `InsightFlow/Services/PlausibleAPI.swift` (actor)
+- `AnalyticsManager.shared` -- `InsightFlow/Services/AnalyticsProvider.swift` (@MainActor class)
+- `AccountManager.shared` -- `InsightFlow/Services/AccountManager.swift` (@MainActor class)
+- `AnalyticsCacheService.shared` -- `InsightFlow/Services/AnalyticsCacheService.swift`
+- `DashboardSettingsManager.shared` -- `InsightFlow/Services/DashboardSettingsManager.swift`
+
+## SwiftUI View Pattern
+
+**State management in Views:**
+```swift
+struct DashboardView: View {
+    @StateObject private var viewModel = DashboardViewModel()
+    @ObservedObject private var accountManager = AccountManager.shared
+    @EnvironmentObject private var quickActionManager: QuickActionManager
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var selectedWebsite: Website?
+}
+```
+
+**View decomposition:** Large views split into computed properties and dedicated supporting files:
+- `InsightFlow/Views/Detail/WebsiteDetailView.swift` (main view)
+- `InsightFlow/Views/Detail/WebsiteDetailSupportingViews.swift` (sub-components)
+- `InsightFlow/Views/Detail/WebsiteDetailMetricsSections.swift` (metric sections)
+- `InsightFlow/Views/Detail/WebsiteDetailChartSection.swift` (chart section)
+
+**Custom View Modifiers** in `InsightFlow/Extensions/View+Extensions.swift`:
+- `.glassBackground(cornerRadius:)` -- glassmorphism card style
+- `.shimmer()` -- loading skeleton animation
+
+## Model Design
+
+**Codable structs with computed accessors for wire-format fields:**
+```swift
+struct MetricItem: Codable, Identifiable, Sendable {
+    let x: String?
+    let y: Int
+
+    var id: String { x ?? "unknown" }
+    var name: String { x ?? String(localized: "metrics.unknown") }
+    var value: Int { y }
+}
+```
+
+**Provider abstraction pattern:**
+- Protocol: `AnalyticsProvider` in `InsightFlow/Services/AnalyticsProvider.swift`
+- Implementations: `UmamiAPI`, `PlausibleAPI`
+- Unified types: `AnalyticsWebsite`, `AnalyticsStats`, `AnalyticsChartPoint`, `AnalyticsMetricItem`
+- Default implementations via protocol extensions for optional features
+- API response models stay close to wire format (`x`/`y` fields), domain models wrap them
 
 ## Comments
 
 **When to Comment:**
-- Section headers using `// MARK: - SectionName` (e.g., `// MARK: - Notification Handling`)
-- Complex logic requiring explanation (e.g., date calculations, retry logic)
-- Subheadings within classes (e.g., `// MARK: - Setup / Teardown` in tests)
-- German comments acceptable for domain-specific explanations (e.g., `// Wenn Provider gewechselt werden muss`)
+- Doc comments (`///`) for non-obvious methods: `/// Reconfigure from Keychain - called when switching accounts`
+- Inline comments for workarounds: `// API returns array with [Team, TeamMembership] - parse manually`
+- FIX references: `// Cancel vorherigen Load -- verhindert Background-Battery-Drain (FIX-02)`
+- German comments acceptable for domain-specific explanations
 
-**JSDoc/TSDoc:**
-- Inline documentation using triple-slash comments (`///`) for public APIs
-- Example from codebase: `/// Reconfigure from Keychain - called when switching accounts`
-- Parameters documented: `func load(for key: KeychainKey) -> String?`
-
-**MARK Comments Pattern:**
-- Used extensively to organize code into logical sections
-- Format: `// MARK: - SectionName` for primary sections
-- Common sections: `- Setup / Teardown`, `- Tests`, `- Helpers`, `- Authentication`, `- API Methods`
-
-## Function Design
-
-**Size:**
-- Most functions 20-40 lines
-- API request methods: 10-30 lines with clear request setup
-- Complex logic decomposed into private helper functions
-- Example: `loadData()` method delegates to individual `load{Entity}()` functions
-
-**Parameters:**
-- Explicit parameter names required
-- Default parameters used for optional configuration (e.g., `cornerRadius: CGFloat = 20`)
-- OrderBy clarity: more important parameters first, defaults last
-- Async methods use `async` keyword consistently
-
-**Return Values:**
-- Explicit return type annotations required
-- Optionals used for fallible operations: `String?`, `[Website]?`
-- Void return used when side effects sufficient (e.g., `func clearSelection()`)
-- Published properties used instead of return values in ViewModels for UI updates
-
-**Example Pattern:**
-```swift
-@MainActor
-class WebsiteDetailViewModel: ObservableObject {
-    func loadData(dateRange: DateRange) async {
-        isLoading = true
-        defer { isLoading = false }
-
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { await self.loadStats(dateRange: dateRange) }
-            // ...
-        }
-    }
-
-    private func loadStats(dateRange: DateRange) async {
-        guard let provider = AnalyticsManager.shared.currentProvider else { return }
-        do {
-            let stats = try await provider.getAnalyticsStats(websiteId: websiteId, dateRange: dateRange)
-            self.stats = stats
-        } catch {
-            self.error = error.localizedDescription
-        }
-    }
-}
-```
-
-## Module Design
-
-**Exports:**
-- Public structs/classes explicitly declared when needed
-- Internal modifier used for implementation details
-- Private used for helpers and internal state
-- No barrel files (index.ts equivalent) detected
-
-**Organization by Layer:**
-- `Models/`: Data structures, enums, codable types
-- `Services/`: API clients, managers, business logic (UmamiAPI, PlausibleAPI, AccountManager)
-- `Views/`: SwiftUI components organized by feature subdirectory
-- `Extensions/`: Convenience extensions on system types (View, Color)
-- `App/`: Entry point and app-level configuration
-
-**Concurrency Patterns:**
-- `@MainActor` applied to ViewModels ensuring UI updates on main thread
-- `actor` keyword used for API clients isolating state (UmamiAPI, PlausibleAPI)
-- `Sendable` conformance required for types crossing actor boundaries
-- `async/await` throughout for sequential operations
-
-## Architecture Patterns
-
-**State Management:**
-- MVVM pattern: ViewModel owns @Published properties
-- ViewModels decorated with `@MainActor` for thread safety
-- Shared singleton managers (AccountManager, AnalyticsManager) use `static let shared`
-- @EnvironmentObject used for passing managers through view hierarchy
-
-**Dependency Injection:**
-- Constructor injection in ViewModels (e.g., `init(websiteId: String, domain: String = "")`)
-- Singleton pattern for services (AnalyticsManager, AccountManager)
-- Protocol abstraction for multi-provider support (AnalyticsProvider protocol)
-
-**Async Patterns:**
-- `withTaskGroup` for concurrent data loads
-- `Task.sleep(nanoseconds:)` for testing delays (not production polling)
-- Error propagation via `throw` in functions, caught in ViewModels
-- Deferred cleanup using `defer` blocks
+**No TODO/FIXME/HACK/XXX comments exist in the codebase** (zero found).
 
 ---
 
-*Convention analysis: 2026-03-28*
+*Convention analysis: 2026-04-04*

@@ -1,177 +1,251 @@
 # External Integrations
 
-**Analysis Date:** 2026-03-28
+**Analysis Date:** 2026-04-04
 
 ## APIs & External Services
 
-**Umami Analytics:**
-- Umami Cloud (default: `https://cloud.umami.is`)
-- Self-hosted Umami servers (custom URLs)
-- SDK/Client: Custom `UmamiAPI` actor (`InsightFlow/Services/UmamiAPI.swift`)
-- Auth: Bearer token (JWT-like, stored in Keychain)
-- Usage: Fetch websites, stats, realtime data, metrics (pages, referrers, countries, devices, browsers, OS, regions, cities, page titles, languages, screens, custom events)
+### Umami Analytics API
 
-**Plausible Analytics:**
-- Plausible Cloud (default: `https://plausible.io`)
-- Self-hosted Plausible servers (custom URLs via `serverURL` normalization)
-- SDK/Client: Custom `PlausibleAPI` actor (`InsightFlow/Services/PlausibleAPI.swift`)
-- Auth: Bearer API key (stored in Keychain as `apiKey`)
-- API Endpoint: `POST /api/v2/query` for analytics queries
-- Usage: Fetch sites, stats, realtime data, metrics, custom goals
-- Key header: `Authorization: Bearer {apiKey}`, `Content-Type: application/json`
+- **Provider type:** `AnalyticsProviderType.umami`
+- **Default cloud URL:** `https://cloud.umami.is`
+- **Self-hosted:** Any URL (user-provided)
+- **Client:** `actor UmamiAPI` at `InsightFlow/Services/UmamiAPI.swift` (singleton: `UmamiAPI.shared`)
+- **Auth:** Username/password login returns JWT token; stored in Keychain as `.token`
+- **Auth header:** `Authorization: Bearer {token}`
+- **Timeout:** 15s for login, 30s for all other requests
+- **Date format:** Timestamps as epoch milliseconds (`startAt`, `endAt`); ISO8601 with fractional seconds for report parameters
+
+**Umami API Endpoints Used:**
+
+| Method | Endpoint | Purpose | Function |
+|--------|----------|---------|----------|
+| POST | `/api/auth/login` | Authentication | `login(baseURL:username:password:)` |
+| GET | `/api/websites` | List websites | `getWebsites()` |
+| GET | `/api/websites/{id}` | Single website | `getWebsite(websiteId:)` |
+| GET | `/api/websites/{id}/active` | Active visitors | `getActiveVisitors(websiteId:)` |
+| GET | `/api/websites/{id}/stats` | Aggregate stats | `getStats(websiteId:dateRange:)` |
+| GET | `/api/websites/{id}/pageviews` | Timeseries data | `getPageviews(websiteId:dateRange:)` |
+| GET | `/api/websites/{id}/metrics` | Dimension metrics | `getMetrics(websiteId:dateRange:type:limit:)` |
+| GET | `/api/websites/{id}/events` | Event list | `getEventsDetail(websiteId:dateRange:page:pageSize:)` |
+| GET | `/api/websites/{id}/event-data/stats` | Event stats | `getEventsStats(websiteId:dateRange:)` |
+| GET | `/api/websites/{id}/event-data/fields` | Event data fields | `getEventDataFields(websiteId:dateRange:)` |
+| GET | `/api/websites/{id}/event-data/values` | Event data values | `getEventDataValues(websiteId:dateRange:eventName:propertyName:)` |
+| GET | `/api/websites/{id}/sessions` | Session list | `getSessions(websiteId:dateRange:page:pageSize:)` |
+| GET | `/api/websites/{id}/sessions/{sid}` | Single session | `getSession(websiteId:sessionId:)` |
+| GET | `/api/websites/{id}/sessions/{sid}/activity` | Session activity | `getSessionActivity(websiteId:sessionId:dateRange:)` |
+| GET | `/api/realtime/{id}` | Realtime data | `getRealtime(websiteId:)` |
+| POST | `/api/websites` | Create website | `createWebsite(name:domain:teamId:)` |
+| POST | `/api/websites/{id}` | Update website | `updateWebsite(websiteId:name:domain:shareId:clearShareId:)` |
+| DELETE | `/api/websites/{id}` | Delete website | `deleteWebsite(websiteId:)` |
+| GET | `/api/reports` | List reports | `getReports(websiteId:page:pageSize:)` |
+| POST | `/api/reports/journey` | Journey report | `getJourneyReport(websiteId:dateRange:steps:)` |
+| POST | `/api/reports/retention` | Retention report | `getRetention(websiteId:dateRange:)` |
+| POST | `/api/reports/funnel` | Funnel report | `getFunnelReport(websiteId:dateRange:steps:window:)` |
+| POST | `/api/reports/goal` | Goal report | `getGoalReport(websiteId:dateRange:goalType:goalValue:)` |
+| POST | `/api/reports/attribution` | Attribution report | `getAttributionReport(websiteId:dateRange:model:type:step:)` |
+| GET | `/api/admin/teams` | List teams (admin) | `getTeams()` |
+| POST | `/api/teams` | Create team | `createTeam(name:)` |
+| DELETE | `/api/teams/{id}` | Delete team | `deleteTeam(teamId:)` |
+| GET | `/api/teams/{id}/users` | Team members | `getTeamMembers(teamId:)` |
+| POST | `/api/teams/{id}/users` | Add team member | `addTeamMember(teamId:userId:role:)` |
+| DELETE | `/api/teams/{id}/users/{uid}` | Remove member | `removeTeamMember(teamId:userId:)` |
+| GET | `/api/admin/users` | List users (admin) | `getUsers()` |
+| POST | `/api/users` | Create user | `createUser(username:password:role:)` |
+| DELETE | `/api/users/{id}` | Delete user | `deleteUser(userId:)` |
+
+**UTM Report:** Not a direct API call; parses UTM parameters from `query` metric type results (`getUTMReport` in `UmamiAPI.swift`).
+
+**Metric Types (Umami):**
+`path`, `referrer`, `browser`, `os`, `device`, `country`, `region`, `city`, `language`, `screen`, `event`, `query`, `title`, `hostname` - defined in `MetricType` enum at `InsightFlow/Models/Stats.swift`.
+
+### Plausible Analytics API
+
+- **Provider type:** `AnalyticsProviderType.plausible`
+- **Default cloud URL:** `https://plausible.io`
+- **Self-hosted:** Any URL (user-provided, normalized: https prefix added, trailing slashes removed)
+- **Client:** `actor PlausibleAPI` at `InsightFlow/Services/PlausibleAPI.swift` (singleton: `PlausibleAPI.shared`)
+- **Auth:** API key (manually obtained from Plausible account settings); stored in Keychain as `.apiKey`
+- **Auth header:** `Authorization: Bearer {apiKey}`
+- **Timeout:** 15s for auth validation, 30s for data requests
+- **Date format:** `yyyy-MM-dd` for day ranges, `yyyy-MM-dd HH:mm:ss` for hourly; native shortcuts (`"day"`, `"7d"`, `"30d"`, `"month"`, `"year"`)
+
+**Plausible API Endpoints Used:**
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/v2/query` | All analytics queries (stats, timeseries, breakdown by dimension) |
+| GET | `/api/v1/sites` | List sites (for site management) |
+| GET | `/api/v1/stats/realtime/visitors?site_id=` | Active visitors (v1 API for CE compatibility) |
+
+**Plausible Query Dimensions:**
+`visit:source`, `visit:referrer`, `visit:utm_source`, `visit:utm_medium`, `visit:utm_campaign`, `visit:utm_content`, `visit:utm_term`, `visit:country`, `visit:region`, `visit:city`, `visit:device`, `visit:browser`, `visit:os`, `visit:entry_page`, `visit:exit_page`, `event:page`, `event:name`, `time:day`, `time:hour`
+
+**Plausible Data Conversions (important):**
+- Bounce rate: Plausible returns percentage (e.g., 31 for 31%); converted to absolute count: `bounces = bounce_rate * visits / 100`
+- Visit duration: Plausible returns average seconds per visit; converted to total time: `totaltime = visit_duration * visits`
+- These conversions happen in `PlausibleAPI.getAnalyticsStats()` to match the unified `AnalyticsStats` model
+
+## Provider Abstraction Layer
+
+**Protocol:** `AnalyticsProvider` at `InsightFlow/Services/AnalyticsProvider.swift`
+
+Both `UmamiAPI` and `PlausibleAPI` conform to this protocol. Key unified methods:
+- `authenticate(serverURL:credentials:)` - Provider-specific login
+- `getAnalyticsWebsites()` -> `[AnalyticsWebsite]`
+- `getAnalyticsStats(websiteId:dateRange:)` -> `AnalyticsStats`
+- `getPageviewsData(websiteId:dateRange:)` -> `[AnalyticsChartPoint]`
+- `getVisitorsData(websiteId:dateRange:)` -> `[AnalyticsChartPoint]`
+- `getActiveVisitors(websiteId:)` -> `Int`
+- `getRealtimeData(websiteId:)` -> `AnalyticsRealtimeData`
+- `getPages/getReferrers/getCountries/getDevices/getBrowsers/getOS/getRegions/getCities/getPageTitles/getLanguages/getScreens/getEvents` -> `[AnalyticsMetricItem]`
+
+**Credentials enum:** `AnalyticsCredentials` - `.umami(username:password:)` or `.plausible(apiKey:)`
+
+**Manager:** `AnalyticsManager` (`@MainActor`) manages current provider and persists provider type to Keychain.
 
 ## Data Storage
 
 **Databases:**
-- None - stateless client application
+- None - stateless client application, no local database
 
-**File Storage:**
-- Local filesystem only (app group container)
+**File Storage (App Group Container):**
 - Cache location: `group.de.godsapp.statflow/analytics_cache/`
-- Cache format: JSON files with TTL metadata
+- Cache format: JSON files with TTL metadata wrapper (`CacheWrapper<T>`)
 - Cache TTL: 3600s default (1 hour), 900s for sparklines (15 min)
+- Cache max size: 100MB (enforced at app startup in `InsightFlowApp.init()`)
+- Stale entry cleanup: entries older than 7 days removed at app startup
+- Service: `AnalyticsCacheService` at `InsightFlow/Services/AnalyticsCacheService.swift`
 
-**Caching:**
-- Custom `AnalyticsCacheService` (`InsightFlow/Services/AnalyticsCacheService.swift`)
-- Stores: websites, stats, sparklines, metrics
-- App group shared: accessible to main app + widget
-- Offline-capable: reads stale cached data if network fails
+**Widget Credential Storage:**
+- Encrypted file: `group.de.godsapp.statflow/widget_credentials.encrypted`
+- Encryption key file: `group.de.godsapp.statflow/widget_credentials.key`
+- Multi-account file: `group.de.godsapp.statflow/widget_accounts.encrypted`
+- Encryption: AES-GCM 256-bit via CryptoKit (`InsightFlow/Services/SharedCredentials.swift`)
+- Legacy migration: automatically migrates unencrypted `widget_credentials.json` to encrypted format
 
 **Keychain Storage:**
 - Service identifier: `de.godsapp.statflow`
-- Stores:
-  - `serverURL` - Analytics server base URL
-  - `token` - Umami JWT token
-  - `username` - Umami username (for reference)
-  - `providerType` - Current provider (umami/plausible)
-  - `apiKey` - Plausible API key
-  - Account-scoped credentials: `token_{accountId}`, `apiKey_{accountId}`
+- Global keys: `serverURL`, `authToken`, `username`, `providerType`, `serverType`, `apiKey`, `plausibleSiteId`
+- Account-scoped keys: `token_{accountUUID}`, `apiKey_{accountUUID}`
 - Accessibility: `kSecAttrAccessibleAfterFirstUnlock`
+- Service: `KeychainService` at `InsightFlow/Services/KeychainService.swift`
+
+**UserDefaults:**
+- `analytics_accounts` - Account list (credentials stripped, stored in Keychain separately)
+- `active_account_id` - UUID string of active account
+- `credentials_migrated_v2` - Migration flag for Keychain migration (SEC-04)
+- `notificationSettings` - Per-website notification preferences (JSON)
+- `notificationTime` - Scheduled notification time
+- `notificationDataSource` - today/yesterday/auto
+- `dashboard_enabled_metrics` - Visible dashboard metrics
+- `dashboard_show_graph` - Graph visibility toggle
+- `dashboard_chart_style` - line/bar
+- `dashboard_show_date_range_picker` - Date range picker visibility
+- `supportReminderShown`, `hasSupported`, `appLaunchCount` - Support reminder tracking
 
 ## Authentication & Identity
 
 **Auth Provider:**
-- Custom implementation (no OAuth)
+- Custom implementation - no OAuth, no third-party auth SDK
 
 **Umami Login Flow:**
-1. POST `/api/auth/login` with `username`/`password`
-2. Returns `token` (JWT-like string)
-3. Token used in subsequent requests as `Authorization: Bearer {token}`
-4. Token stored in Keychain
-5. Session file: `InsightFlow/Views/Auth/LoginView.swift`, `LoginViewModel.swift`
+1. User enters server URL + username + password in `InsightFlow/Views/Auth/LoginView.swift`
+2. POST to `/api/auth/login` with JSON body `{"username": ..., "password": ...}`
+3. Response contains `token` (JWT-like string)
+4. Token + serverURL + username + providerType saved to Keychain
+5. `UmamiAPI.shared` configured with `baseURL` and `token` (actor state)
+6. Account created via `AccountManager.addAccount()` with credentials
 
 **Plausible Auth Flow:**
-1. Manual API key from Plausible account settings
-2. Validate key by sending POST to `/api/v2/query` with empty body
-3. Status 400 = key valid (malformed request), 401 = key invalid
-4. API key stored in Keychain
-5. Key used in requests as `Authorization: Bearer {apiKey}`
-6. Session file: `InsightFlow/Views/Auth/LoginView.swift`
+1. User enters server URL + API key in `InsightFlow/Views/Auth/LoginView.swift`
+2. Validation: POST to `/api/v2/query` with empty body
+3. HTTP 400 = key valid (malformed request expected); HTTP 401 = invalid key
+4. Server URL normalized (https prefix, no trailing slash)
+5. API key + serverURL saved to Keychain
+6. Provider type set to `.plausible` via `AnalyticsManager.shared.saveProviderType()`
 
-**Multi-Account Support:**
-- `AnalyticsAccount` model stores account metadata + credentials per account
-- Accounts persisted to `UserDefaults` (stripped of credentials)
-- Credentials stored separately in Keychain by account UUID
-- Active account tracked in `UserDefaults` key `active_account_id`
-- Switching accounts via `AccountManager.setActiveAccount(_:)`
+**Multi-Account Architecture:**
+- Model: `AnalyticsAccount` at `InsightFlow/Services/AccountManager.swift`
+- Accounts stored in UserDefaults (credentials stripped out)
+- Credentials stored in Keychain by `{credentialType}_{accountUUID}`
+- On load: accounts hydrated with Keychain credentials via `hydrateWithKeychainCredentials()`
+- Switching accounts: `AccountManager.setActiveAccount()` writes to Keychain, reconfigures API actors, posts `.accountDidChange` notification, reloads widget timelines
+- Migration from legacy single-account system via `migrateFromLegacyCredentials()`
+- Migration from UserDefaults credentials to Keychain via `migrateCredentialsToKeychain()` (SEC-04 fix)
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-- None detected - no Sentry, Crashlytics, or similar
+- None - no Sentry, Crashlytics, or similar
 
 **Logs:**
-- Print-based debugging (conditionally compiled with `#if DEBUG`)
-- Example: `InsightFlow/Services/AccountManager.swift`, `AnalyticsCacheService.swift`
-- No persistent logging framework
+- `#if DEBUG print(...)` throughout service layer
+- No persistent logging, no log levels, no crash reporting
 
 ## CI/CD & Deployment
 
 **Hosting:**
 - Apple App Store (native iOS app)
-- No staging/beta infrastructure in codebase
+- No TestFlight configuration in codebase
 
 **CI Pipeline:**
-- Not found in codebase
-- Assumed manual Xcode build + Archive → App Store Connect
-
-## Environment Configuration
-
-**Required env vars:**
-- None - all configuration via app settings UI
-
-**Secrets location:**
-- iOS Keychain (no `.env` files)
-- Credentials never persisted to UserDefaults or files
-- See `KeychainService.swift` for access patterns
-
-**Runtime Configuration:**
-- Server URLs: User-provided via LoginView
-- Credentials: User-provided via LoginView
-- Account names: User-provided during setup
-- Notification time: User-configurable in SettingsView
-- Notification data source: User-configurable in SettingsView
+- Not detected - assumed manual Xcode Archive + App Store Connect upload
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-- Deep link support via `statflow://website?id={websiteId}&provider={umami|plausible}`
-- Handled in `InsightFlowApp.swift` `handleDeepLink(_:)` method
-- Triggers account switching + navigation to website detail view
+- Deep link: `statflow://website?id={websiteId}&provider={umami|plausible}`
+- Handled in `InsightFlowApp.handleDeepLink(_:)` at `InsightFlow/App/InsightFlowApp.swift`
+- Triggers account switching if needed + navigation to website detail
 
 **Outgoing:**
-- None detected - read-only analytics client
+- None - read-only analytics client, no write-back or webhook calls
 
-## API Request Patterns
+## Notifications
 
-**Base URL Construction:**
-- Umami: User-provided server URL (e.g., `https://umami.myserver.com`)
-- Plausible: Normalized by removing trailing slashes and adding `https://` prefix if missing
+**Local Notifications:**
+- Scheduled via `UNCalendarNotificationTrigger` (daily or weekly)
+- Background refresh via `BGAppRefreshTask` (identifier: `de.godsapp.statflow.refresh`)
+- Per-website settings: disabled / daily / weekly (`NotificationSetting` enum)
+- Data source: today / yesterday / auto (morning=yesterday, evening=today)
+- Summary mode: when 5+ websites enabled, sends single summary notification per account
+- Thread grouping: `threadIdentifier = "account-{accountUUID}"`
+- Service: `NotificationManager` at `InsightFlow/Services/NotificationManager.swift`
 
-**Standard Headers:**
-- `Authorization: Bearer {token/apiKey}` (all authenticated requests)
-- `Content-Type: application/json` (all POST/PUT requests)
-- `Accept: application/json` (implicit from URLSession)
+## Widget Integration
 
-**Date Handling:**
-- Umami: ISO8601 with optional fractional seconds (custom decoder)
-- Plausible: Snake case to camelCase conversion (standard JSONDecoder strategy)
+**Widget Extension:** `InsightFlowWidget/`
+- Uses `AppIntentTimelineProvider` for configuration
+- Configurable: account, website, time range
+- Reads credentials from encrypted App Group files (`SharedCredentials`)
+- Has its own networking layer (`InsightFlowWidget/Networking/WidgetNetworking.swift`)
+- Has its own cache (`InsightFlowWidget/Cache/WidgetCache.swift`)
+- Refresh policy: every 15 minutes
+- Supported sizes: small, medium
 
-**Error Handling:**
-- HTTP status codes checked before decoding
-- Custom `APIError` enum for type-safe errors
-- Umami-specific: `UmamiError` enum
-- Plausible-specific: `PlausibleError` enum
+**Data Sharing (App -> Widget):**
+1. Main app writes encrypted credentials to App Group container
+2. Main app syncs all accounts to `widget_accounts.encrypted`
+3. Widget reads and decrypts at timeline refresh
+4. Widget makes its own API calls using decrypted credentials
+5. `WidgetCenter.shared.reloadAllTimelines()` called after account changes
 
-**Timeout:**
-- Default URLSession timeout: 15 seconds
-- Configured in `URLRequest.timeoutInterval = 15`
+## Error Handling
 
-## Data Models & Types
+**Error Enums:**
+- `APIError` (Umami): `.notConfigured`, `.invalidURL`, `.invalidResponse`, `.authenticationFailed`, `.unauthorized`, `.serverError(Int)` - at `InsightFlow/Services/UmamiAPI.swift`
+- `PlausibleError`: `.notAuthenticated`, `.invalidCredentials`, `.invalidResponse`, `.unauthorized`, `.serverError(Int)`, `.noData` - at `InsightFlow/Services/PlausibleAPI.swift`
+- `KeychainError`: `.saveFailed(OSStatus)` - at `InsightFlow/Services/KeychainService.swift`
+- `SharedCredentials.EncryptionError`: `.encryptionFailed`, `.decryptionFailed` - at `InsightFlow/Services/SharedCredentials.swift`
 
-**Unified Analytics Models (AnalyticsProvider protocol):**
-- `AnalyticsWebsite` - Site ID, name, domain, share ID, provider
-- `AnalyticsStats` - Visitors, pageviews, visits, bounces, total time
-- `AnalyticsChartPoint` - Date-based chart data
-- `AnalyticsPageview` - URL, referrer, timestamp, geo (country/city)
-- `AnalyticsEvent` - Event name, URL, timestamp
-- `AnalyticsMetricItem` - Name/dimension + value
-- `DateRange` - Enum: today, yesterday, last7Days, last30Days, last90Days, custom
-
-**Umami-Specific Models:**
-- `Website`, `WebsiteResponse`
-- `Stats`, `StatsComparison`
-- `Realtime`, `RealtimeEvent`
-- `Metric`, `MetricsResponse`
-- `Team`, `TeamsResponse`
-- `MeResponse` - Current user info
-
-**Plausible-Specific Models:**
-- `PlausibleSite` - Site configuration
-- `PlausibleStats` - Plausible-format stats
-- `PlausibleGoal` - Custom goal definitions
-- `PlausibleEvent` - Event tracking data
+**HTTP Error Handling Pattern:**
+```swift
+guard (200...299).contains(httpResponse.statusCode) else {
+    if httpResponse.statusCode == 401 { throw APIError.unauthorized }
+    throw APIError.serverError(httpResponse.statusCode)
+}
+```
 
 ---
 
-*Integration audit: 2026-03-28*
+*Integration audit: 2026-04-04*

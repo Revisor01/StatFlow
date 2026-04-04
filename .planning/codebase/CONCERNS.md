@@ -1,280 +1,267 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-03-28
+**Analysis Date:** 2026-04-04
 
 ## Tech Debt
 
-**Oversized View Files - High Complexity:**
-- Issue: Multiple views exceed 600+ lines, combining state management, layout, and logic in single file
-- Files:
-  - `InsightFlow/Views/Dashboard/DashboardView.swift` (1139 lines)
-  - `InsightFlow/Views/Detail/WebsiteDetailView.swift` (766 lines)
-  - `InsightFlow/Views/Settings/SettingsView.swift` (755 lines)
-  - `InsightFlow/Views/Dashboard/WebsiteCard.swift` (669 lines)
-  - `InsightFlow/Views/Sessions/SessionsView.swift` (676 lines)
-- Impact: Difficult to test, maintain, and refactor. Hard to isolate state changes. Increases cognitive load when debugging UI issues.
-- Fix approach: Extract reusable view components into separate files (e.g., `AccountSwitcherView.swift`, `StatsGridView.swift`, `DateRangePickerSection.swift`). Move view model logic to dedicated ViewModels. Use @ViewBuilder to break large body hierarchies into logical sections.
+**`let viewModel` in CompareChartSection — Missing @ObservedObject (ACTIVE BUG):**
+- Issue: `CompareChartSection` declares `let viewModel: CompareViewModel` instead of `@ObservedObject var viewModel: CompareViewModel`. This is the exact pattern that caused 11 bugs fixed on 2026-04-04 where data loaded but never displayed.
+- Files: `InsightFlow/Views/Detail/CompareChartSection.swift` (line 5)
+- Impact: CompareChartSection will NOT re-render when `CompareViewModel` publishes changes. Chart data may appear stale or empty after initial load.
+- Fix approach: Change `let viewModel: CompareViewModel` to `@ObservedObject var viewModel: CompareViewModel`. Audit all child views that receive an `ObservableObject` to ensure they use `@ObservedObject`, never `let`.
 
-**Mixed State Management Patterns:**
-- Issue: Uses mix of `@StateObject`, `@ObservedObject`, `@Published`, `UserDefaults`, `Keychain`, and `AppGroup` containers for state synchronization across views and widget
+**Oversized View Files — High Complexity:**
+- Issue: Multiple files exceed 600+ lines, combining state management, layout, networking, and logic in single files
 - Files:
-  - `InsightFlow/Services/AccountManager.swift` (multi-account state + Keychain + UserDefaults + widget sync)
-  - `InsightFlow/Services/PlausibleSitesManager.swift` (state sync via flag + UserDefaults + Keychain)
-  - `InsightFlow/Views/Dashboard/DashboardView.swift` (local state + external managers)
-- Impact: State inconsistency between app and widget; difficult to reason about source of truth; potential race conditions during account switching or site management
-- Fix approach: Establish single source of truth per domain: Consider extracting state into a dedicated state container with explicit sync points. Use a state machine pattern for account switching (pending → loading → active). Make widget sync explicit and atomic.
+  - `InsightFlow/Views/Dashboard/DashboardView.swift` (1189 lines — includes DashboardViewModel, DashboardView, add-account sheet, all data loading)
+  - `InsightFlow/Services/PlausibleAPI.swift` (1048 lines)
+  - `InsightFlow/Services/UmamiAPI.swift` (890 lines)
+  - `InsightFlow/Views/Detail/WebsiteDetailView.swift` (786 lines)
+  - `InsightFlow/Views/Settings/SettingsView.swift` (742 lines — includes SettingsViewModel embedded)
+  - `InsightFlow/Views/Sessions/SessionsView.swift` (706 lines — includes SessionsViewModel, SessionDetailViewModel, JourneyViewModel all in one file)
+  - `InsightFlow/Views/Realtime/RealtimeView.swift` (650 lines — includes RealtimeViewModel, LiveEventDetailViewModel)
+- Impact: Difficult to test, maintain, and isolate changes. ViewModels embedded in view files cannot be tested independently. Increases cognitive load when debugging.
+- Fix approach: Extract each ViewModel into its own file. Break large views into focused sub-views. `DashboardView.swift` should be split into at least `DashboardView.swift`, `DashboardViewModel.swift`, and `AddAccountSheet.swift`.
+
+**Duplicated Network Error Detection (5 identical blocks):**
+- Issue: The same 5-line network error detection pattern (`isNetworkError = (error as? URLError)?.code == .notConnectedToInternet || ...`) is copy-pasted in 5 different ViewModels
+- Files:
+  - `InsightFlow/Views/Reports/ReportsViewModel.swift` (lines 57-62)
+  - `InsightFlow/Views/Events/EventsViewModel.swift` (lines 43-48)
+  - `InsightFlow/Views/Dashboard/DashboardView.swift` (lines 961-965)
+  - `InsightFlow/Views/Sessions/SessionsView.swift` (lines 516-520)
+  - `InsightFlow/Views/Detail/WebsiteDetailViewModel.swift` (lines 91-95)
+- Impact: If a new error code needs handling (e.g., `.dataNotAllowed` for cellular restrictions), it must be updated in 5 places. Easy to miss one.
+- Fix approach: Extract to a shared utility: `extension Error { var isNetworkError: Bool { ... } }` in `InsightFlow/Extensions/`.
 
 **Duplicate Decoder/Encoder Setup:**
-- Issue: Custom JSONDecoder/JSONEncoder instances are defined in multiple service classes with different strategies
+- Issue: Custom JSONDecoder/JSONEncoder instances defined in multiple service classes with different strategies
 - Files:
-  - `InsightFlow/Services/UmamiAPI.swift` (custom date formatting with ISO8601 fallback)
-  - `InsightFlow/Services/PlausibleAPI.swift` (snake_case conversion)
+  - `InsightFlow/Services/UmamiAPI.swift` (custom date formatting with ISO8601 fallback, lines 21-48)
+  - `InsightFlow/Services/PlausibleAPI.swift` (snake_case conversion, line 23-27)
   - `InsightFlow/Services/AnalyticsCacheService.swift` (ISO8601 date strategy)
-- Impact: Inconsistent JSON handling; maintenance burden if API format changes; encoding/decoding errors not consistent across providers
-- Fix approach: Create shared `JSON.Configuration` service that provides pre-configured codecs. Use dependency injection to pass decoders to services.
+- Impact: Inconsistent JSON handling; maintenance burden if API format changes
+- Fix approach: Create shared `JSON.Configuration` service. Use dependency injection to pass decoders to services.
 
-**String-Based Enum Serialization in Cache:**
-- Issue: AnalyticsProviderType stored as string in CachedWebsite, requires fallback decoding with default value
-- Files: `InsightFlow/Services/AnalyticsCacheService.swift` (line 294)
-- Impact: Silent data loss if provider type string is invalid; no warning to developer
-- Fix approach: Add explicit validation that throws error on invalid provider type during cache load. Add debug assertion to catch misconfigurations early.
+**DateFormatter Created Repeatedly in Hot Paths:**
+- Issue: `ISO8601DateFormatter()` and `DateFormatter()` are instantiated repeatedly inside loops and data-mapping closures instead of being reused as static properties
+- Files:
+  - `InsightFlow/Views/Dashboard/DashboardView.swift` (lines 995, 1104, 1142 — inside data loading loops)
+  - `InsightFlow/Views/Detail/WebsiteDetailViewModel.swift` (lines 120, 179)
+  - `InsightFlow/Views/Detail/CompareChartSection.swift` (lines 420, 483, 558)
+  - `InsightFlow/Views/Detail/CompareViewModel.swift` (line 68)
+  - `InsightFlow/Models/Stats.swift` (lines 107, 224, 284, 291, 321, 342, 445 — 7 separate formatter allocations)
+  - `InsightFlow/Views/Reports/RetentionView.swift` (lines 277-291)
+- Impact: `DateFormatter` is expensive to allocate. Creating one per data point in a chart with 365 points wastes memory and CPU.
+- Fix approach: Create `static let` formatters as properties on a shared `DateFormatting` utility or as file-level constants.
+
+**ViewModels Hardwired to Singletons (No Dependency Injection):**
+- Issue: Every ViewModel directly references `UmamiAPI.shared`, `PlausibleAPI.shared`, `AnalyticsCacheService.shared` — making unit testing require global state manipulation
+- Files:
+  - `InsightFlow/Views/Reports/ReportsViewModel.swift` (line 17: `private let api = UmamiAPI.shared`)
+  - `InsightFlow/Views/Events/EventsViewModel.swift` (line 17: `private let api = UmamiAPI.shared`)
+  - `InsightFlow/Views/Sessions/SessionsView.swift` (lines 491, 566, 599 — three ViewModels all with `private let api = UmamiAPI.shared`)
+  - `InsightFlow/Views/Detail/WebsiteDetailViewModel.swift`
+  - `InsightFlow/Views/Dashboard/DashboardView.swift` (DashboardViewModel, lines 805-807)
+- Impact: Cannot mock API in tests without swizzling. Tests depend on Keychain state and network.
+- Fix approach: Accept `AnalyticsProvider` protocol via init parameter with default value: `init(api: AnalyticsProvider = UmamiAPI.shared)`.
 
 **Actor/MainActor Isolation Boundary Issues:**
-- Issue: UmamiAPI and PlausibleAPI use `actor` with `nonisolated` properties that read from Keychain (non-thread-safe), while AccountManager is `@MainActor` and calls async actor methods
+- Issue: UmamiAPI and PlausibleAPI use `actor` with `nonisolated` properties that read from Keychain (non-thread-safe), while AccountManager is `@MainActor`
 - Files:
-  - `InsightFlow/Services/UmamiAPI.swift` (actor with nonisolated Keychain reads)
-  - `InsightFlow/Services/PlausibleAPI.swift` (actor with nonisolated Keychain reads)
-  - `InsightFlow/Services/AccountManager.swift` (MainActor calling actor methods)
-- Impact: Potential data race warnings from Swift compiler; actual race condition possible if Keychain is updated while nonisolated property is read
-- Fix approach: Use actor-isolated stored properties instead of computed nonisolated properties. Synchronize actor initialization with AccountManager credential application. Consider using a single atomic credential store that the actors can safely read.
+  - `InsightFlow/Services/UmamiAPI.swift` (nonisolated `serverURL`, `isAuthenticated` read Keychain)
+  - `InsightFlow/Services/PlausibleAPI.swift` (nonisolated `serverURL`, `apiKey`, `isAuthenticated`)
+  - `InsightFlow/Services/AnalyticsCacheService.swift` (line 5: `@unchecked Sendable` on class with mutable file I/O)
+- Impact: Potential data races if Keychain is updated while nonisolated property is read. `@unchecked Sendable` suppresses compiler warnings but does not fix thread safety.
+- Fix approach: Use actor-isolated stored properties instead of computed nonisolated properties. Replace `@unchecked Sendable` with proper actor isolation or `OSAllocatedUnfairLock`.
 
 ## Known Bugs
 
+**CompareChartSection Not Reactive (CONFIRMED):**
+- Symptoms: Chart in CompareView may not update when ViewModel publishes new data
+- Files: `InsightFlow/Views/Detail/CompareChartSection.swift` (line 5)
+- Trigger: Navigate to Compare view, change comparison parameters
+- Workaround: Navigate back and re-enter the view
+- Fix: Change `let viewModel` to `@ObservedObject var viewModel`
+
 **Account Switcher Widget Sync Race Condition:**
 - Symptoms: Widget sometimes shows old account's data after switching accounts
-- Files: `InsightFlow/Services/AccountManager.swift` (line 327), `InsightFlow/Services/PlausibleSitesManager.swift` (line 1046)
+- Files: `InsightFlow/Services/AccountManager.swift` (line 327)
 - Trigger: Rapid account switching or adding account immediately after login
-- Cause: `syncAccountsToWidget()` and `WidgetCenter.shared.reloadAllTimelines()` fire without waiting for credential application to complete. Widget may read stale credentials from SharedCredentials.
-- Workaround: Force close and reopen app or manually refresh widget from widget settings
+- Cause: `syncAccountsToWidget()` and `WidgetCenter.shared.reloadAllTimelines()` fire without waiting for credential application to complete
+- Workaround: Force close and reopen app or manually refresh widget
 
 **Plausible "Realtime" Metric Gaps:**
 - Symptoms: Realtime top pages/countries show only last 24 hours instead of true realtime data
 - Files: `InsightFlow/Services/PlausibleAPI.swift` (lines 344-381)
 - Cause: Plausible API does not support dimensions in realtime endpoint; implementation uses "day" breakdown as workaround
-- Impact: Users expect rolling 30-minute window but get full daily data; confusing when daily total is 0
 - Workaround: None; by design limitation of Plausible API
 
-**Cache Expiration Silent Failure:**
-- Symptoms: Expired cache entries may continue to display if network is unavailable
-- Files: `InsightFlow/Services/AnalyticsCacheService.swift` (lines 172-196)
-- Cause: `clearExpiredCache()` is called but not awaited; entries may be checked after read but before deletion completes
-- Impact: Stale data shown to user with no visible indicator that data is expired
-- Workaround: Manual "Refresh" button or force data reload by switching date range
-
-**Team Response Parsing Fragility:**
-- Symptoms: Team creation may fail or return malformed data
-- Files: `InsightFlow/Services/UmamiAPI.swift` (lines 685-726)
-- Cause: Tries to decode as array first, then single object. If API changes response format, the try/catch silently fails and throws generic `invalidResponse` error without logging actual response
-- Impact: Difficult to debug API issues; team management features become unreliable
-- Fix: Log actual response data when parsing fails (currently only in DEBUG); improve error messages
+**Cache Websites Loaded Without TTL Check:**
+- Symptoms: Stale website list shown from cache even when data is hours old
+- Files: `InsightFlow/Views/Dashboard/DashboardView.swift` (lines 981-982)
+- Trigger: App goes offline, then cache is read without checking `isExpired`
+- Note: Sparkline cache correctly checks `!cachedSparkline.isExpired` (line 993), but the website list load on line 981-982 does NOT check `cachedWebsites.isExpired`. This is inconsistent.
+- Fix: Add `!cachedWebsites.isExpired` guard, or at minimum flag expired cache visually
 
 ## Security Considerations
 
 **Keychain Data Not Isolated by Account:**
 - Risk: Credentials stored with account UUID scoped keys, but fallback lookups use legacy non-scoped keys
 - Files: `InsightFlow/Services/AccountManager.swift` (lines 220-257), `InsightFlow/Services/KeychainService.swift`
-- Current mitigation: Credentials are stripped from UserDefaults before saving (only in Keychain). Migration validates all stored data.
+- Current mitigation: Credentials are stripped from UserDefaults before saving. Migration validates stored data.
 - Recommendations:
-  - Add explicit Keychain query filtering by account UUID during all reads
   - Audit legacy key lookups — ensure they only occur during migration
-  - Add test case that verifies credentials are completely isolated between accounts
+  - Add test that verifies credentials are completely isolated between accounts
+
+**Force Unwrap in KeychainService:**
+- Risk: `value.data(using: .utf8)!` on line 18 and 89 of `InsightFlow/Services/KeychainService.swift` will crash if non-UTF-8 string is passed
+- Files: `InsightFlow/Services/KeychainService.swift` (lines 18, 89)
+- Current mitigation: All callers pass known-good strings (tokens, URLs)
+- Recommendations: Replace with `guard let data = value.data(using: .utf8) else { throw ... }` for safety
 
 **Widget Credentials Stored in UserDefaults via AppGroup:**
-- Risk: Encrypted JSON stored in UserDefaults but encryption key may be accessible to other apps sharing the group
-- Files: `InsightFlow/Services/AccountManager.swift` (line 363-373), `InsightFlow/Services/SharedCredentials.swift`
-- Current mitigation: Data is encoded as JSON (not encrypted at application level)
-- Recommendations:
-  - Document that app group access is limited to same developer team
-  - Consider using Keychain with AppGroup access control instead of SharedCredentials
-  - Review if encryption is needed at application level (depends on sensitivity of multi-account tokens)
-
-**API Token in Memory During String Operations:**
-- Risk: Token passed as String parameter to URLRequest methods; could be logged or captured in memory dumps
-- Files: `InsightFlow/Services/UmamiAPI.swift` (line 1190), `InsightFlow/Services/PlausibleAPI.swift` (line 313)
-- Current mitigation: None; tokens are nonisolated computed properties reading from Keychain
-- Recommendations:
-  - Consider using SecureString or similar wrapper that zeros memory after use
-  - Audit all places where token appears in log output (currently protected by `#if DEBUG`)
-  - Add policy that tokens should never be logged even in DEBUG builds
+- Risk: Encrypted JSON stored in UserDefaults but encryption key stored alongside data in the same container
+- Files: `InsightFlow/Services/SharedCredentials.swift`, `InsightFlow/Services/AccountManager.swift` (lines 363-373)
+- Recommendations: Consider using Keychain with AppGroup access control instead of file-based encryption
 
 ## Performance Bottlenecks
 
-**LazyVStack in DashboardView with Async Data Binding:**
-- Problem: LazyVStack renders WebsiteCard for all websites simultaneously; each card awaits stats loading independently
-- Files: `InsightFlow/Views/Dashboard/DashboardView.swift` (lines 39-73)
-- Cause: No loading state coordination; all cards fetch data in parallel, creating network spike
-- Impact: Slow initial load with many websites (10+); network congestion; battery drain on poor connections
-- Improvement path:
-  - Implement priority-based loading: fetch visible cards first, defer off-screen cards
-  - Add `withThrottling` to batch API requests (max 3 concurrent requests)
-  - Cache sparkline data more aggressively (currently 15-min TTL, could be 1 hour for stable data)
+**LazyVStack Usage With Conditional Content (Risk Pattern):**
+- Problem: LazyVStack used in several views that also contain conditional content and state-dependent rendering. This was the root cause of a recently-fixed bug where LazyVStack prevented conditional view updates.
+- Files:
+  - `InsightFlow/Views/Dashboard/DashboardView.swift` (line 39)
+  - `InsightFlow/Views/Reports/ReportsHubView.swift` (line 36)
+  - `InsightFlow/Views/Events/EventsView.swift` (line 41)
+  - `InsightFlow/Views/Sessions/SessionsView.swift` (line 153)
+  - `InsightFlow/Views/Admin/AdminView.swift` (lines 111, 134, 173, 213)
+- Impact: LazyVStack defers view creation and may not trigger updates for off-screen items when state changes. If conditional content (if/else on ViewModel state) is inside LazyVStack, the view may show stale content.
+- Improvement: For views with < 50 items, prefer `VStack` over `LazyVStack`. Only use `LazyVStack` for truly large, homogeneous lists (e.g., sessions list, event list).
 
 **DashboardView Layout Recalculation on Every State Change:**
 - Problem: Large VStack hierarchy recalculates on any state change (activeVisitors, sparklineData, stats dict updates)
 - Files: `InsightFlow/Views/Dashboard/DashboardView.swift` (body property)
 - Cause: No view memoization; body is fully recomputed even when only one website's stats changed
-- Impact: Frame drops when scrolling with loading activity; jank during data refresh
-- Improvement path:
-  - Wrap WebsiteCard in `.id(website.id)` to stabilize SwiftUI diffing
-  - Use `EquatableView` wrapper to prevent parent redraws
-  - Consider moving sparklineData and activeVisitors into individual WebsiteCard ViewModels
+- Improvement: Move sparklineData and activeVisitors into individual WebsiteCard ViewModels. Use `EquatableView` wrapper.
 
 **Account Switching Loads All Data Sequentially:**
-- Problem: `loadAllAccountsData()` awaits each account's websites sequentially
-- Files: `InsightFlow/Views/Dashboard/DashboardViewModel.swift`
-- Impact: Noticeable delay when viewing "All Accounts" mode with multiple Umami/Plausible instances
-- Improvement path: Use `async let` to fetch in parallel: `async let umamiSites = account1.getWebsites()` then `let results = try await (umamiSites, plausibleSites)`
+- Problem: `loadAllAccountsData()` iterates accounts with `for account in accounts` (sequential), calling `await AccountManager.shared.setActiveAccount(account)` for each
+- Files: `InsightFlow/Views/Dashboard/DashboardView.swift` (lines 856-914)
+- Impact: N accounts = N sequential credential switches + N sequential website loads
+- Improvement: Restructure to load data per-account in parallel without switching global active account state
 
 **AnalyticsCacheService File I/O Not Async:**
-- Problem: Cache save/load operations block the calling thread (file I/O is synchronous)
+- Problem: Cache save/load operations block the calling thread (synchronous file I/O)
 - Files: `InsightFlow/Services/AnalyticsCacheService.swift` (lines 57-111)
-- Impact: Potential UI thread blocking if multiple cache writes happen during data refresh
-- Improvement path: Use `FileManager.default.openFile()` async API or dispatch cache I/O to background queue
+- Impact: Potential MainActor blocking if multiple cache writes happen during data refresh
+- Improvement: Dispatch cache I/O to background queue or use async file APIs
 
 ## Fragile Areas
 
-**Account Switch/Login State Machine Has Multiple Race Conditions:**
-- Files: `InsightFlow/Services/AccountManager.swift` (applyAccountCredentials method)
-- Why fragile:
-  - `setActiveAccount()` updates @Published property before async credential application completes
-  - Views can navigate based on activeAccount before API is actually configured
-  - Plausible site restoration happens in sequence: widget sync → account update → PlausibleSitesManager notification
-  - If any async operation fails (Keychain save, PlausibleAPI reconfiguration), state becomes inconsistent
-- Safe modification:
-  - Create explicit loading state: `enum AccountState { case loading, active, error }`
-  - Don't update activeAccount until ALL async operations complete
-  - Add error boundary that reverts account on any configuration failure
-  - Test with both Umami and Plausible account switches
+**Task Cancellation Handling Inconsistency:**
+- Files:
+  - `InsightFlow/Views/Detail/WebsiteDetailViewModel.swift` — Properly cancels previous task (line 41: `loadingTask?.cancel()`) and checks `Task.isCancelled` before every state write
+  - `InsightFlow/Views/Dashboard/DashboardView.swift` — NO task cancellation on `loadData()`. Rapid date range changes or account switches can cause multiple concurrent loads that overwrite each other
+  - `InsightFlow/Views/Events/EventsViewModel.swift` — No task cancellation at all. Changing date range while loading creates parallel loads.
+  - `InsightFlow/Views/Reports/ReportsViewModel.swift` — No task cancellation. No `Task.isCancelled` checks.
+  - `InsightFlow/Views/Sessions/SessionsView.swift` — SessionsViewModel, SessionDetailViewModel, JourneyViewModel all lack task cancellation.
+  - `InsightFlow/Views/Reports/RetentionView.swift` — RetentionViewModel has no cancellation.
+  - `InsightFlow/Views/Reports/PagesView.swift` — PagesViewModel has no cancellation.
+  - `InsightFlow/Views/Reports/InsightsView.swift` — ComparisonViewModel has no cancellation.
+- Why fragile: Without cancellation, navigating away from a view while data loads wastes network/battery and can overwrite fresh data with stale results from a previous request that completes later.
+- Safe modification: Follow the `WebsiteDetailViewModel` pattern: store a `loadingTask` reference, cancel it before starting new loads, and check `Task.isCancelled` before writing results.
+- Priority: **High** — this was the root cause of a recently-fixed bug where task cancellation overwrote valid data with empty arrays.
 
-**WebsiteCard Dependency on Global KeychainService:**
-- Files: `InsightFlow/Views/Dashboard/WebsiteCard.swift` (line 74)
-- Why fragile: Card reads serverURL directly from Keychain inside view body, no dependency injection
-  - If Keychain state changes, view doesn't refresh (computed property isn't observed)
-  - Switching accounts doesn't trigger card re-render with new serverURL
-- Safe modification: Pass serverURL as explicit @State or environment value from DashboardView
+**EventsViewModel Has No Cancellation-Aware Error Handling:**
+- Files: `InsightFlow/Views/Events/EventsViewModel.swift` (lines 22-75)
+- Why fragile: `loadEvents()` uses `withTaskGroup` but if the enclosing `.task {}` is cancelled (user navigates away), the TaskGroup child tasks throw `CancellationError`, which is caught and may set `isOffline = true` or `error = ...` incorrectly.
+- Safe modification: Add `guard !Task.isCancelled else { return }` after the TaskGroup completes, before setting `isLoading = false`.
+
+**Account Switch Modifies Global Singleton State:**
+- Files: `InsightFlow/Services/AccountManager.swift` (line 166: `setActiveAccount`)
+- Why fragile: `loadAllAccountsData()` in DashboardViewModel (line 866-900) temporarily switches the active account for EACH account to load data, then restores the original. If user interacts during this operation, the active account is wrong.
+- Safe modification: Pass credentials directly to API calls instead of switching global active account state.
 
 **PlausibleSitesManager State Flag Workaround:**
 - Files: `InsightFlow/Services/PlausibleAPI.swift` (lines 972-976)
-- Why fragile: `skipSaveOnSet` flag prevents didSet from saving; multiple concurrent calls could race
-  - If `setSitesWithoutPersist()` is called twice rapidly, second call sets flag to true while first is still executing
-  - Concurrent updates to sites array bypass persistence entirely
-- Safe modification:
-  - Use explicit methods instead of flags: `loadSites()`, `setSites()`, `addSite()` with clear persistence semantics
-  - Lock access to sites array or use serial dispatch queue
-  - Add assertions that document which methods persist vs. don't
-
-**Error Handling in Realtime Data Loading:**
-- Files: All metric fetch methods in both UmamiAPI and PlausibleAPI (e.g., line 221-238)
-- Why fragile: No retry logic; single network error stops entire metric load
-  - If getReferrers() fails, entire detail view shows error
-  - No progressive loading (load pages first, then referrers in background)
-- Safe modification:
-  - Implement exponential backoff retry for transient errors
-  - Return partial results: allow detail view to show available metrics even if some fail
-  - Add timeout per metric instead of single 30-second timeout for all
+- Why fragile: `skipSaveOnSet` flag prevents didSet from saving; multiple concurrent calls can race
+- Safe modification: Use explicit methods instead of flag-based didSet suppression.
 
 ## Scaling Limits
 
-**Keychain Storage Limit:**
-- Current capacity: ~50 accounts with credentials stored (before Keychain performance degrades)
-- Limit: Keychain is not optimized for bulk storage; every credential lookup iterates through all items
-- Scaling path: Implement credential cache in memory with Keychain as source of truth. Lazy-load credentials only when account becomes active.
-
 **Cache Directory Unbounded Growth:**
-- Current capacity: No cleanup policy; cache grows indefinitely
+- Current capacity: No automatic cleanup on app launch
 - Files: `InsightFlow/Services/AnalyticsCacheService.swift`
-- Limit: App group container has limited space; could consume GB with many websites/metrics
-- Scaling path:
-  - Implement LRU eviction: delete oldest cache files when cache exceeds 100MB
-  - Add cleanup task on app launch that removes entries older than 7 days
-  - Implement per-website cache size limits
-
-**Widget Account Limit (Implicit):**
-- Current capacity: Up to ~100 accounts can be serialized to AppGroup UserDefaults
-- Limit: JSON serialization of 100 accounts creates 10-50KB payload; widget refresh must decode and iterate all
-- Scaling path: Store only active account in SharedCredentials; fetch other accounts on-demand from app container
+- Note: `clearExpiredCache()` and `clearStaleEntries()` methods exist but are never called automatically. The `evictOldestEntries()` method exists but is also never called.
+- Scaling path: Call `clearStaleEntries(olderThan: 7)` and `evictOldestEntries(maxSize: 100_000_000)` on app launch in `InsightFlowApp.swift`.
 
 **Concurrent Request Limit:**
-- Current capacity: URLSession.shared uses default configuration (up to 6 concurrent requests per host)
-- Limit: DashboardView with 20+ websites creates 20+ concurrent stats requests; may hit rate limits on server
-- Scaling path: Implement request queue with max 3 concurrent requests per account. Batch metric requests.
+- Current capacity: URLSession.shared default config (6 concurrent per host)
+- Limit: DashboardView with 20+ websites creates 60+ concurrent requests (3 per website: stats, active visitors, sparkline)
+- Scaling path: Implement request queue with max 3 concurrent requests per account.
 
 ## Dependencies at Risk
 
 **No Network Retry Logic:**
 - Risk: Single network glitch causes entire data load to fail
 - Impact: User sees error screen instead of cached data
-- Migration plan: Add `URLSession` wrapper with exponential backoff. Start with: 1s, 2s, 4s retries on transient errors only.
+- Migration plan: Add `URLSession` wrapper with exponential backoff for transient errors.
 
 **Hardcoded Timeout Intervals:**
-- Risk: 30-second timeout for all requests; too long for poor connections, too short for large metric queries
-- Files: `InsightFlow/Services/UmamiAPI.swift` (line 1192, 1222, 1252), `InsightFlow/Services/PlausibleAPI.swift` (line 314)
-- Impact: Unpredictable request failures depending on network condition
-- Migration plan: Make timeout configurable per endpoint type. Stats: 20s, realtime: 10s, team: 30s.
+- Risk: 30-second default timeout for all requests
+- Files: `InsightFlow/Services/UmamiAPI.swift`, `InsightFlow/Services/PlausibleAPI.swift`
+- Migration plan: Make timeout configurable per endpoint type.
 
 ## Missing Critical Features
 
-**No Request Cancellation:**
-- Problem: If user navigates away from WebsiteDetailView while metrics are loading, requests continue in background
-- Impact: Battery drain, network waste, memory pressure from accumulating tasks
-- Solution: Implement `withTaskCancellation` or store task handles in ViewModel to cancel on deinit
+**No Request Cancellation in Most ViewModels:**
+- Problem: Only `WebsiteDetailViewModel` properly cancels previous loads. All other ViewModels allow concurrent loads to race.
+- Blocks: Reliable data display when user rapidly changes date ranges or navigates between views
+- Solution: Implement `loadingTask?.cancel()` pattern in ALL ViewModels that have async load methods.
 
-**No Loading State Transitions:**
-- Problem: Switching accounts shows brief flash of old account data before loading new data
-- Impact: Perceived lag; user may think action didn't complete
-- Solution: Add explicit `isLoading` state to AccountManager that prevents navigation while credentials are being applied
-
-**No Offline Mode UI:**
-- Problem: Offline banner shown but no fallback UI or actions for offline state
-- Impact: Users can't browse cached data when offline
-- Solution: When offline, show cached metrics with visual indicator; allow browsing older date ranges from cache
-
-**No API Change Detection:**
-- Problem: If Umami/Plausible API changes response format, app fails silently with generic error
-- Impact: No way to debug without examining server logs
-- Solution: Log actual response on decode failure. Add optional telemetry to report decode errors.
+**No Loading State for Account Switching:**
+- Problem: Switching accounts shows brief flash of old account data
+- Impact: User may think action did not complete
+- Solution: Add `isLoading` state to AccountManager that prevents navigation while credentials are being applied.
 
 ## Test Coverage Gaps
 
+**No Tests for Child View @ObservedObject Reactivity:**
+- What's not tested: Whether child views with ViewModel parameters correctly re-render when ViewModel publishes changes
+- Files: `InsightFlow/Views/Detail/CompareChartSection.swift` (KNOWN BUG — uses `let` instead of `@ObservedObject`)
+- Risk: More views could silently stop updating without visual indication
+- Priority: **High** — this class of bug is invisible in code review and only caught by user testing
+
 **No Integration Tests for Multi-Account Switching:**
-- What's not tested: Account switch flow with credential persistence → API reconfiguration → widget update
+- What's not tested: Account switch flow with credential persistence, API reconfiguration, widget update
 - Files: `InsightFlow/Services/AccountManager.swift`, related ViewModels
-- Risk: Critical user flow (switching between Umami and Plausible accounts) could break unnoticed
-- Priority: **High** — this is core functionality used by multi-account users
+- Risk: Critical user flow could break unnoticed
+- Priority: **High**
 
 **No Error Path Testing for API Services:**
 - What's not tested: 401 unauthorized, 500 server errors, network timeouts, malformed JSON responses
 - Files: `InsightFlow/Services/UmamiAPI.swift`, `InsightFlow/Services/PlausibleAPI.swift`
-- Risk: Error states propagate with incorrect error messages; no guarantee error recovery works
-- Priority: **High** — these are realistic failure scenarios in production
+- Risk: Error states propagate with incorrect error messages
+- Priority: **High**
+
+**No Task Cancellation Tests:**
+- What's not tested: Whether ViewModels correctly handle task cancellation when user navigates away during data load
+- Files: All ViewModels in `InsightFlow/Views/`
+- Risk: Cancelled tasks may overwrite valid data, set incorrect error states, or leak resources
+- Priority: **High** — this was the root cause of multiple recently-fixed bugs
 
 **No Cache Expiration Tests:**
 - What's not tested: Cache TTL enforcement, expired entry cleanup, cache load with mixed expired/valid data
 - Files: `InsightFlow/Services/AnalyticsCacheService.swift`
-- Risk: Cache may serve stale data indefinitely; offline mode may show outdated numbers
-- Priority: **Medium** — cache is fallback feature, but affects offline experience
+- Risk: Cache may serve stale data indefinitely
+- Priority: **Medium**
 
-**No Widget Sync Tests:**
-- What's not tested: AppGroup credential sync, widget data freshness, multi-account widget updates
-- Files: `InsightFlow/Services/AccountManager.swift` (syncAccountsToWidget method), Widget extension code
-- Risk: Widget could show stale or incorrect account data
-- Priority: **Medium** — widget is secondary feature but is first thing users see
-
-**No Concurrent Operation Tests:**
-- What's not tested: Rapid API calls (e.g., switching date range while loading), concurrent account switches, cache write during read
-- Risk: Race conditions in actor/MainActor boundary could cause crashes in production
-- Priority: **High** — concurrency issues are hard to reproduce and debug
+**88 print() Statements Across 23 Files:**
+- What's the concern: While guarded by `#if DEBUG`, the sheer volume makes log output noisy and hard to filter
+- Files: Throughout `InsightFlow/Services/` and `InsightFlow/Views/`
+- Risk: Important errors get lost in noise; no structured logging for production diagnostics
+- Priority: **Low** — functional but makes debugging harder
 
 ---
 
-*Concerns audit: 2026-03-28*
+*Concerns audit: 2026-04-04*
