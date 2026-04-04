@@ -60,12 +60,7 @@ class ReportsViewModel: ObservableObject {
                 #if DEBUG
                 print("ReportsViewModel: loadReports error: \(error)")
                 #endif
-                let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
-                                     (error as? URLError)?.code == .networkConnectionLost ||
-                                     (error as? URLError)?.code == .timedOut ||
-                                     (error as? URLError)?.code == .cannotFindHost ||
-                                     (error as? URLError)?.code == .cannotConnectToHost
-                if isNetworkError {
+                if error.isNetworkError {
                     self.isOffline = true
                 } else {
                     self.error = error.localizedDescription

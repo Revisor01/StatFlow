@@ -88,12 +88,7 @@ class WebsiteDetailViewModel: ObservableObject {
             totalVisitors = websiteStats.visitors.value
         } catch {
             guard !Task.isCancelled else { return }
-            let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
-                                 (error as? URLError)?.code == .networkConnectionLost ||
-                                 (error as? URLError)?.code == .timedOut ||
-                                 (error as? URLError)?.code == .cannotFindHost ||
-                                 (error as? URLError)?.code == .cannotConnectToHost
-            if isNetworkError {
+            if error.isNetworkError {
                 isOffline = true
             } else {
                 self.error = error.localizedDescription
