@@ -417,8 +417,6 @@ struct CompareChartSection: View {
 
     private func padDataToExpectedCount(_ data: [TimeSeriesPoint]) -> [TimeSeriesPoint] {
         let calendar = Calendar.current
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
         var result: [TimeSeriesPoint] = []
 
@@ -437,7 +435,7 @@ struct CompareChartSection: View {
                     let normalizedDay = pointDay == 1 ? 6 : pointDay - 2
                     return normalizedDay == dayIndex
                 }
-                let dateString = formatter.string(from: targetDate)
+                let dateString = DateFormatters.iso8601WithFractional.string(from: targetDate)
                 result.append(TimeSeriesPoint(x: dateString, y: matchingPoint?.value ?? 0))
             }
 
@@ -455,7 +453,7 @@ struct CompareChartSection: View {
                 let matchingPoint = data.first { point in
                     calendar.component(.day, from: point.date) == targetDay
                 }
-                let dateString = formatter.string(from: targetDate)
+                let dateString = DateFormatters.iso8601WithFractional.string(from: targetDate)
                 result.append(TimeSeriesPoint(x: dateString, y: matchingPoint?.value ?? 0))
             }
 
@@ -470,7 +468,7 @@ struct CompareChartSection: View {
                 let matchingPoint = data.first { point in
                     calendar.component(.month, from: point.date) == monthIndex + 1
                 }
-                let dateString = formatter.string(from: targetDate)
+                let dateString = DateFormatters.iso8601WithFractional.string(from: targetDate)
                 result.append(TimeSeriesPoint(x: dateString, y: matchingPoint?.value ?? 0))
             }
         }
@@ -480,8 +478,6 @@ struct CompareChartSection: View {
 
     private func padDataToExpectedCountB(_ data: [TimeSeriesPoint]) -> [TimeSeriesPoint] {
         let calendar = Calendar.current
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
         var result: [TimeSeriesPoint] = []
 
@@ -500,7 +496,7 @@ struct CompareChartSection: View {
                     let normalizedDay = pointDay == 1 ? 6 : pointDay - 2
                     return normalizedDay == dayIndex
                 }
-                let dateString = formatter.string(from: targetDate)
+                let dateString = DateFormatters.iso8601WithFractional.string(from: targetDate)
                 result.append(TimeSeriesPoint(x: dateString, y: matchingPoint?.value ?? 0))
             }
 
@@ -518,7 +514,7 @@ struct CompareChartSection: View {
                 let matchingPoint = data.first { point in
                     calendar.component(.day, from: point.date) == targetDay
                 }
-                let dateString = formatter.string(from: targetDate)
+                let dateString = DateFormatters.iso8601WithFractional.string(from: targetDate)
                 result.append(TimeSeriesPoint(x: dateString, y: matchingPoint?.value ?? 0))
             }
 
@@ -533,7 +529,7 @@ struct CompareChartSection: View {
                 let matchingPoint = data.first { point in
                     calendar.component(.month, from: point.date) == monthIndex + 1
                 }
-                let dateString = formatter.string(from: targetDate)
+                let dateString = DateFormatters.iso8601WithFractional.string(from: targetDate)
                 result.append(TimeSeriesPoint(x: dateString, y: matchingPoint?.value ?? 0))
             }
         }
@@ -555,9 +551,7 @@ struct CompareChartSection: View {
     }
 
     private func monthName(_ month: Int) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale.current
-        return formatter.monthSymbols[month - 1]
+        DateFormatters.shortDate.monthSymbols[month - 1]
     }
 
     private func xAxisLabel(for index: Int) -> String {

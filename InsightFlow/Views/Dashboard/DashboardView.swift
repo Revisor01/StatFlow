@@ -1012,9 +1012,8 @@ class DashboardViewModel: ObservableObject {
             // Sparkline laden
             if let cachedSparkline = cache.loadSparkline(websiteId: website.id, dateRangeId: dateRangeId) {
                 let points = cachedSparkline.data.toAnalyticsChartPoints()
-                let formatter = ISO8601DateFormatter()
                 sparklineData[website.id] = points.map { point in
-                    TimeSeriesPoint(x: formatter.string(from: point.date), y: point.value)
+                    TimeSeriesPoint(x: DateFormatters.iso8601.string(from: point.date), y: point.value)
                 }
             }
         }
@@ -1120,9 +1119,8 @@ class DashboardViewModel: ObservableObject {
             }
 
             guard !Task.isCancelled else { return }
-            let formatter = ISO8601DateFormatter()
             let rawData = chartPoints.map { point in
-                TimeSeriesPoint(x: formatter.string(from: point.date), y: point.value)
+                TimeSeriesPoint(x: DateFormatters.iso8601.string(from: point.date), y: point.value)
             }
             sparklineData[websiteId] = fillMissingTimeSlots(data: rawData, dateRange: dateRange)
 
@@ -1158,7 +1156,6 @@ class DashboardViewModel: ObservableObject {
         }
 
         var result: [TimeSeriesPoint] = []
-        let isoFormatter = ISO8601DateFormatter()
 
         if isHourly {
             let baseDate: Date
@@ -1178,7 +1175,7 @@ class DashboardViewModel: ObservableObject {
                 if let hourDate = utcCalendar.date(byAdding: .hour, value: hour, to: startOfDay) {
                     let comps = utcCalendar.dateComponents([.year, .month, .day, .hour], from: hourDate)
                     let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"
-                    result.append(TimeSeriesPoint(x: isoFormatter.string(from: hourDate), y: dataByKey[key] ?? 0))
+                    result.append(TimeSeriesPoint(x: DateFormatters.iso8601.string(from: hourDate), y: dataByKey[key] ?? 0))
                 }
             }
         } else {
@@ -1189,7 +1186,7 @@ class DashboardViewModel: ObservableObject {
             while currentDate <= endDate {
                 let comps = utcCalendar.dateComponents([.year, .month, .day], from: currentDate)
                 let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)"
-                result.append(TimeSeriesPoint(x: isoFormatter.string(from: currentDate), y: dataByKey[key] ?? 0))
+                result.append(TimeSeriesPoint(x: DateFormatters.iso8601.string(from: currentDate), y: dataByKey[key] ?? 0))
 
                 if let nextDay = utcCalendar.date(byAdding: .day, value: 1, to: currentDate) {
                     currentDate = nextDay

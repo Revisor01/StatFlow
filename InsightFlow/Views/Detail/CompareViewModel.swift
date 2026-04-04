@@ -71,13 +71,10 @@ class CompareViewModel: ObservableObject {
                 totaltime: StatValue(value: analyticsStats2.totaltime.value, change: analyticsStats2.totaltime.change)
             )
 
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-            pageviews1 = pageviewsData1.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) }
-            pageviews2 = pageviewsData2.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) }
-            visitors1 = visitorsData1.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) }
-            visitors2 = visitorsData2.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) }
+            pageviews1 = pageviewsData1.map { TimeSeriesPoint(x: DateFormatters.iso8601WithFractional.string(from: $0.date), y: $0.value) }
+            pageviews2 = pageviewsData2.map { TimeSeriesPoint(x: DateFormatters.iso8601WithFractional.string(from: $0.date), y: $0.value) }
+            visitors1 = visitorsData1.map { TimeSeriesPoint(x: DateFormatters.iso8601WithFractional.string(from: $0.date), y: $0.value) }
+            visitors2 = visitorsData2.map { TimeSeriesPoint(x: DateFormatters.iso8601WithFractional.string(from: $0.date), y: $0.value) }
 
         } catch {
             guard !Task.isCancelled else { return }

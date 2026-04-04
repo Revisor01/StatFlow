@@ -104,13 +104,9 @@ struct TimeSeriesPoint: Codable, Identifiable, Sendable {
     var id: String { x }
 
     var date: Date {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: x) {
-            return date
-        }
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter.date(from: x) ?? Date()
+        DateFormatters.iso8601WithFractional.date(from: x)
+            ?? DateFormatters.iso8601.date(from: x)
+            ?? Date()
     }
 
     var value: Int { y }
@@ -221,9 +217,7 @@ struct RealtimeEvent: Codable, Identifiable, Sendable {
     var isSession: Bool { __type == "session" }
 
     var createdDate: Date {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: createdAt) ?? Date()
+        DateFormatters.iso8601WithFractional.date(from: createdAt) ?? Date()
     }
 
     var timeAgo: String {
@@ -281,16 +275,12 @@ struct Session: Codable, Identifiable, Sendable {
 
     var firstDate: Date? {
         guard let firstAt = firstAt else { return nil }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: firstAt)
+        return DateFormatters.iso8601WithFractional.date(from: firstAt)
     }
 
     var lastDate: Date? {
         guard let lastAt = lastAt else { return nil }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: lastAt)
+        return DateFormatters.iso8601WithFractional.date(from: lastAt)
     }
 
     var duration: String {
@@ -318,9 +308,7 @@ struct SessionActivity: Codable, Identifiable, Sendable {
     var id: String { "\(createdAt)-\(urlPath ?? "")-\(eventId ?? "")" }
 
     var createdDate: Date {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: createdAt) ?? Date()
+        DateFormatters.iso8601WithFractional.date(from: createdAt) ?? Date()
     }
 
     var isPageview: Bool { eventType == 1 }
@@ -339,13 +327,8 @@ struct RetentionRow: Codable, Identifiable, Sendable {
     var id: String { "\(date)-\(day)" }
 
     var formattedDate: Date? {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = formatter.date(from: date) {
-            return date
-        }
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter.date(from: date)
+        DateFormatters.iso8601WithFractional.date(from: date)
+            ?? DateFormatters.iso8601.date(from: date)
     }
 }
 
@@ -442,9 +425,7 @@ struct EventDetail: Codable, Identifiable, Sendable {
     let createdAt: String
 
     var createdDate: Date {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return formatter.date(from: createdAt) ?? Date()
+        DateFormatters.iso8601WithFractional.date(from: createdAt) ?? Date()
     }
 }
 

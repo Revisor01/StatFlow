@@ -112,18 +112,17 @@ class WebsiteDetailViewModel: ObservableObject {
     private func loadPageviews(dateRange: DateRange) async {
         guard let provider = AnalyticsManager.shared.currentProvider else { return }
         do {
-            let formatter = ISO8601DateFormatter()
             // Load both in parallel
             async let pageviewTask = provider.getPageviewsData(websiteId: websiteId, dateRange: dateRange)
             async let visitorTask = provider.getVisitorsData(websiteId: websiteId, dateRange: dateRange)
             let (pageviewData, visitorData) = try await (pageviewTask, visitorTask)
 
             let filledPageviews = fillMissingTimeSlots(
-                data: pageviewData.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) },
+                data: pageviewData.map { TimeSeriesPoint(x: DateFormatters.iso8601.string(from: $0.date), y: $0.value) },
                 dateRange: dateRange
             )
             let filledSessions = fillMissingTimeSlots(
-                data: visitorData.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) },
+                data: visitorData.map { TimeSeriesPoint(x: DateFormatters.iso8601.string(from: $0.date), y: $0.value) },
                 dateRange: dateRange
             )
             guard !Task.isCancelled else { return }
@@ -171,7 +170,6 @@ class WebsiteDetailViewModel: ObservableObject {
         }
 
         var result: [TimeSeriesPoint] = []
-        let isoFormatter = ISO8601DateFormatter()
 
         // Use UTC calendar for generating slots to match API timezone
         var utcCalendar = Calendar(identifier: .gregorian)
@@ -202,7 +200,7 @@ class WebsiteDetailViewModel: ObservableObject {
                     let comps = utcCalendar.dateComponents([.year, .month, .day, .hour], from: hourDate)
                     let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"
                     let value = dataByComponent[key] ?? 0
-                    result.append(TimeSeriesPoint(x: isoFormatter.string(from: hourDate), y: value))
+                    result.append(TimeSeriesPoint(x: DateFormatters.iso8601.string(from: hourDate), y: value))
                 }
             }
         } else {
@@ -214,7 +212,7 @@ class WebsiteDetailViewModel: ObservableObject {
                 let comps = utcCalendar.dateComponents([.year, .month, .day], from: currentDate)
                 let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)"
                 let value = dataByComponent[key] ?? 0
-                result.append(TimeSeriesPoint(x: isoFormatter.string(from: currentDate), y: value))
+                result.append(TimeSeriesPoint(x: DateFormatters.iso8601.string(from: currentDate), y: value))
 
                 if let nextDay = utcCalendar.date(byAdding: .day, value: 1, to: currentDate) {
                     currentDate = nextDay
