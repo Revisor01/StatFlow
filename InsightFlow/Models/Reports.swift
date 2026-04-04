@@ -30,6 +30,28 @@ struct ReportParameters: Codable, Sendable, Hashable {
     let window: Int?
     let model: String?
     let step: String?
+
+    enum CodingKeys: String, CodingKey {
+        case type, value, startDate, endDate, steps, window, model, step
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        type = try container.decodeIfPresent(String.self, forKey: .type)
+        value = try container.decodeIfPresent(String.self, forKey: .value)
+        startDate = try container.decodeIfPresent(String.self, forKey: .startDate)
+        endDate = try container.decodeIfPresent(String.self, forKey: .endDate)
+        window = try container.decodeIfPresent(Int.self, forKey: .window)
+        model = try container.decodeIfPresent(String.self, forKey: .model)
+        step = try container.decodeIfPresent(String.self, forKey: .step)
+
+        // steps can be [[String: String]] (funnel) or Int (journey) — handle both
+        if let stepsArray = try? container.decodeIfPresent([[String: String]].self, forKey: .steps) {
+            steps = stepsArray
+        } else {
+            steps = nil
+        }
+    }
 }
 
 // MARK: - Funnel Report

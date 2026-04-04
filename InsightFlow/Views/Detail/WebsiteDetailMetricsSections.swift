@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 struct WebsiteDetailMetricsSections: View {
-    let viewModel: WebsiteDetailViewModel
+    @ObservedObject var viewModel: WebsiteDetailViewModel
 
     private var isPlausible: Bool {
         AnalyticsManager.shared.providerType == .plausible
