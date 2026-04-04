@@ -1,4 +1,5 @@
 import Foundation
+import os
 import UserNotifications
 import SwiftUI
 
@@ -171,14 +172,12 @@ class NotificationManager: ObservableObject {
 
         // Debug: Zeige geplante Notifications
         let pending = await center.pendingNotificationRequests()
-        #if DEBUG
-        print("📅 Geplante Notifications: \(pending.count)")
+        Logger.ui.debug("Geplante Notifications: \(pending.count)")
         for req in pending {
             if let trigger = req.trigger as? UNCalendarNotificationTrigger {
-                print("  - \(req.identifier): \(trigger.dateComponents)")
+                Logger.ui.debug("  - \(req.identifier): \(String(describing: trigger.dateComponents))")
             }
         }
-        #endif
     }
 
     private func scheduleNotificationsForAccount(_ account: AnalyticsAccount, center: UNUserNotificationCenter) async {

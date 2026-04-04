@@ -1,4 +1,5 @@
 import Foundation
+import os
 import WidgetKit
 
 // MARK: - Plausible API
@@ -1019,14 +1020,10 @@ class PlausibleSitesManager: ObservableObject {
     private func updateActiveAccountSites() {
         guard let activeAccount = AccountManager.shared.activeAccount,
               activeAccount.providerType == .plausible else {
-            #if DEBUG
-            print("PlausibleSitesManager: updateActiveAccountSites skipped - no active Plausible account")
-            #endif
+            Logger.api.debug("updateActiveAccountSites skipped - no active Plausible account")
             return
         }
-        #if DEBUG
-        print("PlausibleSitesManager: updating account \(activeAccount.name) with sites: \(sites)")
-        #endif
+        Logger.api.debug("updating account \(activeAccount.name) with sites: \(self.sites)")
         AccountManager.shared.updateAccountSites(activeAccount, sites: sites)
     }
 

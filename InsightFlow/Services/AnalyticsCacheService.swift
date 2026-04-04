@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// Caching-Service für Analytics-Daten, der offline Zugriff ermöglicht
 /// Speichert Daten im App Group Container für App + Widget Zugriff
@@ -73,13 +74,9 @@ final class AnalyticsCacheService: @unchecked Sendable {
             encoder.dateEncodingStrategy = .iso8601
             let encoded = try encoder.encode(wrapper)
             try encoded.write(to: fileURL, options: Data.WritingOptions.atomic)
-            #if DEBUG
-            print("AnalyticsCacheService: Saved \(key)")
-            #endif
+            Logger.cache.debug("Saved \(key)")
         } catch {
-            #if DEBUG
-            print("AnalyticsCacheService: Error saving \(key) - \(error)")
-            #endif
+            Logger.cache.error("Error saving \(key) - \(error.localizedDescription)")
         }
     }
 
@@ -106,9 +103,7 @@ final class AnalyticsCacheService: @unchecked Sendable {
                 isExpired: isExpired
             )
         } catch {
-            #if DEBUG
-            print("AnalyticsCacheService: Error loading \(key) - \(error)")
-            #endif
+            Logger.cache.error("Error loading \(key) - \(error.localizedDescription)")
             return nil
         }
     }
@@ -166,9 +161,7 @@ final class AnalyticsCacheService: @unchecked Sendable {
         guard let cacheDir = cacheDirectory else { return }
         try? FileManager.default.removeItem(at: cacheDir)
         try? FileManager.default.createDirectory(at: cacheDir, withIntermediateDirectories: true)
-        #if DEBUG
-        print("AnalyticsCacheService: Cleared all cache")
-        #endif
+        Logger.cache.debug("Cleared all cache")
     }
 
     /// Löscht abgelaufene Cache-Einträge
@@ -191,11 +184,9 @@ final class AnalyticsCacheService: @unchecked Sendable {
             }
         }
 
-        #if DEBUG
         if deletedCount > 0 {
-            print("AnalyticsCacheService: Cleared \(deletedCount) expired entries")
+            Logger.cache.debug("Cleared \(deletedCount) expired entries")
         }
-        #endif
     }
 
     /// Löscht Cache für eine bestimmte Website
@@ -209,17 +200,13 @@ final class AnalyticsCacheService: @unchecked Sendable {
             try? FileManager.default.removeItem(at: fileURL)
         }
 
-        #if DEBUG
-        print("AnalyticsCacheService: Cleared cache for website \(websiteId)")
-        #endif
+        Logger.cache.debug("Cleared cache for website \(websiteId)")
     }
 
     /// Löscht Cache für einen Account
     func clearCache(forAccount accountId: String) {
         delete(forKey: websitesKey(accountId: accountId))
-        #if DEBUG
-        print("AnalyticsCacheService: Cleared cache for account \(accountId)")
-        #endif
+        Logger.cache.debug("Cleared cache for account \(accountId)")
     }
 
     /// Gibt die Cache-Größe in Bytes zurück
@@ -256,11 +243,9 @@ final class AnalyticsCacheService: @unchecked Sendable {
                 deletedCount += 1
             }
         }
-        #if DEBUG
         if deletedCount > 0 {
-            print("AnalyticsCacheService: Cleared \(deletedCount) stale entries (>\(days) days)")
+            Logger.cache.debug("Cleared \(deletedCount) stale entries (>\(days) days)")
         }
-        #endif
     }
 
     /// Löscht älteste Cache-Dateien bis Gesamtgröße unter maxSize liegt
@@ -289,11 +274,9 @@ final class AnalyticsCacheService: @unchecked Sendable {
             currentSize -= fileSize
             deletedCount += 1
         }
-        #if DEBUG
         if deletedCount > 0 {
-            print("AnalyticsCacheService: Evicted \(deletedCount) entries (cache was over \(maxSize) bytes)")
+            Logger.cache.debug("Evicted \(deletedCount) entries (cache was over \(maxSize) bytes)")
         }
-        #endif
     }
 
     /// Check if cached data is recent enough to display in offline mode (< 24h old)

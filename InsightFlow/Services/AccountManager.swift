@@ -1,4 +1,5 @@
 import Foundation
+import os
 import WidgetKit
 import Combine
 
@@ -134,31 +135,23 @@ class AccountManager: ObservableObject {
     }
 
     func updateAccountSites(_ account: AnalyticsAccount, sites: [String]) {
-        #if DEBUG
-        print("AccountManager: updateAccountSites called for \(account.name) with \(sites.count) sites: \(sites)")
-        #endif
+        Logger.auth.debug("updateAccountSites called for \(account.name) with \(sites.count) sites: \(sites)")
         if let index = accounts.firstIndex(where: { $0.id == account.id }) {
             var updated = accounts[index]
             updated.sites = sites
             accounts[index] = updated
             saveAccounts()
-            #if DEBUG
-            print("AccountManager: saved accounts, account.sites = \(updated.sites ?? [])")
-            #endif
+            Logger.auth.debug("saved accounts, account.sites = \(updated.sites ?? [])")
 
             if activeAccount?.id == account.id {
                 activeAccount = updated
-                #if DEBUG
-                print("AccountManager: updated activeAccount.sites = \(updated.sites ?? [])")
-                #endif
+                Logger.auth.debug("updated activeAccount.sites = \(updated.sites ?? [])")
                 // Nur Daten schreiben — kein reloadAllTimelines (FIX-01)
                 // Widget-Reload passiert ausschliesslich ueber applyAccountCredentials
                 syncWidgetData(for: updated)
             }
         } else {
-            #if DEBUG
-            print("AccountManager: account not found in accounts list!")
-            #endif
+            Logger.auth.warning("account not found in accounts list!")
         }
     }
 
@@ -312,18 +305,12 @@ class AccountManager: ObservableObject {
                 try? KeychainService.save(apiKey, for: .apiKey)
             }
             // Restore Plausible sites - use setSitesWithoutPersist to avoid double-save
-            #if DEBUG
-            print("AccountManager: applying Plausible account, account.sites = \(account.sites ?? [])")
-            #endif
+            Logger.auth.debug("applying Plausible account, account.sites = \(account.sites ?? [])")
             if let sites = account.sites, !sites.isEmpty {
-                #if DEBUG
-                print("AccountManager: restoring \(sites.count) sites from account")
-                #endif
+                Logger.auth.debug("restoring \(sites.count) sites from account")
                 PlausibleSitesManager.shared.setSitesWithoutPersist(sites)
             } else {
-                #if DEBUG
-                print("AccountManager: account has no sites, clearing PlausibleSitesManager")
-                #endif
+                Logger.auth.debug("account has no sites, clearing PlausibleSitesManager")
                 PlausibleSitesManager.shared.clearAll()
             }
             // Reconfigure PlausibleAPI with stored credentials (await actor method)
@@ -419,14 +406,10 @@ class AccountManager: ObservableObject {
         do {
             let data = try JSONEncoder().encode(widgetAccounts)
             if SharedCredentials.saveWidgetAccounts(data) {
-                #if DEBUG
-                print("AccountManager: synced \(widgetAccounts.count) accounts to widget (encrypted)")
-                #endif
+                Logger.auth.debug("synced \(widgetAccounts.count) accounts to widget (encrypted)")
             }
         } catch {
-            #if DEBUG
-            print("Failed to encode widget accounts: \(error)")
-            #endif
+            Logger.auth.error("Failed to encode widget accounts: \(error.localizedDescription)")
         }
     }
 

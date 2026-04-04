@@ -1,5 +1,6 @@
 import Foundation
 import CryptoKit
+import os
 
 /// Shares credentials between app and widget using a file in the App Group container
 /// This avoids UserDefaults issues with "System Containers" error
@@ -134,9 +135,7 @@ enum SharedCredentials {
         sites: [String]? = nil
     ) -> Bool {
         guard let url = fileURL else {
-            #if DEBUG
-            print("SharedCredentials: No container URL - App Group not configured?")
-            #endif
+            Logger.auth.warning("No container URL - App Group not configured?")
             return false
         }
 
@@ -154,14 +153,10 @@ enum SharedCredentials {
             let jsonData = try JSONEncoder().encode(credentials)
             let encryptedData = try encrypt(jsonData)
             try encryptedData.write(to: url, options: [.atomic, .completeFileProtection])
-            #if DEBUG
-            print("SharedCredentials: Saved encrypted credentials")
-            #endif
+            Logger.auth.debug("Saved encrypted credentials")
             return true
         } catch {
-            #if DEBUG
-            print("SharedCredentials: Save error - \(error)")
-            #endif
+            Logger.auth.error("Save error - \(error.localizedDescription)")
             return false
         }
     }
@@ -169,9 +164,7 @@ enum SharedCredentials {
     /// Load credentials (used by widget) - decrypts automatically
     static func load() -> Credentials? {
         guard let url = fileURL else {
-            #if DEBUG
-            print("SharedCredentials: No container URL")
-            #endif
+            Logger.auth.warning("No container URL")
             return nil
         }
 
@@ -200,9 +193,7 @@ enum SharedCredentials {
             let credentials = try JSONDecoder().decode(Credentials.self, from: jsonData)
             return credentials
         } catch {
-            #if DEBUG
-            print("SharedCredentials: Load error - \(error)")
-            #endif
+            Logger.auth.error("Load error - \(error.localizedDescription)")
             return nil
         }
     }
@@ -239,9 +230,7 @@ enum SharedCredentials {
         }
         // Delete legacy file if exists
         deleteLegacyFile()
-        #if DEBUG
-        print("SharedCredentials: Deleted")
-        #endif
+        Logger.auth.debug("Deleted")
     }
 
     // MARK: - Widget Accounts (Encrypted)
@@ -264,9 +253,7 @@ enum SharedCredentials {
             }
             return true
         } catch {
-            #if DEBUG
-            print("SharedCredentials: Failed to save widget accounts - \(error)")
-            #endif
+            Logger.auth.error("Failed to save widget accounts - \(error.localizedDescription)")
             return false
         }
     }
@@ -286,9 +273,7 @@ enum SharedCredentials {
             let encrypted = try Data(contentsOf: url)
             return try decrypt(encrypted)
         } catch {
-            #if DEBUG
-            print("SharedCredentials: Failed to load widget accounts - \(error)")
-            #endif
+            Logger.auth.error("Failed to load widget accounts - \(error.localizedDescription)")
             return nil
         }
     }

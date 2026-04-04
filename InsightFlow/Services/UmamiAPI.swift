@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 actor UmamiAPI: AnalyticsProvider {
     static let shared = UmamiAPI()
@@ -517,11 +518,9 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         // Debug output for troubleshooting
-        #if DEBUG
         if let jsonString = String(data: data, encoding: .utf8) {
-            print("Team create response: \(jsonString)")
+            Logger.api.debug("Team create response: \(jsonString)")
         }
-        #endif
 
         throw APIError.invalidResponse
     }
@@ -642,11 +641,9 @@ actor UmamiAPI: AnalyticsProvider {
         ]
 
         let data = try await postRequest(endpoint: "api/reports/funnel", body: body)
-        #if DEBUG
         if let jsonString = String(data: data, encoding: .utf8) {
-            print("UmamiAPI.getFunnelReport: \(jsonString.prefix(500))")
+            Logger.api.debug("getFunnelReport: \(jsonString.prefix(500))")
         }
-        #endif
         return try decoder.decode([FunnelStep].self, from: data)
     }
 
@@ -679,9 +676,7 @@ actor UmamiAPI: AnalyticsProvider {
             ))
         }
 
-        #if DEBUG
-        print("UmamiAPI.getUTMReport: parsed \(items.count) UTM entries from query metrics")
-        #endif
+        Logger.api.debug("getUTMReport: parsed \(items.count) UTM entries from query metrics")
         return items
     }
 
@@ -701,11 +696,9 @@ actor UmamiAPI: AnalyticsProvider {
         ]
 
         let data = try await postRequest(endpoint: "api/reports/goal", body: body)
-        #if DEBUG
         if let jsonString = String(data: data, encoding: .utf8) {
-            print("UmamiAPI.getGoalReport(\(goalType):\(goalValue)): \(jsonString.prefix(500))")
+            Logger.api.debug("getGoalReport(\(goalType):\(goalValue)): \(jsonString.prefix(500))")
         }
-        #endif
         return try decoder.decode(GoalReportResult.self, from: data)
     }
 
@@ -755,11 +748,9 @@ actor UmamiAPI: AnalyticsProvider {
                 URLQueryItem(name: "limit", value: String(limit))
             ]
         )
-        #if DEBUG
         if let jsonString = String(data: data, encoding: .utf8) {
-            print("UmamiAPI.getMetrics(\(type.rawValue)): \(jsonString.prefix(500))")
+            Logger.api.debug("getMetrics(\(type.rawValue)): \(jsonString.prefix(500))")
         }
-        #endif
         return try decoder.decode([MetricItem].self, from: data)
     }
 
