@@ -5,7 +5,7 @@ milestone_name: milestone
 status: completed
 stopped_at: Completed 20-02-PLAN.md
 last_updated: "2026-04-04T21:09:45.394Z"
-last_activity: 2026-04-04 — REFACTOR-01 + REFACTOR-05 completed
+last_activity: 2026-04-04 — REFACTOR-06 completed (os.Logger migration)
 progress:
   total_phases: 17
   completed_phases: 13
@@ -24,10 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 ## Current Position
 
-Phase: 19-architektur-robustheit
-Plan: 01 (completed)
-Status: Plan 01 complete — isNetworkError dedup + LazyVStack audit
-Last activity: 2026-04-04 — REFACTOR-01 + REFACTOR-05 completed
+Phase: 20-code-organisation
+Plan: 03 (completed)
+Status: Plan 03 complete — all 88 print() replaced with structured os.Logger
+Last activity: 2026-04-04 — REFACTOR-06 completed (os.Logger migration)
 
 ## Accumulated Context
 
@@ -45,6 +45,7 @@ Last activity: 2026-04-04 — REFACTOR-01 + REFACTOR-05 completed
 - [Phase 19]: nonisolated(unsafe) for shared DateFormatter static lets under Swift strict concurrency
 - [Phase 20]: Pure ViewModel extraction: 8 VMs into dedicated files, no logic changes
 - [Phase 20]: DI pattern: init parameters with .shared defaults for all ViewModels
+- [Phase 20]: os.Logger categories: api, cache, auth, ui — all print() replaced, zero #if DEBUG remaining
 
 ### Blockers/Concerns
 
@@ -52,6 +53,6 @@ None — alle 12 Punkte in Requirements erfasst.
 
 ## Session Continuity
 
-Last session: 2026-04-04T21:09:45.390Z
-Stopped at: Completed 20-02-PLAN.md
+Last session: 2026-04-04T21:28:01Z
+Stopped at: Completed 20-03-PLAN.md
 Resume file: None
