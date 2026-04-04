@@ -1,34 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.6
-milestone_name: Design Polish
-status: complete
+milestone: v2.7
+milestone_name: Stability & Architecture
+status: planning
 stopped_at: null
-last_updated: "2026-04-03T12:00:00.000Z"
-last_activity: 2026-04-03
+last_updated: "2026-04-04T20:00:00.000Z"
+last_activity: 2026-04-04
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
-  percent: 100
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-03)
+See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** v2.6 Design Polish — COMPLETE
+**Current focus:** v2.7 Stability & Architecture — Bugs fixen, Task-Cancellation, Cache nur Offline, Tech Debt
 
 ## Current Position
 
-Phase: Complete
+Phase: Planning
 Plan: —
-Status: Milestone v2.6 shipped
-Last activity: 2026-04-03 — All phases complete, milestone archived
+Status: Requirements + Roadmap erstellt, bereit für Phase 1
+Last activity: 2026-04-04 — Milestone v2.7 initialisiert nach 11-Bug-Fix-Session
 
 ## Accumulated Context
 
@@ -36,15 +36,15 @@ Last activity: 2026-04-03 — All phases complete, milestone archived
 
 - App-Name: StatFlow (ersetzt PrivacyFlow/InsightFlow)
 - Bundle ID Prefix: de.godsapp.statflow
-- Admin-Sheets: Icon-only Toolbars (xmark/checkmark)
-- AddAccountView: ServerType-Selektor für Cloud vs Self-Hosted
+- Cache-Strategie v2.7: NUR Offline-Fallback, nie als primäre Datenquelle
+- Task-Cancellation: WebsiteDetailViewModel als Referenz-Pattern für alle ViewModels
 
 ### Blockers/Concerns
 
-None.
+None — alle 12 Punkte in Requirements erfasst.
 
 ## Session Continuity
 
-Last session: 2026-04-03
-Stopped at: Milestone v2.6 complete
+Last session: 2026-04-04
+Stopped at: Milestone v2.7 Requirements + Roadmap erstellt
 Resume file: None

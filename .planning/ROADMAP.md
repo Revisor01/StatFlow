@@ -9,3 +9,4 @@
 - ✅ **v2.4 Rename to StatFlow** - 1 phase, completed 2026-03-28
 - ✅ **v2.5 Pre-Release Polish** - 3 phases, 7 plans, completed 2026-03-29 ([archive](milestones/v2.5-ROADMAP.md))
 - ✅ **v2.6 Design Polish** - 2 phases, 2 plans, completed 2026-04-03 ([archive](milestones/v2.6-ROADMAP.md))
+- 🔄 **v2.7 Stability & Architecture** - 3 phases, 12 requirements ([roadmap](milestones/v2.7-ROADMAP.md))

@@ -11,6 +11,7 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 ## Current State
 
 **Latest shipped:** v2.6 Design Polish (completed 2026-04-03)
+**Current:** v2.7 Stability & Architecture (started 2026-04-04)
 **GitHub:** Revisor01/StatFlow
 
 ### v2.6 Accomplishments
@@ -97,7 +98,13 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 <!-- Current scope. Building toward these. -->
 
-(Keine aktiven Requirements — nächster Milestone noch nicht definiert)
+- BUG-01: CompareChartSection @ObservedObject Fix — v2.7
+- BUG-02: Cache nur für Offline (nie als primäre Datenquelle) — v2.7
+- BUG-03: Widget Account-Sync Race Condition — v2.7
+- TASK-01: Task-Cancellation in allen ViewModels — v2.7
+- TASK-02: Account-Switch ohne globalen Singleton-State — v2.7
+- REFACTOR-01 bis REFACTOR-06: Tech Debt abbauen — v2.7
+- SEC-01: KeychainService Force Unwraps entfernen — v2.7
 
 ### Out of Scope
 
@@ -154,4 +161,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-03 — v2.6 Design Polish completed*
+*Last updated: 2026-04-04 — v2.7 Stability & Architecture started*
