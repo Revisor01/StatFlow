@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 struct CompareChartSection: View {
-    let viewModel: CompareViewModel
+    @ObservedObject var viewModel: CompareViewModel
     let compareType: CompareType
     let selectedMetric: CompareMetric
     @Binding var chartStyle: ChartStyle

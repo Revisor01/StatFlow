@@ -147,6 +147,7 @@ class PagesViewModel: ObservableObject {
     @Published var combinedPages: [CombinedPage] = []
     @Published var isLoading = false
 
+    private var loadingTask: Task<Void, Never>?
     private let api = UmamiAPI.shared
 
     init(websiteId: String) {
@@ -154,30 +155,42 @@ class PagesViewModel: ObservableObject {
     }
 
     func loadData(dateRange: DateRange) async {
-        isLoading = true
-        defer { isLoading = false }
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        async let pagesTask = api.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .path, limit: 100)
-        async let titlesTask = api.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .title, limit: 100)
+            async let pagesTask = api.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .path, limit: 100)
+            async let titlesTask = api.getMetrics(websiteId: websiteId, dateRange: dateRange, type: .title, limit: 100)
 
-        do {
-            topPages = try await pagesTask
-        } catch {
-            #if DEBUG
-            print("Failed to load top pages: \(error)")
-            #endif
+            do {
+                let result = try await pagesTask
+                guard !Task.isCancelled else { return }
+                topPages = result
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("Failed to load top pages: \(error)")
+                #endif
+            }
+
+            do {
+                let result = try await titlesTask
+                guard !Task.isCancelled else { return }
+                pageTitles = result
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("Failed to load page titles: \(error)")
+                #endif
+            }
+
+            guard !Task.isCancelled else { return }
+            // Kombiniere Titel und Pfade
+            combinedPages = createCombinedPages()
         }
-
-        do {
-            pageTitles = try await titlesTask
-        } catch {
-            #if DEBUG
-            print("Failed to load page titles: \(error)")
-            #endif
-        }
-
-        // Kombiniere Titel und Pfade
-        combinedPages = createCombinedPages()
+        loadingTask = task
+        await task.value
     }
 
     private func createCombinedPages() -> [CombinedPage] {

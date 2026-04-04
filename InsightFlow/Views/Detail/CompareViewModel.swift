@@ -15,6 +15,7 @@ class CompareViewModel: ObservableObject {
     @Published var visitors2: [TimeSeriesPoint] = []
     @Published var isLoading = false
 
+    private var loadingTask: Task<Void, Never>?
     private let umamiAPI = UmamiAPI.shared
     private let plausibleAPI = PlausibleAPI.shared
 
@@ -27,15 +28,19 @@ class CompareViewModel: ObservableObject {
     }
 
     func loadComparison(dateRange1: DateRange, dateRange2: DateRange) async {
-        isLoading = true
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        if isPlausible {
-            await loadPlausibleComparison(dateRange1: dateRange1, dateRange2: dateRange2)
-        } else {
-            await loadUmamiComparison(dateRange1: dateRange1, dateRange2: dateRange2)
+            if isPlausible {
+                await loadPlausibleComparison(dateRange1: dateRange1, dateRange2: dateRange2)
+            } else {
+                await loadUmamiComparison(dateRange1: dateRange1, dateRange2: dateRange2)
+            }
         }
-
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 
     private func loadPlausibleComparison(dateRange1: DateRange, dateRange2: DateRange) async {
@@ -48,6 +53,7 @@ class CompareViewModel: ObservableObject {
             async let v2 = plausibleAPI.getVisitorsData(websiteId: websiteId, dateRange: dateRange2)
 
             let (analyticsStats1, analyticsStats2, pageviewsData1, pageviewsData2, visitorsData1, visitorsData2) = try await (s1, s2, pv1, pv2, v1, v2)
+            guard !Task.isCancelled else { return }
 
             stats1 = WebsiteStats(
                 pageviews: StatValue(value: analyticsStats1.pageviews.value, change: analyticsStats1.pageviews.change),
@@ -74,6 +80,7 @@ class CompareViewModel: ObservableObject {
             visitors2 = visitorsData2.map { TimeSeriesPoint(x: formatter.string(from: $0.date), y: $0.value) }
 
         } catch {
+            guard !Task.isCancelled else { return }
             #if DEBUG
             print("Plausible Compare error: \(error)")
             #endif
@@ -88,6 +95,7 @@ class CompareViewModel: ObservableObject {
             async let pv2 = umamiAPI.getPageviews(websiteId: websiteId, dateRange: dateRange2)
 
             let (stats1Result, stats2Result, pageviews1Result, pageviews2Result) = try await (s1, s2, pv1, pv2)
+            guard !Task.isCancelled else { return }
 
             stats1 = stats1Result
             stats2 = stats2Result
@@ -98,6 +106,7 @@ class CompareViewModel: ObservableObject {
             visitors2 = pageviews2Result.sessions
 
         } catch {
+            guard !Task.isCancelled else { return }
             #if DEBUG
             print("Compare error: \(error)")
             #endif

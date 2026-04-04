@@ -259,6 +259,7 @@ class AdminViewModel: ObservableObject {
     @Published var showCreateTeam = false
     @Published var showCreateUser = false
 
+    private var loadingTask: Task<Void, Never>?
     private let umamiAPI = UmamiAPI.shared
     private let plausibleAPI = PlausibleAPI.shared
 
@@ -274,33 +275,45 @@ class AdminViewModel: ObservableObject {
     }
 
     func loadAll() async {
-        isLoading = true
-        if currentProvider == .plausible {
-            await loadPlausibleSites()
-        } else {
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask { await self.loadWebsites() }
-                group.addTask { await self.loadTeams() }
-                group.addTask { await self.loadUsers() }
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            defer { if !Task.isCancelled { isLoading = false } }
+
+            if currentProvider == .plausible {
+                await loadPlausibleSites()
+            } else {
+                await withTaskGroup(of: Void.self) { group in
+                    group.addTask { await self.loadWebsites() }
+                    group.addTask { await self.loadTeams() }
+                    group.addTask { await self.loadUsers() }
+                }
             }
         }
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 
     // MARK: - Umami
 
     private func loadWebsites() async {
         do {
-            websites = try await umamiAPI.getWebsites()
+            let result = try await umamiAPI.getWebsites()
+            guard !Task.isCancelled else { return }
+            websites = result
         } catch {
+            guard !Task.isCancelled else { return }
             showError(error)
         }
     }
 
     func loadTeams() async {
         do {
-            teams = try await umamiAPI.getTeams()
+            let result = try await umamiAPI.getTeams()
+            guard !Task.isCancelled else { return }
+            teams = result
         } catch {
+            guard !Task.isCancelled else { return }
             #if DEBUG
             print("Teams error: \(error)")
             #endif
@@ -309,8 +322,11 @@ class AdminViewModel: ObservableObject {
 
     private func loadUsers() async {
         do {
-            users = try await umamiAPI.getUsers()
+            let result = try await umamiAPI.getUsers()
+            guard !Task.isCancelled else { return }
+            users = result
         } catch {
+            guard !Task.isCancelled else { return }
             #if DEBUG
             print("Users error: \(error)")
             #endif
@@ -431,8 +447,10 @@ class AdminViewModel: ObservableObject {
     private func loadPlausibleSites() async {
         do {
             let analyticsWebsites = try await plausibleAPI.getAnalyticsWebsites()
+            guard !Task.isCancelled else { return }
             plausibleSites = analyticsWebsites.map { PlausibleSite(domain: $0.domain, timezone: nil) }
         } catch {
+            guard !Task.isCancelled else { return }
             showError(error)
         }
     }
