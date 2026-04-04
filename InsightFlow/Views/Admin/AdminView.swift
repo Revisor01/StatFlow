@@ -108,6 +108,7 @@ struct AdminView: View {
                 )
                 .padding(40)
             } else {
+                // LazyVStack: intentional — homogeneous ForEach, list can grow large
                 LazyVStack(spacing: 12) {
                     ForEach(viewModel.websites) { website in
                         WebsiteAdminCard(website: website, viewModel: viewModel)
@@ -131,6 +132,7 @@ struct AdminView: View {
                 )
                 .padding(40)
             } else {
+                // LazyVStack: intentional — homogeneous ForEach, list can grow large
                 LazyVStack(spacing: 12) {
                     ForEach(viewModel.plausibleSites) { site in
                         PlausibleSiteAdminCard(site: site, viewModel: viewModel)
@@ -170,7 +172,7 @@ struct AdminView: View {
                 )
                 .padding(40)
             } else {
-                LazyVStack(spacing: 12) {
+                VStack(spacing: 12) {
                     ForEach(viewModel.teams) { team in
                         TeamCard(team: team, viewModel: viewModel)
                     }
@@ -210,7 +212,7 @@ struct AdminView: View {
                 )
                 .padding(40)
             } else {
-                LazyVStack(spacing: 12) {
+                VStack(spacing: 12) {
                     ForEach(viewModel.users) { user in
                         UserCard(user: user, viewModel: viewModel)
                     }

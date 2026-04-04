@@ -38,7 +38,7 @@ struct EventsView: View {
                 Spacer()
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 0) {
+                    VStack(spacing: 0) {
                         if let stats = viewModel.eventStats {
                             statsHeader(stats: stats)
                                 .padding(.horizontal)

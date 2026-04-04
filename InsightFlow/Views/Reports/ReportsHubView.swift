@@ -33,7 +33,7 @@ struct ReportsHubView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
+            VStack(spacing: 16) {
                 if viewModel.isOffline {
                     offlineBanner
                         .padding(.horizontal)
