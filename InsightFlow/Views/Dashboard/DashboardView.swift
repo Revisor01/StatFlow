@@ -984,17 +984,13 @@ class DashboardViewModel: ObservableObject {
                 Website(id: site.id, name: site.name, domain: site.domain, shareId: site.shareId, teamId: nil, resetAt: nil, createdAt: nil)
             }
 
-            // Lade gecachte Stats und Sparklines für jede Website
+            // Lade gecachte Sparklines für sofortige Anzeige (Stats kommen schnell von der API)
             for website in websites {
                 let dateRangeId = dateRange.preset.rawValue
 
-                // Stats laden
-                if let cachedStats = cache.loadStats(websiteId: website.id, dateRangeId: dateRangeId) {
-                    stats[website.id] = cachedStats.data.toAnalyticsStats().toWebsiteStats()
-                }
-
-                // Sparkline laden
-                if let cachedSparkline = cache.loadSparkline(websiteId: website.id, dateRangeId: dateRangeId) {
+                // Sparkline laden — nur gültigen Cache verwenden
+                if let cachedSparkline = cache.loadSparkline(websiteId: website.id, dateRangeId: dateRangeId),
+                   !cachedSparkline.isExpired {
                     let points = cachedSparkline.data.toAnalyticsChartPoints()
                     let formatter = ISO8601DateFormatter()
                     sparklineData[website.id] = points.map { point in
@@ -1061,29 +1057,31 @@ class DashboardViewModel: ObservableObject {
                 )
             }
 
+            guard !Task.isCancelled else { return }
             stats[websiteId] = analyticsStats.toWebsiteStats()
 
             // Cache die Stats
             cache.saveStats(CachedStats(from: analyticsStats), websiteId: websiteId, dateRangeId: dateRangeId)
         } catch {
             #if DEBUG
-            print("Failed to load stats for \(websiteId): \(error)")
+            if !Task.isCancelled { print("Failed to load stats for \(websiteId): \(error)") }
             #endif
         }
     }
 
     private func loadActiveVisitors(for websiteId: String) async {
         do {
+            let count: Int
             if isPlausible {
-                let count = try await plausibleAPI.getActiveVisitors(websiteId: websiteId)
-                activeVisitors[websiteId] = count
+                count = try await plausibleAPI.getActiveVisitors(websiteId: websiteId)
             } else {
-                let count = try await umamiAPI.getActiveVisitors(websiteId: websiteId)
-                activeVisitors[websiteId] = count
+                count = try await umamiAPI.getActiveVisitors(websiteId: websiteId)
             }
+            guard !Task.isCancelled else { return }
+            activeVisitors[websiteId] = count
         } catch {
             #if DEBUG
-            print("Failed to load active visitors for \(websiteId): \(error)")
+            if !Task.isCancelled { print("Failed to load active visitors for \(websiteId): \(error)") }
             #endif
         }
     }
@@ -1102,6 +1100,7 @@ class DashboardViewModel: ObservableObject {
                 }
             }
 
+            guard !Task.isCancelled else { return }
             let formatter = ISO8601DateFormatter()
             let rawData = chartPoints.map { point in
                 TimeSeriesPoint(x: formatter.string(from: point.date), y: point.value)
@@ -1112,7 +1111,7 @@ class DashboardViewModel: ObservableObject {
             cache.saveSparkline(chartPoints.toCached(), websiteId: websiteId, dateRangeId: dateRangeId)
         } catch {
             #if DEBUG
-            print("Failed to load sparkline for \(websiteId): \(error)")
+            if !Task.isCancelled { print("Failed to load sparkline for \(websiteId): \(error)") }
             #endif
         }
     }
@@ -1123,17 +1122,26 @@ class DashboardViewModel: ObservableObject {
         let now = Date()
         let isHourly = dateRange.unit == "hour"
 
-        // Create a map of existing data by date
-        var dataMap: [Date: Int] = [:]
+        // Build O(1) lookup by normalized date components (UTC to match API)
+        var utcCalendar = Calendar(identifier: .gregorian)
+        utcCalendar.timeZone = TimeZone(identifier: "UTC")!
+
+        var dataByKey: [String: Int] = [:]
         for point in data {
-            dataMap[point.date] = point.value
+            let date = point.date
+            if isHourly {
+                let comps = utcCalendar.dateComponents([.year, .month, .day, .hour], from: date)
+                dataByKey["\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"] = point.value
+            } else {
+                let comps = utcCalendar.dateComponents([.year, .month, .day], from: date)
+                dataByKey["\(comps.year!)-\(comps.month!)-\(comps.day!)"] = point.value
+            }
         }
 
         var result: [TimeSeriesPoint] = []
-        let formatter = ISO8601DateFormatter()
+        let isoFormatter = ISO8601DateFormatter()
 
         if isHourly {
-            // Generate all hours for the day
             let baseDate: Date
             switch dateRange.preset {
             case .today:
@@ -1144,35 +1152,27 @@ class DashboardViewModel: ObservableObject {
                 baseDate = dateRange.dates.start
             }
 
-            let startOfDay = calendar.startOfDay(for: baseDate)
-            let currentHour = dateRange.preset == .today ? calendar.component(.hour, from: now) : 23
+            let startOfDay = utcCalendar.startOfDay(for: baseDate)
+            let currentHour = dateRange.preset == .today ? utcCalendar.component(.hour, from: now) : 23
 
             for hour in 0...currentHour {
-                if let hourDate = calendar.date(byAdding: .hour, value: hour, to: startOfDay) {
-                    // Find matching value in data
-                    let value = dataMap.first { existing in
-                        calendar.component(.hour, from: existing.key) == hour &&
-                        calendar.isDate(existing.key, inSameDayAs: hourDate)
-                    }?.value ?? 0
-
-                    result.append(TimeSeriesPoint(x: formatter.string(from: hourDate), y: value))
+                if let hourDate = utcCalendar.date(byAdding: .hour, value: hour, to: startOfDay) {
+                    let comps = utcCalendar.dateComponents([.year, .month, .day, .hour], from: hourDate)
+                    let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"
+                    result.append(TimeSeriesPoint(x: isoFormatter.string(from: hourDate), y: dataByKey[key] ?? 0))
                 }
             }
         } else {
-            // Generate all days in range
             let dates = dateRange.dates
-            var currentDate = calendar.startOfDay(for: dates.start)
-            let endDate = calendar.startOfDay(for: dates.end)
+            var currentDate = utcCalendar.startOfDay(for: dates.start)
+            let endDate = utcCalendar.startOfDay(for: dates.end)
 
             while currentDate <= endDate {
-                // Find matching value in data
-                let value = dataMap.first { existing in
-                    calendar.isDate(existing.key, inSameDayAs: currentDate)
-                }?.value ?? 0
+                let comps = utcCalendar.dateComponents([.year, .month, .day], from: currentDate)
+                let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)"
+                result.append(TimeSeriesPoint(x: isoFormatter.string(from: currentDate), y: dataByKey[key] ?? 0))
 
-                result.append(TimeSeriesPoint(x: formatter.string(from: currentDate), y: value))
-
-                if let nextDay = calendar.date(byAdding: .day, value: 1, to: currentDate) {
+                if let nextDay = utcCalendar.date(byAdding: .day, value: 1, to: currentDate) {
                     currentDate = nextDay
                 } else {
                     break

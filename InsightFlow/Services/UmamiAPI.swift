@@ -570,9 +570,14 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Journey Report
 
+    /// Format date as ISO8601 for report parameters — Umami requires full timestamps, not yyyy-MM-dd
+    private func isoDate(_ date: Date) -> String {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f.string(from: date)
+    }
+
     func getJourneyReport(websiteId: String, dateRange: DateRange, steps: Int = 5) async throws -> [JourneyPath] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -580,8 +585,8 @@ actor UmamiAPI: AnalyticsProvider {
             "type": "journey",
             "filters": [:],
             "parameters": [
-                "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end),
+                "startDate": isoDate(dates.start),
+                "endDate": isoDate(dates.end),
                 "steps": steps
             ]
         ]
@@ -593,9 +598,6 @@ actor UmamiAPI: AnalyticsProvider {
     // MARK: - Reports
 
     func getRetention(websiteId: String, dateRange: DateRange) async throws -> [RetentionRow] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -603,8 +605,8 @@ actor UmamiAPI: AnalyticsProvider {
             "type": "retention",
             "filters": [:],
             "parameters": [
-                "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end)
+                "startDate": isoDate(dates.start),
+                "endDate": isoDate(dates.end)
             ]
         ]
 
@@ -625,8 +627,6 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     func getFunnelReport(websiteId: String, dateRange: DateRange, steps: [[String: String]], window: Int = 60) async throws -> [FunnelStep] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -634,39 +634,58 @@ actor UmamiAPI: AnalyticsProvider {
             "type": "funnel",
             "filters": [:],
             "parameters": [
-                "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end),
+                "startDate": isoDate(dates.start),
+                "endDate": isoDate(dates.end),
                 "steps": steps,
                 "window": window
             ]
         ]
 
         let data = try await postRequest(endpoint: "api/reports/funnel", body: body)
+        #if DEBUG
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("UmamiAPI.getFunnelReport: \(jsonString.prefix(500))")
+        }
+        #endif
         return try decoder.decode([FunnelStep].self, from: data)
     }
 
     func getUTMReport(websiteId: String, dateRange: DateRange) async throws -> [UTMReportItem] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let dates = dateRange.dates
+        // Umami stores UTM data in query metrics — parse utm_ params from query strings
+        let queryMetrics = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .query, limit: 100)
 
-        let body: [String: Any] = [
-            "websiteId": websiteId,
-            "type": "utm",
-            "filters": [:],
-            "parameters": [
-                "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end)
-            ]
-        ]
+        var items: [UTMReportItem] = []
+        for metric in queryMetrics {
+            let query = metric.name
+            guard query.contains("utm_") else { continue }
 
-        let data = try await postRequest(endpoint: "api/reports/utm", body: body)
-        return try decoder.decode([UTMReportItem].self, from: data)
+            // Parse query string into UTM components
+            let components = URLComponents(string: "?\(query)")
+            let params = components?.queryItems ?? []
+
+            let source = params.first(where: { $0.name == "utm_source" })?.value
+            let medium = params.first(where: { $0.name == "utm_medium" })?.value
+            let campaign = params.first(where: { $0.name == "utm_campaign" })?.value
+            let content = params.first(where: { $0.name == "utm_content" })?.value
+            let term = params.first(where: { $0.name == "utm_term" })?.value
+
+            items.append(UTMReportItem(
+                source: source,
+                medium: medium,
+                campaign: campaign,
+                content: content,
+                term: term,
+                visitors: metric.value
+            ))
+        }
+
+        #if DEBUG
+        print("UmamiAPI.getUTMReport: parsed \(items.count) UTM entries from query metrics")
+        #endif
+        return items
     }
 
     func getGoalReport(websiteId: String, dateRange: DateRange, goalType: String, goalValue: String) async throws -> GoalReportResult {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -674,20 +693,23 @@ actor UmamiAPI: AnalyticsProvider {
             "type": "goal",
             "filters": [:],
             "parameters": [
-                "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end),
+                "startDate": isoDate(dates.start),
+                "endDate": isoDate(dates.end),
                 "type": goalType,
                 "value": goalValue
             ]
         ]
 
         let data = try await postRequest(endpoint: "api/reports/goal", body: body)
+        #if DEBUG
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("UmamiAPI.getGoalReport(\(goalType):\(goalValue)): \(jsonString.prefix(500))")
+        }
+        #endif
         return try decoder.decode(GoalReportResult.self, from: data)
     }
 
     func getAttributionReport(websiteId: String, dateRange: DateRange, model: String = "last-click", type: String = "path", step: String = "/") async throws -> [AttributionItem] {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -695,8 +717,8 @@ actor UmamiAPI: AnalyticsProvider {
             "type": "attribution",
             "filters": [:],
             "parameters": [
-                "startDate": formatter.string(from: dates.start),
-                "endDate": formatter.string(from: dates.end),
+                "startDate": isoDate(dates.start),
+                "endDate": isoDate(dates.end),
                 "model": model,
                 "type": type,
                 "step": step
@@ -706,6 +728,7 @@ actor UmamiAPI: AnalyticsProvider {
         let data = try await postRequest(endpoint: "api/reports/attribution", body: body)
         let response = try decoder.decode(AttributionResponse.self, from: data)
 
+        // Attribution = only traffic sources (referrers, paid ads)
         var items: [AttributionItem] = []
         for entry in response.referrer ?? [] {
             items.append(AttributionItem(category: "Referrer", name: entry.name, count: entry.value))
@@ -713,15 +736,7 @@ actor UmamiAPI: AnalyticsProvider {
         for entry in response.paidAds ?? [] {
             items.append(AttributionItem(category: "Paid Ads", name: entry.name, count: entry.value))
         }
-        for entry in response.utm_source ?? [] {
-            items.append(AttributionItem(category: "UTM Source", name: entry.name, count: entry.value))
-        }
-        for entry in response.utm_medium ?? [] {
-            items.append(AttributionItem(category: "UTM Medium", name: entry.name, count: entry.value))
-        }
-        for entry in response.utm_campaign ?? [] {
-            items.append(AttributionItem(category: "UTM Campaign", name: entry.name, count: entry.value))
-        }
+
         return items
     }
 
@@ -740,6 +755,11 @@ actor UmamiAPI: AnalyticsProvider {
                 URLQueryItem(name: "limit", value: String(limit))
             ]
         )
+        #if DEBUG
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("UmamiAPI.getMetrics(\(type.rawValue)): \(jsonString.prefix(500))")
+        }
+        #endif
         return try decoder.decode([MetricItem].self, from: data)
     }
 

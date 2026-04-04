@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 struct WebsiteDetailChartSection: View {
-    let viewModel: WebsiteDetailViewModel
+    @ObservedObject var viewModel: WebsiteDetailViewModel
     @Binding var selectedMetric: ChartMetric
     @Binding var selectedChartPoint: TimeSeriesPoint?
     @Binding var selectedChartStyle: ChartStyle

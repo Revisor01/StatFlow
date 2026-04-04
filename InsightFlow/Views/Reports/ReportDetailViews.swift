@@ -15,28 +15,28 @@ struct UTMReportView: View {
     }
 
     var sortedUTMData: [UTMReportItem] {
-        viewModel.utmData.sorted {
-            ($0.source ?? "") < ($1.source ?? "")
-        }
+        viewModel.utmData.sorted { $0.visitors > $1.visitors }
     }
 
     var body: some View {
-        Group {
-            if viewModel.isLoading && viewModel.utmData.isEmpty {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if viewModel.utmData.isEmpty {
-                ContentUnavailableView(
-                    String(localized: "reports.empty.utm"),
-                    systemImage: "link.badge.plus",
-                    description: Text(String(localized: "reports.empty.utm.description"))
-                )
-            } else {
-                List(sortedUTMData) { item in
-                    UTMReportRow(item: item)
+        ScrollView {
+            VStack(spacing: 16) {
+                if viewModel.isLoading && viewModel.utmData.isEmpty {
+                    ProgressView()
+                        .padding(40)
+                } else if viewModel.utmData.isEmpty && !viewModel.isLoading {
+                    ContentUnavailableView(
+                        String(localized: "reports.empty.utm"),
+                        systemImage: "link.badge.plus",
+                        description: Text(String(localized: "reports.empty.utm.description"))
+                    )
+                } else {
+                    ForEach(sortedUTMData) { item in
+                        UTMReportRow(item: item)
+                    }
                 }
-                .listStyle(.plain)
             }
+            .padding()
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle(String(localized: "reports.utm"))
@@ -51,30 +51,69 @@ struct UTMReportRow: View {
     let item: UTMReportItem
 
     var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 10) {
+                // Campaign name as headline (if present)
+                if let campaign = item.campaign {
+                    HStack {
+                        Image(systemName: "megaphone.fill")
+                            .foregroundStyle(.orange)
+                            .font(.subheadline)
+                        Text(campaign)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Text("\(item.visitors)")
+                            .font(.title3)
+                            .fontWeight(.bold)
+                            .monospacedDigit()
+                    }
+                } else {
+                    HStack {
+                        Text("\(item.visitors) Besucher")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Spacer()
+                    }
+                }
+
+                // Source + Medium as labeled row
+                HStack(spacing: 16) {
                     if let source = item.source {
-                        TagBadge(text: source, color: .blue)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Quelle")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            TagBadge(text: source, color: .blue)
+                        }
                     }
                     if let medium = item.medium {
-                        TagBadge(text: medium, color: .green)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Medium")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            TagBadge(text: medium, color: .green)
+                        }
+                    }
+                    if let content = item.content {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Inhalt")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            TagBadge(text: content, color: .purple)
+                        }
+                    }
+                    if let term = item.term {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Suchbegriff")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            TagBadge(text: term, color: .cyan)
+                        }
                     }
                 }
-
-                if let campaign = item.campaign {
-                    TagBadge(text: campaign, color: .orange)
-                }
             }
-
-            Spacer()
-
-            Text("\(item.visitors)")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .monospacedDigit()
         }
-        .padding(.vertical, 4)
     }
 }
 
@@ -151,6 +190,7 @@ struct FunnelReportView: View {
     let dateRange: DateRange
 
     @StateObject private var viewModel: ReportsViewModel
+    @State private var selectedFunnel: Report?
 
     init(website: Website, dateRange: DateRange) {
         self.website = website
@@ -161,6 +201,33 @@ struct FunnelReportView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
+                // Funnel picker when multiple funnels exist
+                if viewModel.funnelReports.count > 1 {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(viewModel.funnelReports) { report in
+                                Button {
+                                    selectedFunnel = report
+                                    Task {
+                                        await viewModel.loadFunnelReport(report: report, dateRange: dateRange)
+                                    }
+                                } label: {
+                                    Text(report.name)
+                                        .font(.subheadline)
+                                        .fontWeight(selectedFunnel?.id == report.id ? .semibold : .regular)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(selectedFunnel?.id == report.id ? Color.blue : Color(.secondarySystemBackground))
+                                        .foregroundStyle(selectedFunnel?.id == report.id ? .white : .primary)
+                                        .clipShape(Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+
                 if viewModel.isLoading && viewModel.funnelData.isEmpty {
                     ProgressView()
                         .padding(40)
@@ -171,6 +238,12 @@ struct FunnelReportView: View {
                         description: Text(String(localized: "reports.empty.funnel.description"))
                     )
                 } else {
+                    if let name = selectedFunnel?.name {
+                        Text(name)
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal)
+                    }
                     funnelStepsView
                 }
             }
@@ -180,7 +253,11 @@ struct FunnelReportView: View {
         .navigationTitle(String(localized: "reports.funnel"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await viewModel.loadFirstFunnel(dateRange: dateRange)
+            await viewModel.loadReports()
+            if let first = viewModel.funnelReports.first {
+                selectedFunnel = first
+                await viewModel.loadFunnelReport(report: first, dateRange: dateRange)
+            }
         }
     }
 

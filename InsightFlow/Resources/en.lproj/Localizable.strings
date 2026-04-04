@@ -469,11 +469,11 @@
 "reports.funnel" = "Funnels";
 "reports.funnel.subtitle" = "Conversion paths";
 "reports.utm" = "UTM Campaigns";
-"reports.utm.subtitle" = "Traffic sources";
+"reports.utm.subtitle" = "Campaign link tracking";
 "reports.goals" = "Goals";
 "reports.goals.subtitle" = "Goal tracking";
-"reports.attribution" = "Attribution";
-"reports.attribution.subtitle" = "Channel attribution";
+"reports.attribution" = "Sources";
+"reports.attribution.subtitle" = "Referrers and traffic sources";
 "reports.empty.utm" = "No UTM Data";
 "reports.empty.utm.description" = "No UTM campaign data for this period.";
 "reports.empty.attribution" = "No Attribution Data";

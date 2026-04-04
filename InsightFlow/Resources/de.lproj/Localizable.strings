@@ -470,11 +470,11 @@
 "reports.funnel" = "Funnels";
 "reports.funnel.subtitle" = "Conversion-Pfade";
 "reports.utm" = "UTM-Kampagnen";
-"reports.utm.subtitle" = "Traffic-Quellen";
+"reports.utm.subtitle" = "Link-Tracking";
 "reports.goals" = "Goals";
 "reports.goals.subtitle" = "Ziel-Tracking";
-"reports.attribution" = "Attribution";
-"reports.attribution.subtitle" = "Kanal-Zuordnung";
+"reports.attribution" = "Herkunft";
+"reports.attribution.subtitle" = "Referrer und Verweise";
 "reports.empty.utm" = "Keine UTM-Daten";
 "reports.empty.utm.description" = "Keine UTM-Kampagnendaten im gewählten Zeitraum.";
 "reports.empty.attribution" = "Keine Attribution-Daten";
