@@ -366,6 +366,7 @@ class RetentionViewModel: ObservableObject {
     @Published var retentionRows: [RetentionRow] = []
     @Published var isLoading = false
 
+    private var loadingTask: Task<Void, Never>?
     private let api = UmamiAPI.shared
 
     init(websiteId: String) {
@@ -411,18 +412,25 @@ class RetentionViewModel: ObservableObject {
     }
 
     func loadRetention(dateRange: DateRange) async {
-        isLoading = true
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            retentionRows = try await api.getRetention(websiteId: websiteId, dateRange: dateRange)
-        } catch {
-            #if DEBUG
-            print("Retention error: \(error)")
-            #endif
-            retentionRows = []
+            do {
+                let result = try await api.getRetention(websiteId: websiteId, dateRange: dateRange)
+                guard !Task.isCancelled else { return }
+                retentionRows = result
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("Retention error: \(error)")
+                #endif
+                retentionRows = []
+            }
         }
-
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 }
 

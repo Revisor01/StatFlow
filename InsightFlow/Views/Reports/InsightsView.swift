@@ -294,6 +294,7 @@ class ComparisonViewModel: ObservableObject {
     @Published var previousPageviews: [ComparisonDataPoint] = []
     @Published var isLoading = false
 
+    private var loadingTask: Task<Void, Never>?
     private let api = UmamiAPI.shared
 
     init(websiteId: String) {
@@ -301,36 +302,42 @@ class ComparisonViewModel: ObservableObject {
     }
 
     func loadComparison() async {
-        isLoading = true
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            async let currentStatsTask = api.getStats(websiteId: websiteId, dateRange: selectedPeriod.currentRange)
-            async let previousStatsTask = api.getStats(websiteId: websiteId, dateRange: selectedPeriod.previousRange)
-            async let currentPageviewsTask = api.getPageviews(websiteId: websiteId, dateRange: selectedPeriod.currentRange)
-            async let previousPageviewsTask = api.getPageviews(websiteId: websiteId, dateRange: selectedPeriod.previousRange)
+            do {
+                async let currentStatsTask = api.getStats(websiteId: websiteId, dateRange: selectedPeriod.currentRange)
+                async let previousStatsTask = api.getStats(websiteId: websiteId, dateRange: selectedPeriod.previousRange)
+                async let currentPageviewsTask = api.getPageviews(websiteId: websiteId, dateRange: selectedPeriod.currentRange)
+                async let previousPageviewsTask = api.getPageviews(websiteId: websiteId, dateRange: selectedPeriod.previousRange)
 
-            let (current, previous, currentPV, previousPV) = try await (
-                currentStatsTask, previousStatsTask, currentPageviewsTask, previousPageviewsTask
-            )
+                let (current, previous, currentPV, previousPV) = try await (
+                    currentStatsTask, previousStatsTask, currentPageviewsTask, previousPageviewsTask
+                )
+                guard !Task.isCancelled else { return }
 
-            currentStats = current
-            previousStats = previous
+                currentStats = current
+                previousStats = previous
 
-            currentPageviews = currentPV.pageviews.enumerated().map { index, point in
-                ComparisonDataPoint(dayIndex: index, value: point.value)
+                currentPageviews = currentPV.pageviews.enumerated().map { index, point in
+                    ComparisonDataPoint(dayIndex: index, value: point.value)
+                }
+
+                previousPageviews = previousPV.pageviews.enumerated().map { index, point in
+                    ComparisonDataPoint(dayIndex: index, value: point.value)
+                }
+
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("Comparison error: \(error)")
+                #endif
             }
-
-            previousPageviews = previousPV.pageviews.enumerated().map { index, point in
-                ComparisonDataPoint(dayIndex: index, value: point.value)
-            }
-
-        } catch {
-            #if DEBUG
-            print("Comparison error: \(error)")
-            #endif
         }
-
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 }
 

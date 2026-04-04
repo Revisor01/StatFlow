@@ -14,6 +14,7 @@ class ReportsViewModel: ObservableObject {
     @Published var isOffline = false
     @Published var error: String?
 
+    private var loadingTask: Task<Void, Never>?
     private let api = UmamiAPI.shared
 
     // MARK: - Computed Properties
@@ -43,163 +44,207 @@ class ReportsViewModel: ObservableObject {
     // MARK: - Data Loading
 
     func loadReports() async {
-        isLoading = true
-        isOffline = false
-        error = nil
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            isOffline = false
+            error = nil
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            let response = try await api.getReports(websiteId: websiteId)
-            reports = response.data
-        } catch {
-            #if DEBUG
-            print("ReportsViewModel: loadReports error: \(error)")
-            #endif
-            let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
-                                 (error as? URLError)?.code == .networkConnectionLost ||
-                                 (error as? URLError)?.code == .timedOut ||
-                                 (error as? URLError)?.code == .cannotFindHost ||
-                                 (error as? URLError)?.code == .cannotConnectToHost
-            if isNetworkError {
-                self.isOffline = true
-            } else {
-                self.error = error.localizedDescription
+            do {
+                let response = try await api.getReports(websiteId: websiteId)
+                guard !Task.isCancelled else { return }
+                reports = response.data
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("ReportsViewModel: loadReports error: \(error)")
+                #endif
+                let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
+                                     (error as? URLError)?.code == .networkConnectionLost ||
+                                     (error as? URLError)?.code == .timedOut ||
+                                     (error as? URLError)?.code == .cannotFindHost ||
+                                     (error as? URLError)?.code == .cannotConnectToHost
+                if isNetworkError {
+                    self.isOffline = true
+                } else {
+                    self.error = error.localizedDescription
+                }
             }
         }
-
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 
     func loadUTMReport(dateRange: DateRange) async {
-        isLoading = true
-        error = nil
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            error = nil
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            utmData = try await api.getUTMReport(websiteId: websiteId, dateRange: dateRange)
-        } catch {
-            #if DEBUG
-            print("ReportsViewModel: loadUTMReport error: \(error)")
-            #endif
-            self.error = error.localizedDescription
+            do {
+                let result = try await api.getUTMReport(websiteId: websiteId, dateRange: dateRange)
+                guard !Task.isCancelled else { return }
+                utmData = result
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("ReportsViewModel: loadUTMReport error: \(error)")
+                #endif
+                self.error = error.localizedDescription
+            }
         }
-
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 
     func loadAttributionReport(dateRange: DateRange) async {
-        isLoading = true
-        error = nil
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            error = nil
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            attributionData = try await api.getAttributionReport(websiteId: websiteId, dateRange: dateRange)
-        } catch {
-            #if DEBUG
-            print("ReportsViewModel: loadAttributionReport error: \(error)")
-            #endif
-            self.error = error.localizedDescription
+            do {
+                let result = try await api.getAttributionReport(websiteId: websiteId, dateRange: dateRange)
+                guard !Task.isCancelled else { return }
+                attributionData = result
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("ReportsViewModel: loadAttributionReport error: \(error)")
+                #endif
+                self.error = error.localizedDescription
+            }
         }
-
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 
     func loadFunnelReport(report: Report, dateRange: DateRange) async {
-        isLoading = true
-        error = nil
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            error = nil
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            let steps = report.parameters?.steps ?? []
-            let window = report.parameters?.window ?? 60
-            funnelData = try await api.getFunnelReport(
-                websiteId: websiteId,
-                dateRange: dateRange,
-                steps: steps,
-                window: window
-            )
-        } catch {
-            #if DEBUG
-            print("ReportsViewModel: loadFunnelReport error: \(error)")
-            #endif
-            self.error = error.localizedDescription
-        }
-
-        isLoading = false
-    }
-
-    func loadFirstFunnel(dateRange: DateRange) async {
-        isLoading = true
-        error = nil
-
-        do {
-            if reports.isEmpty {
-                let response = try await api.getReports(websiteId: websiteId)
-                reports = response.data
-            }
-            let funnels = reports.filter { $0.type == "funnel" }
-            if let first = funnels.first {
-                let steps = first.parameters?.steps ?? []
-                let window = first.parameters?.window ?? 60
-                funnelData = try await api.getFunnelReport(
+            do {
+                let steps = report.parameters?.steps ?? []
+                let window = report.parameters?.window ?? 60
+                let result = try await api.getFunnelReport(
                     websiteId: websiteId,
                     dateRange: dateRange,
                     steps: steps,
                     window: window
                 )
+                guard !Task.isCancelled else { return }
+                funnelData = result
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("ReportsViewModel: loadFunnelReport error: \(error)")
+                #endif
+                self.error = error.localizedDescription
             }
-        } catch {
-            #if DEBUG
-            print("ReportsViewModel: loadFirstFunnel error: \(error)")
-            #endif
-            self.error = error.localizedDescription
         }
+        loadingTask = task
+        await task.value
+    }
 
-        isLoading = false
+    func loadFirstFunnel(dateRange: DateRange) async {
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            error = nil
+            defer { if !Task.isCancelled { isLoading = false } }
+
+            do {
+                if reports.isEmpty {
+                    let response = try await api.getReports(websiteId: websiteId)
+                    guard !Task.isCancelled else { return }
+                    reports = response.data
+                }
+                let funnels = reports.filter { $0.type == "funnel" }
+                if let first = funnels.first {
+                    let steps = first.parameters?.steps ?? []
+                    let window = first.parameters?.window ?? 60
+                    let result = try await api.getFunnelReport(
+                        websiteId: websiteId,
+                        dateRange: dateRange,
+                        steps: steps,
+                        window: window
+                    )
+                    guard !Task.isCancelled else { return }
+                    funnelData = result
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("ReportsViewModel: loadFirstFunnel error: \(error)")
+                #endif
+                self.error = error.localizedDescription
+            }
+        }
+        loadingTask = task
+        await task.value
     }
 
     func loadAllGoals(dateRange: DateRange) async {
-        isLoading = true
-        error = nil
-        goalData = []
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            error = nil
+            goalData = []
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            // Load reports if not already loaded
-            if reports.isEmpty {
-                let response = try await api.getReports(websiteId: websiteId)
-                reports = response.data
-            }
-
-            let goals = reports.filter { $0.type == "goal" }
-
-            for report in goals {
-                let goalType = report.parameters?.type ?? "event"
-                let goalValue = report.parameters?.value ?? ""
-                do {
-                    let result = try await api.getGoalReport(
-                        websiteId: websiteId,
-                        dateRange: dateRange,
-                        goalType: goalType,
-                        goalValue: goalValue
-                    )
-                    let item = GoalReportItem(
-                        type: goalType,
-                        value: goalValue,
-                        name: report.name,
-                        goal: result.total,
-                        result: result.num
-                    )
-                    goalData.append(item)
-                } catch {
-                    #if DEBUG
-                    print("ReportsViewModel: loadGoalReport error for \(report.name): \(error)")
-                    #endif
+            do {
+                // Load reports if not already loaded
+                if reports.isEmpty {
+                    let response = try await api.getReports(websiteId: websiteId)
+                    guard !Task.isCancelled else { return }
+                    reports = response.data
                 }
-            }
-        } catch {
-            #if DEBUG
-            print("ReportsViewModel: loadAllGoals error: \(error)")
-            #endif
-            self.error = error.localizedDescription
-        }
 
-        isLoading = false
+                let goals = reports.filter { $0.type == "goal" }
+
+                for report in goals {
+                    guard !Task.isCancelled else { return }
+                    let goalType = report.parameters?.type ?? "event"
+                    let goalValue = report.parameters?.value ?? ""
+                    do {
+                        let result = try await api.getGoalReport(
+                            websiteId: websiteId,
+                            dateRange: dateRange,
+                            goalType: goalType,
+                            goalValue: goalValue
+                        )
+                        guard !Task.isCancelled else { return }
+                        let item = GoalReportItem(
+                            type: goalType,
+                            value: goalValue,
+                            name: report.name,
+                            goal: result.total,
+                            result: result.num
+                        )
+                        goalData.append(item)
+                    } catch {
+                        guard !Task.isCancelled else { return }
+                        #if DEBUG
+                        print("ReportsViewModel: loadGoalReport error for \(report.name): \(error)")
+                        #endif
+                    }
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("ReportsViewModel: loadAllGoals error: \(error)")
+                #endif
+                self.error = error.localizedDescription
+            }
+        }
+        loadingTask = task
+        await task.value
     }
 
     // MARK: - Helpers

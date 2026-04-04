@@ -485,6 +485,7 @@ class SessionsViewModel: ObservableObject {
     @Published var isOffline = false
     @Published var hasMore = false
 
+    private var loadingTask: Task<Void, Never>?
     private var currentPage = 1
     private var totalCount = 0
     private let pageSize = 20
@@ -495,35 +496,41 @@ class SessionsViewModel: ObservableObject {
     }
 
     func loadData(dateRange: DateRange) async {
-        isLoading = true
-        isOffline = false
-        currentPage = 1
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            isOffline = false
+            currentPage = 1
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            let response = try await api.getSessions(
-                websiteId: websiteId,
-                dateRange: dateRange,
-                page: currentPage,
-                pageSize: pageSize
-            )
-            sessions = response.data
-            totalCount = response.count
-            hasMore = sessions.count < totalCount
-        } catch {
-            #if DEBUG
-            print("Sessions error: \(error)")
-            #endif
-            let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
-                                 (error as? URLError)?.code == .networkConnectionLost ||
-                                 (error as? URLError)?.code == .timedOut ||
-                                 (error as? URLError)?.code == .cannotFindHost ||
-                                 (error as? URLError)?.code == .cannotConnectToHost
-            if isNetworkError {
-                isOffline = true
+            do {
+                let response = try await api.getSessions(
+                    websiteId: websiteId,
+                    dateRange: dateRange,
+                    page: currentPage,
+                    pageSize: pageSize
+                )
+                guard !Task.isCancelled else { return }
+                sessions = response.data
+                totalCount = response.count
+                hasMore = sessions.count < totalCount
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("Sessions error: \(error)")
+                #endif
+                let isNetworkError = (error as? URLError)?.code == .notConnectedToInternet ||
+                                     (error as? URLError)?.code == .networkConnectionLost ||
+                                     (error as? URLError)?.code == .timedOut ||
+                                     (error as? URLError)?.code == .cannotFindHost ||
+                                     (error as? URLError)?.code == .cannotConnectToHost
+                if isNetworkError {
+                    isOffline = true
+                }
             }
         }
-
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 
     func loadMore(dateRange: DateRange) async {
@@ -563,6 +570,7 @@ class SessionDetailViewModel: ObservableObject {
     @Published var activities: [SessionActivity] = []
     @Published var isLoading = false
 
+    private var loadingTask: Task<Void, Never>?
     private let api = UmamiAPI.shared
 
     init(websiteId: String, sessionId: String) {
@@ -571,21 +579,28 @@ class SessionDetailViewModel: ObservableObject {
     }
 
     func loadActivity(dateRange: DateRange) async {
-        isLoading = true
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            activities = try await api.getSessionActivity(
-                websiteId: websiteId,
-                sessionId: sessionId,
-                dateRange: dateRange
-            )
-        } catch {
-            #if DEBUG
-            print("Activity error: \(error)")
-            #endif
+            do {
+                let result = try await api.getSessionActivity(
+                    websiteId: websiteId,
+                    sessionId: sessionId,
+                    dateRange: dateRange
+                )
+                guard !Task.isCancelled else { return }
+                activities = result
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("Activity error: \(error)")
+                #endif
+            }
         }
-
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 }
 
@@ -596,6 +611,7 @@ class JourneyViewModel: ObservableObject {
     @Published var journeys: [JourneyPath] = []
     @Published var isLoading = false
 
+    private var loadingTask: Task<Void, Never>?
     private let api = UmamiAPI.shared
 
     init(websiteId: String) {
@@ -603,21 +619,28 @@ class JourneyViewModel: ObservableObject {
     }
 
     func loadJourneys(dateRange: DateRange) async {
-        isLoading = true
+        loadingTask?.cancel()
+        let task = Task {
+            isLoading = true
+            defer { if !Task.isCancelled { isLoading = false } }
 
-        do {
-            journeys = try await api.getJourneyReport(
-                websiteId: websiteId,
-                dateRange: dateRange,
-                steps: 5
-            )
-        } catch {
-            #if DEBUG
-            print("Journey error: \(error)")
-            #endif
+            do {
+                let result = try await api.getJourneyReport(
+                    websiteId: websiteId,
+                    dateRange: dateRange,
+                    steps: 5
+                )
+                guard !Task.isCancelled else { return }
+                journeys = result
+            } catch {
+                guard !Task.isCancelled else { return }
+                #if DEBUG
+                print("Journey error: \(error)")
+                #endif
+            }
         }
-
-        isLoading = false
+        loadingTask = task
+        await task.value
     }
 }
 
