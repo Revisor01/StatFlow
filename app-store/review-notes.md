@@ -15,14 +15,13 @@ Steps:
 ## Test Account 2: Plausible Analytics
 
 Server URL: https://plausible.godsapp.de
-Email: test@godsapp.de
-Password: StatFlow2026!
+API Key: 4uJEjvR5JiXZuQRm84fM4C3wMvQqVPgF2xBUiSlSCRcz1Vu4zt1qvEQ0BtDU5U2S
 
 Steps:
 1. Tap "Account hinzufuegen" (Add Account)
 2. Select "Plausible" as provider
-3. Enter server URL, email, and password
-4. Tap "Anmelden" (Sign In) — dashboard loads with test websites
+3. Enter server URL and API key
+4. Tap "Anmelden" (Sign In) — dashboard loads with 3 test websites (blog, shop, docs)
 
 ## Notes for Review
 
