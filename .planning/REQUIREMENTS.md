@@ -35,19 +35,19 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| STORE-01 | TBD | Pending |
-| REVIEW-01 | TBD | Pending |
-| WEB-01 | TBD | Pending |
-| WEB-02 | TBD | Pending |
-| WEB-03 | TBD | Pending |
-| WEB-04 | TBD | Pending |
-| WEB-05 | TBD | Pending |
-| README-01 | TBD | Pending |
+| STORE-01 | Phase 2 | Pending |
+| REVIEW-01 | Phase 2 | Pending |
+| WEB-01 | Phase 1 | Pending |
+| WEB-02 | Phase 1 | Pending |
+| WEB-03 | Phase 1 | Pending |
+| WEB-04 | Phase 1 | Pending |
+| WEB-05 | Phase 1 | Pending |
+| README-01 | Phase 2 | Pending |
 
 **Coverage:**
 - v2.8 requirements: 8 total
-- Mapped to phases: 0
-- Unmapped: 8 ⚠️
+- Mapped to phases: 8
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-05*

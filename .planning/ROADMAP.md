@@ -10,3 +10,4 @@
 - ✅ **v2.5 Pre-Release Polish** - 3 phases, 7 plans, completed 2026-03-29 ([archive](milestones/v2.5-ROADMAP.md))
 - ✅ **v2.6 Design Polish** - 2 phases, 2 plans, completed 2026-04-03 ([archive](milestones/v2.6-ROADMAP.md))
 - ✅ **v2.7 Stability & Architecture** - 3 phases, 8 plans, 12 requirements, completed 2026-04-04 ([archive](milestones/v2.7-ROADMAP.md))
+- 🔄 **v2.8 App Store Release** - 2 phases, 8 requirements ([roadmap](milestones/v2.8-ROADMAP.md))
