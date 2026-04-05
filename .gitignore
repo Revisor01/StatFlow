@@ -62,3 +62,6 @@ credentials.json
 # Temporary files
 *.tmp
 *.temp
+
+# Secrets
+app-store/secrets.md
