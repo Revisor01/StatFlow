@@ -10,7 +10,6 @@ struct SettingsView: View {
     @State private var showSupport = false
     @State private var showEditApiKey = false
     @State private var showAddAccount = false
-    @State private var showEditAccount = false
     @State private var accountToEdit: AnalyticsAccount?
     @State private var newApiKey = ""
     @AppStorage("colorScheme") private var colorScheme: String = "system"
@@ -58,15 +57,13 @@ struct SettingsView: View {
                     })
                 }
             }
-            .sheet(isPresented: $showEditAccount) {
-                if let account = accountToEdit {
-                    NavigationStack {
-                        EditAccountView(account: account, onAccountUpdated: {
-                            Task {
-                                await viewModel.loadWebsites()
-                            }
-                        })
-                    }
+            .sheet(item: $accountToEdit) { account in
+                NavigationStack {
+                    EditAccountView(account: account, onAccountUpdated: {
+                        Task {
+                            await viewModel.loadWebsites()
+                        }
+                    })
                 }
             }
             .alert("settings.editApiKey", isPresented: $showEditApiKey) {
@@ -113,18 +110,16 @@ struct SettingsView: View {
                             }
                         }
                     )
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             accountManager.removeAccount(account)
                         } label: {
                             Image(systemName: "trash")
                         }
                         .tint(.red)
-                    }
-                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
+
                         Button {
                             accountToEdit = account
-                            showEditAccount = true
                         } label: {
                             Image(systemName: "pencil")
                         }
