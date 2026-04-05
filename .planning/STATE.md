@@ -1,34 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.7
-milestone_name: Stability & Architecture
-status: completed
+milestone: v2.8
+milestone_name: App Store Release
+status: planning
 stopped_at: null
-last_updated: "2026-04-04T22:00:00.000Z"
-last_activity: 2026-04-04
+last_updated: "2026-04-05T10:00:00.000Z"
+last_activity: 2026-04-05
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-04)
+See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** v2.7 complete — bereit für nächsten Milestone
+**Current focus:** v2.8 App Store Release — Beschreibung, Privacy Policy, Web-Seiten, Review-Daten
 
 ## Current Position
 
-Phase: Milestone v2.7 abgeschlossen
+Phase: Not started (defining requirements)
 Plan: —
-Status: Alle 3 Phasen, 8 Pläne, 12 Requirements abgeschlossen
-Last activity: 2026-04-04 — Milestone v2.7 archived
+Status: Defining requirements
+Last activity: 2026-04-05 — Milestone v2.8 started
 
 ## Accumulated Context
 
@@ -36,12 +36,10 @@ Last activity: 2026-04-04 — Milestone v2.7 archived
 
 - App-Name: StatFlow (ersetzt PrivacyFlow/InsightFlow)
 - Bundle ID Prefix: de.godsapp.statflow
-- Cache-Strategie v2.7: NUR Offline-Fallback, nie als primäre Datenquelle
-- Task-Cancellation: loadingTask + isCancelled Guards in 14 ViewModels
-- configureProviderForAccount statt setActiveAccount-Loop für Multi-Account
-- Error+Network.swift als Single Source of Truth für Netzwerk-Fehler-Erkennung
-- DI via init-Parameter mit .shared Defaults für alle ViewModels
-- os.Logger mit 4 Kategorien (api, cache, auth, ui)
+- Privacy Policy wird auf simonluthe.de gehostet (Hugo-Website)
+- Neue "Apps"-Rubrik auf simonluthe.de für alle Apps (CookMy, StatFlow, Valetudios, Guck mal!)
+- Guck mal! wird von /guckmal/ in /apps/guckmal/ verschoben
+- Testaccounts: Umami (t.godsapp.de, admin) + Plausible (plausible.godsapp.de, test@godsapp.de)
 
 ### Blockers/Concerns
 
@@ -49,6 +47,6 @@ None
 
 ## Session Continuity
 
-Last session: 2026-04-04
-Stopped at: Milestone v2.7 complete
+Last session: 2026-04-05
+Stopped at: Milestone v2.8 requirements definition
 Resume file: None

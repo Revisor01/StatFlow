@@ -11,6 +11,7 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 ## Current State
 
 **Latest shipped:** v2.7 Stability & Architecture (completed 2026-04-04)
+**Current:** v2.8 App Store Release (started 2026-04-05)
 **GitHub:** Revisor01/StatFlow
 
 ### v2.7 Accomplishments
@@ -118,7 +119,14 @@ Nutzer können ihre Website-Analytics sicher und übersichtlich von ihrem iPhone
 
 <!-- Current scope. Building toward these. -->
 
-(Kein aktiver Milestone — v2.7 abgeschlossen)
+- STORE-01: App Store Beschreibung (DE + EN) — Titel, Untertitel, Keywords, Text — v2.8
+- WEB-01: "Apps"-Rubrik auf simonluthe.de mit Unterseiten für alle Apps — v2.8
+- WEB-02: StatFlow Projektseite (Beschreibung, Features) — v2.8
+- WEB-03: StatFlow Privacy Policy auf simonluthe.de — v2.8
+- WEB-04: CookMy + Valetudios Platzhalter-Seiten + Privacy Policies — v2.8
+- WEB-05: "Guck mal!" von /guckmal/ in Apps-Rubrik verschieben — v2.8
+- REVIEW-01: App Review Notes mit Testaccount-Daten — v2.8
+- README-01: README.md aktualisieren falls nötig — v2.8
 
 ### Out of Scope
 
@@ -182,4 +190,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-04 — v2.7 Stability & Architecture completed*
+*Last updated: 2026-04-05 — v2.8 App Store Release started*
