@@ -15,7 +15,7 @@
 - [ ] **WEB-01**: Neue "Apps"-Rubrik auf simonluthe.de mit Übersichtsseite aller Apps
 - [ ] **WEB-02**: StatFlow Projektseite mit attraktiver Beschreibung, Features, Screenshots
 - [ ] **WEB-03**: StatFlow Privacy Policy (DSGVO-konform, Apple-konform)
-- [ ] **WEB-04**: CookMy und Valetudios Platzhalter-Seiten mit Privacy Policies
+- [ ] **WEB-04**: Konfi Quest und Valetudios Platzhalter-Seiten mit Privacy Policies
 - [ ] **WEB-05**: "Guck mal!" von /guckmal/ in /apps/guckmal/ verschieben (mit Redirect)
 
 ### README
