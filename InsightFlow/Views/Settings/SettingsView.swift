@@ -384,7 +384,7 @@ struct SettingsView: View {
                 Text("StatFlow v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")")
                 HStack(spacing: 4) {
                     Text("Made with")
-                    Image(systemName: "dove.fill")
+                    Image(systemName: "bird")
                     Text("in Hennstedt")
                 }
                 Text("Friede. Schalom. Salam.")
@@ -468,69 +468,50 @@ private struct AccountNotificationSection: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Account-Header mit Icon und Alle-Toggle
-            HStack(spacing: 10) {
-                Image(systemName: account.icon)
-                    .font(.system(size: 16))
-                    .foregroundStyle(account.providerType == .umami ? .orange : .blue)
-                    .frame(width: 28, height: 28)
-                    .background(
-                        (account.providerType == .umami ? Color.orange : Color.blue).opacity(0.12)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-
-                Text(account.displayName)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-
-                Spacer()
-
-                Toggle("", isOn: Binding(
-                    get: { notificationManager.allEnabled(for: websiteIds) },
-                    set: { isOn in
+        DisclosureGroup(
+            isExpanded: $isExpanded,
+            content: {
+                ForEach(websites) { website in
+                    NotificationSettingRow(
+                        website: website,
+                        setting: notificationManager.getSetting(for: website.id)
+                    ) { newSetting in
                         Task {
-                            if isOn {
+                            if newSetting != .disabled {
                                 let granted = await notificationManager.requestPermission()
                                 if !granted { return }
-                                notificationManager.updateAllSettings(for: websiteIds, setting: .daily)
-                            } else {
-                                notificationManager.updateAllSettings(for: websiteIds, setting: .disabled)
                             }
+                            notificationManager.updateSetting(for: website.id, setting: newSetting)
                         }
                     }
-                ))
-                .labelsHidden()
-            }
-            .padding(.vertical, 4)
-
-            // DisclosureGroup fuer Website-Liste
-            DisclosureGroup(
-                isExpanded: $isExpanded,
-                content: {
-                    ForEach(websites) { website in
-                        NotificationSettingRow(
-                            website: website,
-                            setting: notificationManager.getSetting(for: website.id)
-                        ) { newSetting in
-                            Task {
-                                if newSetting != .disabled {
-                                    let granted = await notificationManager.requestPermission()
-                                    if !granted { return }
-                                }
-                                notificationManager.updateSetting(for: website.id, setting: newSetting)
-                            }
-                        }
-                        .padding(.leading, 4)
-                    }
-                },
-                label: {
-                    Text("\(enabledCount) von \(websites.count) aktiv")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    .padding(.leading, 4)
                 }
-            )
-        }
+            },
+            label: {
+                HStack(spacing: 10) {
+                    Image(systemName: account.icon)
+                        .font(.system(size: 16))
+                        .foregroundStyle(account.providerType == .umami ? .orange : .blue)
+                        .frame(width: 28, height: 28)
+                        .background(
+                            (account.providerType == .umami ? Color.orange : Color.blue).opacity(0.12)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                    Text(account.displayName)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+
+                    Spacer()
+
+                    if enabledCount > 0 {
+                        Text("\(enabledCount)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        )
     }
 }
 

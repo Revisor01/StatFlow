@@ -27,7 +27,7 @@ class NotificationManager: ObservableObject {
     private let settingsKey = "notificationSettings"
     private let timeKey = "notificationTime"
     private let dataSourceKey = "notificationDataSource"
-    private let summaryThreshold = 5
+
 
     init() {
         // Standard: 9:00 Uhr
@@ -133,20 +133,7 @@ class NotificationManager: ObservableObject {
         }
     }
 
-    /// Setzt alle Websites eines Accounts auf das gleiche Setting
-    func updateAllSettings(for accountWebsiteIds: [String], setting: NotificationSetting) {
-        for id in accountWebsiteIds {
-            notificationSettings[id] = setting
-        }
-        saveSettings()
-        Task { await scheduleAllNotifications() }
-    }
 
-    /// Prueft ob alle Websites eines Accounts aktiviert sind
-    func allEnabled(for websiteIds: [String]) -> Bool {
-        guard !websiteIds.isEmpty else { return false }
-        return websiteIds.allSatisfy { notificationSettings[$0] != nil && notificationSettings[$0] != .disabled }
-    }
 
     // Scheduled Notifications mit UNCalendarNotificationTrigger für zuverlässige Zeiten
     func scheduleAllNotifications() async {
@@ -205,93 +192,8 @@ class NotificationManager: ObservableObject {
             websites = sites.map { WebsiteInfo(id: $0, name: $0) }
         }
 
-        // Bestimme aktivierte Websites und ob Summary verwendet werden soll
-        let enabledWebsites = websites.filter { ws in
-            guard let setting = notificationSettings[ws.id] else { return false }
-            return setting != .disabled
-        }
-        let useSummary = enabledWebsites.count >= summaryThreshold
-
-        if useSummary {
-            // Summary-Notification: Sammle Stats aller aktivierten Websites
-            struct WebsiteStats {
-                let name: String
-                let visitors: Int
-                let changePercentage: Double
-            }
-            var allStats: [WebsiteStats] = []
-
-            // Bestimme häufigstes Setting (daily vs. weekly)
-            let weeklyCount = enabledWebsites.filter { notificationSettings[$0.id] == .weekly }.count
-            let dominantSetting: NotificationSetting = weeklyCount > enabledWebsites.count / 2 ? .weekly : .daily
-            let dateRange = getEffectiveDateRange(for: dominantSetting)
-
-            for website in enabledWebsites {
-                var stats: AnalyticsStats?
-                switch account.providerType {
-                case .umami:
-                    if let token = account.credentials.token,
-                       let url = URL(string: account.serverURL) {
-                        let api = UmamiAPI.shared
-                        await api.configure(baseURL: url, token: token)
-                        if let umamiStats = try? await api.getStats(websiteId: website.id, dateRange: dateRange) {
-                            stats = AnalyticsStats(
-                                visitors: StatValue(value: umamiStats.visitors.value, change: umamiStats.visitors.change),
-                                pageviews: StatValue(value: umamiStats.pageviews.value, change: umamiStats.pageviews.change),
-                                visits: StatValue(value: umamiStats.visits.value, change: umamiStats.visits.change),
-                                bounces: StatValue(value: umamiStats.bounces.value, change: umamiStats.bounces.change),
-                                totaltime: StatValue(value: umamiStats.totaltime.value, change: umamiStats.totaltime.change)
-                            )
-                        }
-                    }
-                case .plausible:
-                    if let apiKey = account.credentials.apiKey {
-                        try? KeychainService.save(account.serverURL, for: .serverURL)
-                        try? KeychainService.save(apiKey, for: .apiKey)
-                        await PlausibleAPI.shared.reconfigureFromKeychain()
-                        stats = try? await PlausibleAPI.shared.getAnalyticsStats(websiteId: website.id, dateRange: dateRange)
-                    }
-                }
-                if let s = stats {
-                    allStats.append(WebsiteStats(name: website.name, visitors: s.visitors.value, changePercentage: s.visitors.changePercentage))
-                }
-            }
-
-            let content = UNMutableNotificationContent()
-            content.sound = .default
-            content.title = "\(account.displayName) — Zusammenfassung"
-            content.threadIdentifier = "account-\(account.id.uuidString)"
-
-            if allStats.isEmpty {
-                content.body = "Tippe um deine Statistiken zu sehen"
-            } else {
-                let totalVisitors = allStats.reduce(0) { $0 + $1.visitors }
-                let topSite = allStats.max(by: { $0.changePercentage < $1.changePercentage })
-                var bodyText = "\(totalVisitors.formatted()) Besucher gesamt"
-                if let top = topSite {
-                    let arrow = top.changePercentage >= 0 ? "↑" : "↓"
-                    bodyText += " • Top: \(top.name) \(arrow)\(abs(Int(top.changePercentage)))%"
-                }
-                content.body = bodyText
-            }
-
-            var dateComponents = DateComponents()
-            dateComponents.hour = notificationHour
-            dateComponents.minute = notificationMinute
-            if dominantSetting == .weekly {
-                dateComponents.weekday = 2 // Montag
-            }
-            let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-            let request = UNNotificationRequest(
-                identifier: "scheduled-\(account.id.uuidString)-summary",
-                content: content,
-                trigger: trigger
-            )
-            try? await center.add(request)
-
-        } else {
-            // Einzel-Notifications mit threadIdentifier
-            for website in websites {
+        // Einzel-Notifications pro Website
+        for website in websites {
                 guard let setting = notificationSettings[website.id], setting != .disabled else { continue }
 
                 let dateRange = getEffectiveDateRange(for: setting)
@@ -396,7 +298,6 @@ class NotificationManager: ObservableObject {
 
                 try? await center.add(request)
             }
-        }
     }
 
     func getSetting(for websiteId: String) -> NotificationSetting {
@@ -466,92 +367,8 @@ class NotificationManager: ObservableObject {
             guard let setting = settings[ws.id] else { return false }
             return setting != .disabled
         }
-        let localSummaryThreshold = 5
-        let useSummary = enabledWebsites.count >= localSummaryThreshold
-
-        if useSummary {
-            // Summary-Notification: Sammle Stats aller aktivierten Websites
-            struct WebsiteStats: Sendable {
-                let name: String
-                let visitors: Int
-                let changePercentage: Double
-            }
-            var allStats: [WebsiteStats] = []
-
-            // Bestimme häufigstes Setting für DateRange
-            let weeklyCount = enabledWebsites.filter { settings[$0.id] == .weekly }.count
-            let dominantSetting: NotificationSetting = weeklyCount > enabledWebsites.count / 2 ? .weekly : .daily
-
-            let dateRange: DateRange
-            if dominantSetting == .weekly {
-                dateRange = .last7Days
-            } else {
-                switch dataSource {
-                case .today: dateRange = .today
-                case .yesterday: dateRange = .yesterday
-                case .auto: dateRange = notificationHour < 12 ? .yesterday : .today
-                }
-            }
-
-            for website in enabledWebsites {
-                var stats: AnalyticsStats?
-                switch account.providerType {
-                case .umami:
-                    if let token = account.credentials.token,
-                       let url = URL(string: account.serverURL) {
-                        let api = UmamiAPI.shared
-                        await api.configure(baseURL: url, token: token)
-                        if let umamiStats = try? await api.getStats(websiteId: website.id, dateRange: dateRange) {
-                            stats = AnalyticsStats(
-                                visitors: StatValue(value: umamiStats.visitors.value, change: umamiStats.visitors.change),
-                                pageviews: StatValue(value: umamiStats.pageviews.value, change: umamiStats.pageviews.change),
-                                visits: StatValue(value: umamiStats.visits.value, change: umamiStats.visits.change),
-                                bounces: StatValue(value: umamiStats.bounces.value, change: umamiStats.bounces.change),
-                                totaltime: StatValue(value: umamiStats.totaltime.value, change: umamiStats.totaltime.change)
-                            )
-                        }
-                    }
-                case .plausible:
-                    if let apiKey = account.credentials.apiKey {
-                        try? KeychainService.save(account.serverURL, for: .serverURL)
-                        try? KeychainService.save(apiKey, for: .apiKey)
-                        await PlausibleAPI.shared.reconfigureFromKeychain()
-                        stats = try? await PlausibleAPI.shared.getAnalyticsStats(websiteId: website.id, dateRange: dateRange)
-                    }
-                }
-                if let s = stats {
-                    allStats.append(WebsiteStats(name: website.name, visitors: s.visitors.value, changePercentage: s.visitors.changePercentage))
-                }
-            }
-
-            let content = UNMutableNotificationContent()
-            content.sound = .default
-            content.title = "\(account.displayName) — Zusammenfassung"
-            content.threadIdentifier = "account-\(account.id.uuidString)"
-
-            if allStats.isEmpty {
-                content.body = "Tippe um deine Statistiken zu sehen"
-            } else {
-                let totalVisitors = allStats.reduce(0) { $0 + $1.visitors }
-                let topSite = allStats.max(by: { $0.changePercentage < $1.changePercentage })
-                var bodyText = "\(totalVisitors.formatted()) Besucher gesamt"
-                if let top = topSite {
-                    let arrow = top.changePercentage >= 0 ? "↑" : "↓"
-                    bodyText += " • Top: \(top.name) \(arrow)\(abs(Int(top.changePercentage)))%"
-                }
-                content.body = bodyText
-            }
-
-            let request = UNNotificationRequest(
-                identifier: "stats-\(account.id.uuidString)-summary-\(Date().timeIntervalSince1970)",
-                content: content,
-                trigger: nil
-            )
-            try? await UNUserNotificationCenter.current().add(request)
-
-        } else {
-            // Einzel-Notifications
-            for website in websites {
+        // Einzel-Notifications pro Website
+        for website in websites {
                 guard let setting = settings[website.id], setting != .disabled else { continue }
 
                 // Ermittle den richtigen DateRange
@@ -655,7 +472,6 @@ class NotificationManager: ObservableObject {
 
                 try? await UNUserNotificationCenter.current().add(request)
             }
-        }
     }
 
 }
