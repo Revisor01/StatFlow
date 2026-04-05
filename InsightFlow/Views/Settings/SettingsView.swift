@@ -385,6 +385,7 @@ struct SettingsView: View {
                 HStack(spacing: 4) {
                     Text("Made with")
                     Image(systemName: "bird")
+                        .foregroundStyle(.red)
                     Text("in Hennstedt")
                 }
                 Text("Friede. Schalom. Salam.")
