@@ -10,7 +10,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-iOS%2018%2B-blue?style=flat-square" alt="Platform">
-  <img src="https://img.shields.io/badge/Swift-5.10-orange?style=flat-square&logo=swift" alt="Swift">
+  <img src="https://img.shields.io/badge/Swift-6.0-orange?style=flat-square&logo=swift" alt="Swift">
   <img src="https://img.shields.io/badge/Xcode-16%2B-blue?style=flat-square&logo=xcode" alt="Xcode">
   <img src="https://img.shields.io/github/license/Revisor01/StatFlow?style=flat-square" alt="License">
   <img src="https://img.shields.io/github/v/tag/Revisor01/StatFlow?style=flat-square&label=Version" alt="Version">
@@ -21,10 +21,11 @@
 - **Multi-Account-Unterstützung**: Verwalte mehrere Analytics-Konten verschiedener Anbieter in einer App
 - **Echtzeit-Dashboard**: Besucher, Seitenaufrufe, Absprungrate und Sitzungsdauer auf einen Blick
 - **Detaillierte Analysen**: Top-Seiten, Referrer, Geografie, Geräte und Browser
-- **Periodenvergleich**: Woche, Monat oder Jahr vergleichen
+- **Periodenvergleich**: Beliebige Zeiträume vergleichen (Woche, Monat, Jahr)
+- **Events & Reports**: Custom Events, Funnel-Analysen, UTM-Tracking, Goals und Attribution
 - **Home-Screen-Widgets**: Schneller Blick auf die wichtigsten Statistiken direkt vom Home Screen
 - **Push-Benachrichtigungen**: Tägliche oder wöchentliche Zusammenfassungen
-- **Offline-Modus**: Gecachte Daten auch ohne Netzwerk verfügbar
+- **Offline-Modus**: Gecachte Daten als Fallback auch ohne Netzwerk verfügbar
 - **Dark Mode**: Vollständige Unterstützung für den Dunkelmodus
 - **Lokalisierung**: Deutsch und Englisch
 
@@ -91,7 +92,8 @@ StatFlow verwendet MVVM mit klarer Schichttrennung und einem einheitlichen Provi
 
 ### App Store
 
-Demnächst verfügbar.
+<!-- TODO: App Store Badge und Link einfuegen, sobald verfuegbar -->
+*Demnächst im App Store verfügbar.*
 
 ### Selbst kompilieren
 
@@ -99,7 +101,7 @@ Demnächst verfügbar.
    ```bash
    git clone https://github.com/Revisor01/StatFlow.git
    ```
-2. `InsightFlow.xcodeproj` in Xcode 16+ öffnen
+2. `StatFlow.xcodeproj` in Xcode 16+ öffnen
 3. Bundle ID in den Signing-Einstellungen auf die eigene Team-ID anpassen
 4. Auf Gerät oder Simulator bauen und ausführen
 
@@ -128,6 +130,8 @@ Dieses Projekt steht unter der GNU General Public License v3.0 — siehe [LICENS
 Dies ist eine inoffizielle Companion-App. StatFlow ist nicht mit Umami Software, Inc. oder Plausible Insights OU verbunden oder von diesen unterstützt.
 
 ## Datenschutzerklärung
+
+> Die vollständige Datenschutzerklärung ist auch unter [simonluthe.de/apps/statflow/datenschutz](https://simonluthe.de/apps/statflow/datenschutz/) verfügbar.
 
 **Verantwortlicher**
 
