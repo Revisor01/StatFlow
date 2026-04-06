@@ -49,6 +49,7 @@ None
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 260406-jli | Fix line chart X-axis labels showing time instead of dates in month view | 2026-04-06 | 3c2fd19 | [260406-jli](./quick/260406-jli-fix-line-chart-x-axis-labels-showing-tim/) |
 
 ## Session Continuity
 
