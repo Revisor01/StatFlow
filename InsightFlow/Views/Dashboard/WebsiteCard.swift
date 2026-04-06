@@ -328,8 +328,13 @@ struct WebsiteCard: View {
         }
         .chartXAxis {
             AxisMarks(values: sparklineXAxisValues) { _ in
-                AxisValueLabel(format: .dateTime.hour().minute())
-                    .font(.caption2)
+                if isHourlyData {
+                    AxisValueLabel(format: .dateTime.hour().minute())
+                        .font(.caption2)
+                } else {
+                    AxisValueLabel(format: .dateTime.day().month())
+                        .font(.caption2)
+                }
             }
         }
         .chartYAxis(.hidden)
