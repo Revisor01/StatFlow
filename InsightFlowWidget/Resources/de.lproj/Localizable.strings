@@ -32,5 +32,5 @@
 "widget.stats.pageviews" = "Aufrufe";
 
 // MARK: - Widget Info
-"widget.displayName" = "Umami Insights";
+"widget.displayName" = "StatFlow";
 "widget.description" = "Website-Statistiken";
