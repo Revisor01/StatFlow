@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 Phase: 22 (App Store Listing)
 Plan: 01 completed
 Status: Executing
-Last activity: 2026-04-06 — Completed quick task 260406-jtt: Rename Widget to StatFlow
+Last activity: 2026-04-07 — Completed quick task 260407-w5b: Fix "Alle" filter reset
 
 ## Accumulated Context
 
@@ -51,6 +51,7 @@ None
 |---|-------------|------|--------|-----------|
 | 260406-jli | Fix line chart X-axis labels showing time instead of dates in month view | 2026-04-06 | 3c2fd19 | [260406-jli](./quick/260406-jli-fix-line-chart-x-axis-labels-showing-tim/) |
 | 260406-jtt | Rename Widget from "Umami Insights" to "StatFlow" | 2026-04-06 | 2dc75b8 | [260406-jtt](./quick/260406-jtt-rename-widget-from-umami-insights-to-sta/) |
+| 260407-w5b | Fix "Alle" account filter resets after returning from detail view | 2026-04-07 | 2e3206a | [260407-w5b](./quick/260407-w5b-fix-dashboard-account-filter-resets-from/) |
 
 ## Session Continuity
 
