@@ -64,7 +64,6 @@ struct DashboardView: View {
                                                 if showAllAccounts,
                                                    let account = websiteAccountMap[website.id] {
                                                     await accountManager.setActiveAccount(account)
-                                                    showAllAccounts = false
                                                 }
                                                 selectedWebsite = website
                                             }
