@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
+import { COPY } from "./copy";
 
 const THEME = {
   bgFrom: "#FAFAF7",
@@ -29,12 +30,6 @@ type Slide = {
   bgVariant: 0 | 1 | 2;
 };
 
-type Copy = {
-  de: { headline: string; subline: string };
-  en: { headline: string; subline: string };
-  fr: { headline: string; subline: string };
-};
-
 const SCREEN_IDS = [
   "01-dashboard",
   "02-details",
@@ -45,49 +40,6 @@ const SCREEN_IDS = [
   "07-account-switcher",
   "08-start",
 ] as const;
-
-const COPY: Record<string, Copy> = {
-  "01-dashboard": {
-    de: { headline: "PLACEHOLDER_DE", subline: "PLACEHOLDER_DE_SUB" },
-    en: { headline: "PLACEHOLDER_EN", subline: "PLACEHOLDER_EN_SUB" },
-    fr: { headline: "PLACEHOLDER_FR", subline: "PLACEHOLDER_FR_SUB" },
-  },
-  "02-details": {
-    de: { headline: "PLACEHOLDER_DE", subline: "PLACEHOLDER_DE_SUB" },
-    en: { headline: "PLACEHOLDER_EN", subline: "PLACEHOLDER_EN_SUB" },
-    fr: { headline: "PLACEHOLDER_FR", subline: "PLACEHOLDER_FR_SUB" },
-  },
-  "03-realtime": {
-    de: { headline: "PLACEHOLDER_DE", subline: "PLACEHOLDER_DE_SUB" },
-    en: { headline: "PLACEHOLDER_EN", subline: "PLACEHOLDER_EN_SUB" },
-    fr: { headline: "PLACEHOLDER_FR", subline: "PLACEHOLDER_FR_SUB" },
-  },
-  "04-vergleich": {
-    de: { headline: "PLACEHOLDER_DE", subline: "PLACEHOLDER_DE_SUB" },
-    en: { headline: "PLACEHOLDER_EN", subline: "PLACEHOLDER_EN_SUB" },
-    fr: { headline: "PLACEHOLDER_FR", subline: "PLACEHOLDER_FR_SUB" },
-  },
-  "05-events": {
-    de: { headline: "PLACEHOLDER_DE", subline: "PLACEHOLDER_DE_SUB" },
-    en: { headline: "PLACEHOLDER_EN", subline: "PLACEHOLDER_EN_SUB" },
-    fr: { headline: "PLACEHOLDER_FR", subline: "PLACEHOLDER_FR_SUB" },
-  },
-  "06-widget": {
-    de: { headline: "PLACEHOLDER_DE", subline: "PLACEHOLDER_DE_SUB" },
-    en: { headline: "PLACEHOLDER_EN", subline: "PLACEHOLDER_EN_SUB" },
-    fr: { headline: "PLACEHOLDER_FR", subline: "PLACEHOLDER_FR_SUB" },
-  },
-  "07-account-switcher": {
-    de: { headline: "PLACEHOLDER_DE", subline: "PLACEHOLDER_DE_SUB" },
-    en: { headline: "PLACEHOLDER_EN", subline: "PLACEHOLDER_EN_SUB" },
-    fr: { headline: "PLACEHOLDER_FR", subline: "PLACEHOLDER_FR_SUB" },
-  },
-  "08-start": {
-    de: { headline: "PLACEHOLDER_DE", subline: "PLACEHOLDER_DE_SUB" },
-    en: { headline: "PLACEHOLDER_EN", subline: "PLACEHOLDER_EN_SUB" },
-    fr: { headline: "PLACEHOLDER_FR", subline: "PLACEHOLDER_FR_SUB" },
-  },
-};
 
 const LAYOUT_ROTATION: Layout[] = [
   "headline-top", // 01 Dashboard
