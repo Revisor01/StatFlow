@@ -1,27 +1,65 @@
-# StatFlow — App Store Listing
+import * as path from "path";
 
-## App Name
+// --- App Identifiers ---
+export const APP_BUNDLE_ID = "de.godsapp.statflow";
+export const APP_VERSION_STRING = "1.0";
 
-StatFlow
+// --- Locale-Codes (BCP-47, Pitfall 5) ---
+export const LOCALES = {
+  de: "de-DE",
+  en: "en-US",
+} as const;
 
-## Subtitle (max 30 Zeichen)
+export type LocaleKey = keyof typeof LOCALES;
 
-- **DE:** Analytics Dashboard für iPhone
-- **EN:** Analytics Dashboard for iPhone
+// --- Screenshot Paths ---
+const REPO_ROOT = path.resolve(__dirname, "../../../..");
+export const SCREENSHOT_BASE_PATH = path.join(
+  REPO_ROOT,
+  "app-store/screenshots/export"
+);
 
-## Keywords (max 100 Zeichen, kommagetrennt)
+export const SLIDE_IDS = [
+  "01-dashboard",
+  "02-details",
+  "03-realtime",
+  "04-vergleich",
+  "05-events",
+  "06-widget",
+  "07-account-switcher",
+  "08-start",
+] as const;
 
-- **DE:** analytics,umami,plausible,statistik,dashboard,website,tracking,besucher,self-hosted,datenschutz
-- **EN:** analytics,umami,plausible,statistics,dashboard,website,tracking,visitors,self-hosted,privacy
+export type SlideId = (typeof SLIDE_IDS)[number];
 
-## Promotional Text (max 170 Zeichen)
+export function screenshotPath(locale: LocaleKey, slideId: SlideId): string {
+  return path.join(SCREENSHOT_BASE_PATH, locale, `${slideId}-${locale}.png`);
+}
 
-- **DE:** Dein Analytics-Dashboard für unterwegs. Umami und Plausible Analytics sicher auf dem iPhone — mit Echtzeit-Daten, Widgets und Zeitraumvergleich.
-- **EN:** Your analytics dashboard on the go. Umami and Plausible Analytics on your iPhone — with realtime data, widgets, and period comparison.
+// --- ASC Screenshot Display Type ---
+// RESEARCH.md: APP_IPHONE_69 existiert NICHT im OpenAPI-Spec (Stand April 2026).
+// Primär APP_IPHONE_67 verwenden; bei 422 → manueller Upload-Fallback.
+export const SCREENSHOT_DISPLAY_TYPE = "APP_IPHONE_67";
 
-## Description — Deutsch (max 4000 Zeichen)
-
-Deine Website-Zahlen. Immer dabei.
+// --- App Store Metadata ---
+// Alle Texte direkt aus app-store/description.md übernommen.
+export const METADATA: Record<
+  LocaleKey,
+  {
+    name: string;
+    subtitle: string;
+    keywords: string;
+    description: string;
+    promotionalText: string;
+    whatsNew: string;
+  }
+> = {
+  de: {
+    name: "StatFlow",
+    subtitle: "Analytics Dashboard für iPhone",
+    keywords:
+      "analytics,umami,plausible,statistik,dashboard,website,tracking,besucher,self-hosted,datenschutz",
+    description: `Deine Website-Zahlen. Immer dabei.
 
 StatFlow bringt dein Analytics-Dashboard aufs iPhone — für Umami und Plausible Analytics. Schnell, sicher und ohne Umwege.
 
@@ -58,11 +96,19 @@ DATENSCHUTZ
 TECHNIK
 StatFlow ist eine native iOS-App, komplett in Swift und SwiftUI gebaut. Keine externen Abhängigkeiten, keine Drittanbieter-Frameworks. Deine Daten bleiben auf deinem Gerät und deinen Servern.
 
-Für Website-Betreiber, die ihre Self-Hosted Analytics auch unterwegs im Blick behalten wollen.
+Für Website-Betreiber, die ihre Self-Hosted Analytics auch unterwegs im Blick behalten wollen.`,
+    promotionalText:
+      "Dein Analytics-Dashboard für unterwegs. Umami und Plausible Analytics sicher auf dem iPhone — mit Echtzeit-Daten, Widgets und Zeitraumvergleich.",
+    whatsNew:
+      "Erste Veröffentlichung im App Store! Dashboard, Echtzeit-Ansicht, Zeitraumvergleich, Events, Reports, Widget und Offline-Modus — alles für Umami und Plausible Analytics.",
+  },
 
-## Description — English (max 4000 chars)
-
-Your website stats. Always with you.
+  en: {
+    name: "StatFlow",
+    subtitle: "Analytics Dashboard for iPhone",
+    keywords:
+      "analytics,umami,plausible,statistics,dashboard,website,tracking,visitors,self-hosted,privacy",
+    description: `Your website stats. Always with you.
 
 StatFlow brings your analytics dashboard to your iPhone — for Umami and Plausible Analytics. Fast, secure, and straightforward.
 
@@ -99,57 +145,41 @@ PRIVACY
 TECHNOLOGY
 StatFlow is a native iOS app built entirely in Swift and SwiftUI. No external dependencies, no third-party frameworks. Your data stays on your device and your servers.
 
-For website owners who want to keep their self-hosted analytics in sight while on the go.
+For website owners who want to keep their self-hosted analytics in sight while on the go.`,
+    promotionalText:
+      "Your analytics dashboard on the go. Umami and Plausible Analytics on your iPhone — with realtime data, widgets, and period comparison.",
+    whatsNew:
+      "First App Store release! Dashboard, realtime view, period comparison, events, reports, widget, and offline mode — all for Umami and Plausible Analytics.",
+  },
+};
 
-## What's New (v1.0)
+// --- App Review Notes ---
+// Aus app-store/review-notes.md übernommen (Test-Accounts in app-store/secrets.md).
+export const REVIEW_NOTES = `Test Account 1 — Umami Analytics:
+Server URL: https://t.godsapp.de
+Username: admin
+Password: (see credentials provided via secure channel)
 
-- **DE:** Erste Veröffentlichung im App Store! Dashboard, Echtzeit-Ansicht, Zeitraumvergleich, Events, Reports, Widget und Offline-Modus — alles für Umami und Plausible Analytics.
-- **EN:** First App Store release! Dashboard, realtime view, period comparison, events, reports, widget, and offline mode — all for Umami and Plausible Analytics.
+Steps:
+1. Open app, tap "Account hinzufügen" (Add Account)
+2. Select "Umami" as provider
+3. Enter server URL, username, and password
+4. Tap "Anmelden" (Sign In) — dashboard loads with test websites
 
-## Category
+Test Account 2 — Plausible Analytics:
+Server URL: https://plausible.godsapp.de
+API Key: (see credentials provided via secure channel)
 
-Primary: Utilities
-Secondary: Productivity
+Steps:
+1. Tap "Account hinzufügen"
+2. Select "Plausible" as provider
+3. Enter server URL and API key
+4. Tap "Anmelden" — dashboard loads with 3 test websites
 
-## Age Rating
+Note: App requires a self-hosted Umami or Plausible server. No data collection. Credentials in iOS Keychain.`;
 
-4+ (keine anstößigen Inhalte, keine In-App-Käufe, keine Werbung)
-
-## URLs
-
-- **Privacy Policy:** https://simonluthe.de/apps/statflow/datenschutz/
-- **Support:** https://simonluthe.de/apps/statflow/
-- **Marketing URL:** https://simonluthe.de/apps/statflow/
-
-## Copyright
-
-© 2026 Simon Luthe
-
-## App Store Connect — Privacy Details
-
-### Data Collection: None
-
-StatFlow sammelt keine Daten. Für App Store Connect → App Privacy:
-- **Data Types Collected:** None
-- Begründung: Die App kommuniziert ausschließlich mit den vom Nutzer konfigurierten Self-Hosted-Servern. Es werden keine Daten an den Entwickler oder Dritte übermittelt. Zugangsdaten werden lokal in der iOS Keychain gespeichert.
-
-## Checkliste App Store Submission
-
-- [ ] MARKETING_VERSION auf 1.0 gesetzt ✓
-- [ ] App Name: StatFlow
-- [ ] Subtitle (DE/EN)
-- [ ] Keywords (DE/EN)
-- [ ] Promotional Text (DE/EN)
-- [ ] Description (DE/EN)
-- [ ] What's New (DE/EN)
-- [ ] Screenshots hochladen (6.9" iPhone 16/17 Pro Max — 1320×2868, Apple skaliert für kleinere)
-- [ ] App Icon (1024x1024, bereits im Asset Catalog)
-- [ ] Category: Utilities / Productivity
-- [ ] Age Rating: 4+
-- [ ] Privacy Policy URL: https://simonluthe.de/apps/statflow/datenschutz/
-- [ ] Support URL: https://simonluthe.de/apps/statflow/
-- [ ] Marketing URL: https://simonluthe.de/apps/statflow/
-- [ ] Copyright: © 2026 Simon Luthe
-- [ ] App Privacy: "None" (keine Datensammlung)
-- [ ] Review Notes + Test-Accounts (siehe review-notes.md)
-- [ ] Build hochladen via Xcode → Archive → Distribute
+// --- URLs ---
+export const PRIVACY_POLICY_URL =
+  "https://simonluthe.de/apps/statflow/datenschutz/";
+export const SUPPORT_URL = "https://simonluthe.de/apps/statflow/";
+export const MARKETING_URL = "https://simonluthe.de/apps/statflow/";

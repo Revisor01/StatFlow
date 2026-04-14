@@ -18,7 +18,7 @@ const CANVAS_W = 1320;
 const CANVAS_H = 2868;
 
 type Layout = "headline-top" | "mock-left" | "mock-right";
-type Locale = "de" | "en" | "fr";
+type Locale = "de" | "en";
 
 type Slide = {
   id: string;
@@ -59,7 +59,7 @@ function sourcePath(id: string, locale: Locale): string {
 }
 
 const SLIDES: Slide[] = SCREEN_IDS.flatMap((id, idx) =>
-  (["de", "en", "fr"] as const).map((locale) => ({
+  (["de", "en"] as const).map((locale) => ({
     id,
     locale,
     headline: COPY[id][locale].headline,
@@ -424,11 +424,11 @@ export default function Home() {
   return (
     <div style={{ padding: 40, background: "#0f172a", minHeight: "100vh" }}>
       <h1 style={{ color: "white", fontSize: 32, marginBottom: 24 }}>
-        StatFlow — App Store Screenshots (8 Screens × DE/EN/FR)
+        StatFlow — App Store Screenshots (8 Screens × DE/EN)
       </h1>
       <p style={{ color: "#94a3b8", marginBottom: 32 }}>
         Chrome verwenden. Klicke „Export" unter einem Slide für 1320×2868 PNG.
-        Source-Screenshots in public/screenshots/{"{de,en,fr}"}/ ablegen.
+        Source-Screenshots in public/screenshots/{"{de,en}"}/ ablegen.
       </p>
 
       <div

@@ -40,13 +40,14 @@ Last activity: 2026-04-14 -- Phase 23 execution started
 - Neue "Apps"-Rubrik auf simonluthe.de für alle Apps (CookMy, StatFlow, Valetudios, Guck mal!)
 - Guck mal! wird von /guckmal/ in /apps/guckmal/ verschoben
 - Testaccounts: Umami (t.godsapp.de, admin) + Plausible (plausible.godsapp.de, test@godsapp.de)
-- Screenshot-Sprachen: DE, EN, FR (drei Lokalisierungen für App Store Connect)
+- Screenshot-Sprachen: DE, EN (zwei Lokalisierungen für App Store Connect)
 - Screenshot-Tooling: Next.js + html-to-image Generator nach `app-store-screenshots-playbook/PLAYBOOK.md` (ValetudiOS-Rezept)
 - StatFlow-Logo: weißer Hintergrund, drei schwarze pinselstrichartige Balken (aufsteigendes Balkendiagramm) — Design-Richtung für Screenshots: monochrom, reduziert, analytisch (nicht farbverliebt wie ValetudiOS)
+- Phase 23 Scope-Change (2026-04-14): FR-Lokalisierung fällt raus. Ursprünglich DE/EN/FR geplant (irrtümlich aus anderem Projekt übernommen). Phase-Ordnername (`23-screenshots-assets-submission-en-fr-de`) bleibt aus historischen Gründen stehen; Code, description.md, config.ts und Roadmap spiegeln nur noch DE/EN.
 
 ### Roadmap Evolution
 
-- Phase 23 added (2026-04-14): Screenshots, Assets, Video & App Store Submission (DE/EN/FR)
+- Phase 23 added (2026-04-14): Screenshots, Assets, Video & App Store Submission (DE/EN)
 
 ### Blockers/Concerns
 

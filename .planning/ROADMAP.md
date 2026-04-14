@@ -12,18 +12,20 @@
 - ✅ **v2.7 Stability & Architecture** - 3 phases, 8 plans, 12 requirements, completed 2026-04-04 ([archive](milestones/v2.7-ROADMAP.md))
 - 🔄 **v2.8 App Store Release** - 3 phases, 8+ requirements ([roadmap](milestones/v2.8-ROADMAP.md))
 
-### Phase 23: Screenshots, Assets & App Store Submission (DE/EN/FR)
+### Phase 23: Screenshots, Assets & App Store Submission (DE/EN)
 
-**Goal:** Produktionsreife App-Store-Screenshots (DE/EN/FR) nach Playbook-Rezept erstellen und Submission via App Store Connect API durchführen. App-Preview-Video out of scope (D-16).
+**Goal:** Produktionsreife App-Store-Screenshots (DE/EN) nach Playbook-Rezept erstellen und Submission via App Store Connect API durchführen. App-Preview-Video out of scope (D-16).
 **Requirements:** SHOT-01, SHOT-02, SHOT-03, SHOT-04, SHOT-05, SUBMIT-01
 **Depends on:** Phase 22 (App Store Listing)
-**Plans:** 7 plans
+**Plans:** 3/7 plans executed
 
 Plans:
-- [ ] 23-01-PLAN.md — Wave 0: Verzeichnisstruktur, .gitignore, validate.sh
-- [ ] 23-02-PLAN.md — Wave 1: Next.js-Generator scaffolden + StatFlow THEME/LAYOUT
-- [ ] 23-03-PLAN.md — Wave 1: Copy-Map (DE/EN/FR × 8 Slides) + FR App Store Localization
-- [ ] 23-04-PLAN.md — Wave 2: Simulator Source-Shots + Export-Pipeline (24 PNGs)
+- [x] 23-01-PLAN.md — Wave 0: Verzeichnisstruktur, .gitignore, validate.sh
+- [x] 23-02-PLAN.md — Wave 1: Next.js-Generator scaffolden + StatFlow THEME/LAYOUT
+- [x] 23-03-PLAN.md — Wave 1: Copy-Map (DE/EN × 8 Slides) + App Store Localization
+- [ ] 23-04-PLAN.md — Wave 2: Simulator Source-Shots + Export-Pipeline (16 PNGs)
 - [ ] 23-05-PLAN.md — Wave 2: Submission-Infrastruktur (jwt.ts, asc-api.ts, config.ts)
 - [ ] 23-06-PLAN.md — Wave 3: submit.ts — vollständiges ASC API Script
 - [ ] 23-07-PLAN.md — Wave 4: Submission-Execution + Manual-Gates-Checkpoint
+
+**Scope-Change 2026-04-14:** FR-Lokalisierung gestrichen (war irrtümlich aus anderem Projekt übernommen). Phase-Ordnername (`23-screenshots-assets-submission-en-fr-de`) bleibt aus historischen Gründen stehen.

@@ -86,10 +86,8 @@ echo ""
 echo "--- Directory structure ---"
 assert_dir_exists "app-store/screenshots/source/de"
 assert_dir_exists "app-store/screenshots/source/en"
-assert_dir_exists "app-store/screenshots/source/fr"
 assert_dir_exists "app-store/screenshots/export/de"
 assert_dir_exists "app-store/screenshots/export/en"
-assert_dir_exists "app-store/screenshots/export/fr"
 assert_dir_exists "app-store/submission"
 
 echo ""
@@ -99,20 +97,18 @@ assert_file_exists "app-store/screenshots/generator/src/app/layout.tsx"
 assert_file_exists "app-store/screenshots/generator/public/mockup.png"
 
 echo ""
-echo "--- Export PNG count (expected 24: 8 slides × 3 locales) ---"
+echo "--- Export PNG count (expected 16: 8 slides × 2 locales) ---"
 DE_COUNT=$(ls "${EXPORT_BASE}/de/"*.png 2>/dev/null | wc -l | tr -d ' ' || true)
 EN_COUNT=$(ls "${EXPORT_BASE}/en/"*.png 2>/dev/null | wc -l | tr -d ' ' || true)
-FR_COUNT=$(ls "${EXPORT_BASE}/fr/"*.png 2>/dev/null | wc -l | tr -d ' ' || true)
 DE_COUNT=${DE_COUNT:-0}
 EN_COUNT=${EN_COUNT:-0}
-FR_COUNT=${FR_COUNT:-0}
-echo "  DE: ${DE_COUNT}/8  EN: ${EN_COUNT}/8  FR: ${FR_COUNT}/8"
-TOTAL=$((DE_COUNT + EN_COUNT + FR_COUNT))
-if [ "$TOTAL" -eq 24 ]; then
-  echo "  ✓ 24 PNGs gesamt vorhanden"
+echo "  DE: ${DE_COUNT}/8  EN: ${EN_COUNT}/8"
+TOTAL=$((DE_COUNT + EN_COUNT))
+if [ "$TOTAL" -eq 16 ]; then
+  echo "  ✓ 16 PNGs gesamt vorhanden"
   PASS=$((PASS+1))
 else
-  echo "  ⚠ Erst ${TOTAL}/24 PNGs vorhanden (OK bis Export abgeschlossen)"
+  echo "  ⚠ Erst ${TOTAL}/16 PNGs vorhanden (OK bis Export abgeschlossen)"
 fi
 
 echo ""
@@ -129,7 +125,7 @@ if [ "$MODE" = "full" ]; then
     "01-dashboard" "02-details" "03-realtime" "04-vergleich"
     "05-events" "06-widget" "07-account-switcher" "08-start"
   )
-  for locale in de en fr; do
+  for locale in de en; do
     for slide in "${SLIDES[@]}"; do
       PNG="${EXPORT_BASE}/${locale}/${slide}-${locale}.png"
       if [ -f "$PNG" ]; then
