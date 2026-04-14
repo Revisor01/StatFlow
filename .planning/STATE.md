@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.8
-milestone_name: App Store Release
+milestone: v2.0
+milestone_name: milestone
 status: executing
-stopped_at: "Completed 22-01 App Store Listing"
-last_updated: "2026-04-05T18:11:00.000Z"
-last_activity: 2026-04-05
+stopped_at: Completed 22-01 App Store Listing
+last_updated: "2026-04-14T13:31:15.483Z"
+last_activity: 2026-04-14 -- Phase 23 execution started
 progress:
   total_phases: 1
   completed_phases: 0
-  total_plans: 1
-  completed_plans: 1
-  percent: 100
+  total_plans: 7
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-05)
 
 **Core value:** Nutzer können ihre Website-Analytics sicher und übersichtlich vom iPhone aus überwachen
-**Current focus:** v2.8 App Store Release — Beschreibung, Privacy Policy, Web-Seiten, Review-Daten
+**Current focus:** Phase 23 — screenshots-assets-submission-en-fr-de
 
 ## Current Position
 
-Phase: 22 (App Store Listing)
-Plan: 01 completed
-Status: Executing
-Last activity: 2026-04-07 — Completed quick task 260407-w5b: Fix "Alle" filter reset
+Phase: 23 (screenshots-assets-submission-en-fr-de) — EXECUTING
+Plan: 1 of 7
+Status: Executing Phase 23
+Last activity: 2026-04-14 -- Phase 23 execution started
 
 ## Accumulated Context
 
@@ -40,6 +40,13 @@ Last activity: 2026-04-07 — Completed quick task 260407-w5b: Fix "Alle" filter
 - Neue "Apps"-Rubrik auf simonluthe.de für alle Apps (CookMy, StatFlow, Valetudios, Guck mal!)
 - Guck mal! wird von /guckmal/ in /apps/guckmal/ verschoben
 - Testaccounts: Umami (t.godsapp.de, admin) + Plausible (plausible.godsapp.de, test@godsapp.de)
+- Screenshot-Sprachen: DE, EN, FR (drei Lokalisierungen für App Store Connect)
+- Screenshot-Tooling: Next.js + html-to-image Generator nach `app-store-screenshots-playbook/PLAYBOOK.md` (ValetudiOS-Rezept)
+- StatFlow-Logo: weißer Hintergrund, drei schwarze pinselstrichartige Balken (aufsteigendes Balkendiagramm) — Design-Richtung für Screenshots: monochrom, reduziert, analytisch (nicht farbverliebt wie ValetudiOS)
+
+### Roadmap Evolution
+
+- Phase 23 added (2026-04-14): Screenshots, Assets, Video & App Store Submission (DE/EN/FR)
 
 ### Blockers/Concerns
 
