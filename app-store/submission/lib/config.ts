@@ -13,7 +13,8 @@ export const LOCALES = {
 export type LocaleKey = keyof typeof LOCALES;
 
 // --- Screenshot Paths ---
-const REPO_ROOT = path.resolve(__dirname, "../../../..");
+// lib/config.ts liegt in app-store/submission/lib/ → 3x hochgehen → Repo-Root.
+const REPO_ROOT = path.resolve(__dirname, "../../..");
 export const SCREENSHOT_BASE_PATH = path.join(
   REPO_ROOT,
   "app-store/screenshots/export"
