@@ -6,10 +6,8 @@ StatFlow
 
 ## Subtitle (max 30 Zeichen)
 
-- **DE:** Analytics Dashboard for iPhone
+- **DE:** Analytics Dashboard für iPhone
 - **EN:** Analytics Dashboard for iPhone
-
-> Hinweis: "Analytics Dashboard for iPhone" ist 29 Zeichen und funktioniert in beiden Sprachen.
 
 ## Keywords (max 100 Zeichen, kommagetrennt)
 
@@ -18,14 +16,14 @@ StatFlow
 
 ## Promotional Text (max 170 Zeichen)
 
-- **DE:** Dein Analytics-Dashboard fuer unterwegs. Umami und Plausible Analytics sicher auf dem iPhone — mit Echtzeit-Daten, Widgets und Zeitraumvergleich.
+- **DE:** Dein Analytics-Dashboard für unterwegs. Umami und Plausible Analytics sicher auf dem iPhone — mit Echtzeit-Daten, Widgets und Zeitraumvergleich.
 - **EN:** Your analytics dashboard on the go. Umami and Plausible Analytics on your iPhone — with realtime data, widgets, and period comparison.
 
 ## Description — Deutsch (max 4000 Zeichen)
 
 Deine Website-Zahlen. Immer dabei.
 
-StatFlow bringt dein Analytics-Dashboard aufs iPhone — fuer Umami und Plausible Analytics. Schnell, sicher und ohne Umwege.
+StatFlow bringt dein Analytics-Dashboard aufs iPhone — für Umami und Plausible Analytics. Schnell, sicher und ohne Umwege.
 
 Wer eine Website betreibt und auf datenschutzfreundliche Analytics setzt, kennt das Problem: Um die Besucherzahlen zu checken, muss man sich jedes Mal am Desktop einloggen. StatFlow macht Schluss damit. Eine App, alle Accounts, alle Websites.
 
@@ -33,34 +31,34 @@ MULTI-ACCOUNT & MULTI-PROVIDER
 Verwalte beliebig viele Umami- und Plausible-Accounts in einer App. Wechsle zwischen Accounts mit einem Tap oder sieh alle Websites aller Accounts in einer kombinierten Ansicht.
 
 DASHBOARD MIT SPARKLINES
-Die Uebersicht zeigt dir sofort, was auf deinen Websites passiert: Besucher, Seitenaufrufe, Verweildauer und Absprungrate — alles mit kompakten Sparkline-Charts fuer den schnellen Trend-Check.
+Die Übersicht zeigt dir sofort, was auf deinen Websites passiert: Besucher, Seitenaufrufe, Verweildauer und Absprungrate — alles mit kompakten Sparkline-Charts für den schnellen Trend-Check.
 
 ECHTZEIT-ANSICHT
 Wer ist gerade auf deiner Website? Die Realtime-View zeigt dir Live-Besucher, aktuelle Seiten und Referrer in Echtzeit.
 
 ZEITRAUMVERGLEICH
-Vergleiche beliebige Zeitraeume miteinander: Diese Woche vs. letzte Woche, dieser Monat vs. Vormonat. So erkennst du Trends sofort.
+Vergleiche beliebige Zeiträume miteinander: Diese Woche vs. letzte Woche, dieser Monat vs. Vormonat. So erkennst du Trends sofort.
 
 EVENTS & REPORTS
-Detaillierte Auswertungen fuer Custom Events, Funnel-Analysen, UTM-Tracking, Goals und Attribution — alles direkt in der App.
+Detaillierte Auswertungen für Custom Events, Funnel-Analysen, UTM-Tracking, Goals und Attribution — alles direkt in der App.
 
-WIDGET FUER DEN HOMESCREEN
-Ein Blick auf den Homescreen genuegt: Das StatFlow-Widget zeigt dir die wichtigsten Zahlen deiner Website, ohne die App zu oeffnen.
+WIDGET FÜR DEN HOMESCREEN
+Ein Blick auf den Homescreen genügt: Das StatFlow-Widget zeigt dir die wichtigsten Zahlen deiner Website, ohne die App zu öffnen.
 
 OFFLINE-MODUS
 Kein Netz? Kein Problem. StatFlow zeigt dir die zuletzt geladenen Daten als Fallback an, damit du auch unterwegs nicht im Dunkeln tappst.
 
 DATENSCHUTZ
-- Keine Tracking-SDKs — die App selbst enthaelt keinerlei Analytics oder Tracking
+- Keine Tracking-SDKs — die App selbst enthält keinerlei Analytics oder Tracking
 - Keine Werbung — komplett werbefrei
 - Credentials im Keychain — deine Zugangsdaten werden sicher in der iOS Keychain gespeichert
-- Keine Datensammlung — die App kommuniziert ausschliesslich mit deinen eigenen Servern
+- Keine Datensammlung — die App kommuniziert ausschließlich mit deinen eigenen Servern
 - Keine externen Dependencies — komplett in SwiftUI gebaut, ohne Drittanbieter-Bibliotheken
 
 TECHNIK
-StatFlow ist eine native iOS-App, komplett in Swift und SwiftUI gebaut. Keine externen Abhaengigkeiten, keine Drittanbieter-Frameworks. Deine Daten bleiben auf deinem Geraet und deinen Servern.
+StatFlow ist eine native iOS-App, komplett in Swift und SwiftUI gebaut. Keine externen Abhängigkeiten, keine Drittanbieter-Frameworks. Deine Daten bleiben auf deinem Gerät und deinen Servern.
 
-Fuer Website-Betreiber, die ihre Self-Hosted Analytics auch unterwegs im Blick behalten wollen.
+Für Website-Betreiber, die ihre Self-Hosted Analytics auch unterwegs im Blick behalten wollen.
 
 ## Description — English (max 4000 chars)
 
@@ -105,7 +103,7 @@ For website owners who want to keep their self-hosted analytics in sight while o
 
 ## What's New (v1.0)
 
-- **DE:** Erste Veroeffentlichung im App Store! Dashboard, Echtzeit-Ansicht, Zeitraumvergleich, Events, Reports, Widget und Offline-Modus — alles fuer Umami und Plausible Analytics.
+- **DE:** Erste Veröffentlichung im App Store! Dashboard, Echtzeit-Ansicht, Zeitraumvergleich, Events, Reports, Widget und Offline-Modus — alles für Umami und Plausible Analytics.
 - **EN:** First App Store release! Dashboard, realtime view, period comparison, events, reports, widget, and offline mode — all for Umami and Plausible Analytics.
 
 ## Category
@@ -113,8 +111,45 @@ For website owners who want to keep their self-hosted analytics in sight while o
 Primary: Utilities
 Secondary: Productivity
 
+## Age Rating
+
+4+ (keine anstößigen Inhalte, keine In-App-Käufe, keine Werbung)
+
 ## URLs
 
 - **Privacy Policy:** https://simonluthe.de/apps/statflow/datenschutz/
-- **Support:** mailto:mail@simonluthe.de
+- **Support:** https://simonluthe.de/apps/statflow/
 - **Marketing URL:** https://simonluthe.de/apps/statflow/
+
+## Copyright
+
+© 2026 Simon Luthe
+
+## App Store Connect — Privacy Details
+
+### Data Collection: None
+
+StatFlow sammelt keine Daten. Für App Store Connect → App Privacy:
+- **Data Types Collected:** None
+- Begründung: Die App kommuniziert ausschließlich mit den vom Nutzer konfigurierten Self-Hosted-Servern. Es werden keine Daten an den Entwickler oder Dritte übermittelt. Zugangsdaten werden lokal in der iOS Keychain gespeichert.
+
+## Checkliste App Store Submission
+
+- [ ] MARKETING_VERSION auf 1.0 gesetzt ✓
+- [ ] App Name: StatFlow
+- [ ] Subtitle (DE/EN)
+- [ ] Keywords (DE/EN)
+- [ ] Promotional Text (DE/EN)
+- [ ] Description (DE/EN)
+- [ ] What's New (DE/EN)
+- [ ] Screenshots hochladen (6.9" iPhone 16/17 Pro Max — 1320×2868, Apple skaliert für kleinere)
+- [ ] App Icon (1024x1024, bereits im Asset Catalog)
+- [ ] Category: Utilities / Productivity
+- [ ] Age Rating: 4+
+- [ ] Privacy Policy URL: https://simonluthe.de/apps/statflow/datenschutz/
+- [ ] Support URL: https://simonluthe.de/apps/statflow/
+- [ ] Marketing URL: https://simonluthe.de/apps/statflow/
+- [ ] Copyright: © 2026 Simon Luthe
+- [ ] App Privacy: "None" (keine Datensammlung)
+- [ ] Review Notes + Test-Accounts (siehe review-notes.md)
+- [ ] Build hochladen via Xcode → Archive → Distribute
