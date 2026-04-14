@@ -74,3 +74,5 @@ app-store/screenshots/generator/out/
 app-store/submission/node_modules/
 # Source-Shots werden NICHT committet (D-22 — können jederzeit aus Simulator regeneriert werden)
 app-store/screenshots/source/
+# Generator public/screenshots ist ein Runtime-Spiegel der source/-Shots
+app-store/screenshots/generator/public/screenshots/
