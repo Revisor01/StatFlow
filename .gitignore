@@ -66,3 +66,11 @@ credentials.json
 
 # Secrets
 app-store/secrets.md
+
+# Phase 23 — Screenshot Generator + Submission
+app-store/screenshots/generator/node_modules/
+app-store/screenshots/generator/.next/
+app-store/screenshots/generator/out/
+app-store/submission/node_modules/
+# Source-Shots werden NICHT committet (D-22 — können jederzeit aus Simulator regeneriert werden)
+app-store/screenshots/source/
