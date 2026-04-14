@@ -101,10 +101,72 @@ StatFlow is a native iOS app built entirely in Swift and SwiftUI. No external de
 
 For website owners who want to keep their self-hosted analytics in sight while on the go.
 
+---
+
+## Description — Français (max 4000 caractères)
+
+Tes statistiques de site web. Toujours avec toi.
+
+StatFlow apporte ton tableau de bord analytics sur iPhone — pour Umami et Plausible Analytics. Rapide, sécurisé et sans détour.
+
+Si tu gères un site web avec des analytics respectueux de la vie privée, tu connais le problème : vérifier tes statistiques signifie se connecter sur desktop à chaque fois. StatFlow change ça. Une app, tous tes comptes, tous tes sites.
+
+MULTI-COMPTES & MULTI-FOURNISSEURS
+Gère autant de comptes Umami et Plausible que tu veux dans une seule app. Passe d'un compte à l'autre d'un tap ou vois tous les sites de tous tes comptes dans une vue combinée.
+
+TABLEAU DE BORD AVEC SPARKLINES
+La vue d'ensemble te montre immédiatement ce qui se passe sur tes sites : visiteurs, pages vues, durée de session et taux de rebond — le tout avec des graphiques sparklines pour un aperçu rapide des tendances.
+
+VUE EN TEMPS RÉEL
+Qui est sur ton site en ce moment ? La vue temps réel te montre les visiteurs en direct, les pages actuelles et les référents à la seconde.
+
+COMPARAISON DE PÉRIODES
+Compare n'importe quelles périodes : cette semaine vs la semaine dernière, ce mois vs le mois précédent. Repère les tendances immédiatement.
+
+ÉVÉNEMENTS & RAPPORTS
+Analyses détaillées pour les événements personnalisés, les entonnoirs de conversion, le suivi UTM, les objectifs et l'attribution — directement dans l'app.
+
+WIDGET POUR L'ÉCRAN D'ACCUEIL
+Un coup d'œil sur l'écran d'accueil suffit : le widget StatFlow t'affiche les chiffres clés de ton site sans ouvrir l'app.
+
+MODE HORS LIGNE
+Pas de connexion ? Pas de problème. StatFlow affiche les dernières données chargées en fallback, pour que tu ne sois jamais dans le noir.
+
+VIE PRIVÉE
+- Aucun SDK de suivi — l'app elle-même ne contient aucun analytics ni tracking
+- Sans publicité — entièrement sans pub
+- Identifiants dans le Keychain — tes données de connexion sont stockées de manière sécurisée dans le Keychain iOS
+- Aucune collecte de données — l'app communique exclusivement avec tes propres serveurs
+- Aucune dépendance externe — entièrement développée en SwiftUI, sans bibliothèques tierces
+
+TECHNOLOGIE
+StatFlow est une app iOS native, entièrement développée en Swift et SwiftUI. Aucune dépendance externe, aucun framework tiers. Tes données restent sur ton appareil et tes serveurs.
+
+Pour les propriétaires de sites web qui veulent garder un œil sur leurs analytics self-hosted, même en déplacement.
+
+## Subtitle (FR, max 30 caractères)
+
+Tableau de bord analytics
+
+## Keywords (FR, max 100 caractères)
+
+analytics,umami,plausible,statistiques,dashboard,site,suivi,visiteurs,self-hosted,confidentialité
+
+## Promotional Text (FR, max 170 caractères)
+
+Ton tableau de bord analytics en poche. Umami et Plausible Analytics sur iPhone — avec données en temps réel, widgets et comparaison de périodes.
+
+## What's New (FR, v1.0)
+
+Première publication sur l'App Store ! Tableau de bord, vue temps réel, comparaison de périodes, événements, rapports, widget et mode hors ligne — pour Umami et Plausible Analytics.
+
+---
+
 ## What's New (v1.0)
 
 - **DE:** Erste Veröffentlichung im App Store! Dashboard, Echtzeit-Ansicht, Zeitraumvergleich, Events, Reports, Widget und Offline-Modus — alles für Umami und Plausible Analytics.
 - **EN:** First App Store release! Dashboard, realtime view, period comparison, events, reports, widget, and offline mode — all for Umami and Plausible Analytics.
+- **FR:** Première publication sur l'App Store ! Tableau de bord, vue temps réel, comparaison de périodes, événements, rapports, widget et mode hors ligne — pour Umami et Plausible Analytics.
 
 ## Category
 
