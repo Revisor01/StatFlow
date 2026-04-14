@@ -44,6 +44,7 @@ Carthage/Checkouts/
 
 # Claude Code
 .claude/
+.playwright-mcp/
 
 # Secrets & Credentials
 *.p12
