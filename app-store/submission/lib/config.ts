@@ -23,12 +23,13 @@ export const SCREENSHOT_BASE_PATH = path.join(
 export const SLIDE_IDS = [
   "01-dashboard",
   "02-details",
-  "03-realtime",
-  "04-vergleich",
-  "05-events",
-  "06-widget",
-  "07-account-switcher",
-  "08-start",
+  "03-breakdown",
+  "04-realtime",
+  "05-vergleich",
+  "06-events",
+  "07-combo",
+  "08-account-switcher",
+  "09-add-account",
 ] as const;
 
 export type SlideId = (typeof SLIDE_IDS)[number];
