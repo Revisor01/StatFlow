@@ -1,4 +1,4 @@
-# StatFlow — App Review Notes
+# StatsFlow — App Review Notes
 
 ## Test Account 1: Umami Analytics
 

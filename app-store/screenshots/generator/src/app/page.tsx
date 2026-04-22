@@ -222,7 +222,7 @@ function AnalyticsPattern({ slideIdx }: { slideIdx: number }) {
   return <Pattern />;
 }
 
-// Pinselstrich-Motiv — knüpft ans StatFlow-Logo an (drei schwarze Balken).
+// Pinselstrich-Motiv — knüpft ans StatsFlow-Logo an (drei schwarze Balken).
 // Vier Striche als Bézier-Kurven, leicht unregelmäßig (nicht zu glatt).
 // Verschiedene Positionen/Opacities pro Layout — siehe Verwendung unten.
 function BrushStrokes({
@@ -253,7 +253,7 @@ function BrushStrokes({
         zIndex: 1,
       }}
     >
-      {/* Vier Pinselstriche, aufsteigend wie ein Balkendiagramm — StatFlow-Logo-DNA */}
+      {/* Vier Pinselstriche, aufsteigend wie ein Balkendiagramm — StatsFlow-Logo-DNA */}
       <path
         d="M 150 1200 C 200 1190, 380 1205, 440 1195 L 440 1020 C 440 1010, 430 1005, 410 1008 L 180 1012 C 160 1014, 148 1022, 150 1200 Z"
         fill="#000000"
@@ -434,7 +434,7 @@ function SlideCanvas({ slide }: { slide: Slide }) {
       {/* Layout: brush-bg
           Pinselstrich-Balken dezent im Hintergrund (opacity niedrig), sonst
           wie headline-top: Claim oben zentriert, Mockup unten. Wiedererkennungs-
-          motiv aus dem StatFlow-Logo, reduziert und analytisch. */}
+          motiv aus dem StatsFlow-Logo, reduziert und analytisch. */}
       {slide.layout === "brush-bg" && (
         <>
           <BrushStrokes
@@ -649,7 +649,7 @@ export default function Home() {
   return (
     <div style={{ padding: 40, background: "#0f172a", minHeight: "100vh" }}>
       <h1 style={{ color: "white", fontSize: 32, marginBottom: 24 }}>
-        StatFlow — App Store Screenshots (10 Screens × DE/EN)
+        StatsFlow — App Store Screenshots (10 Screens × DE/EN)
       </h1>
       <p style={{ color: "#94a3b8", marginBottom: 32 }}>
         Chrome verwenden. Klicke „Export" unter einem Slide für 1320×2868 PNG.

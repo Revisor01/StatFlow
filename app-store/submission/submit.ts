@@ -326,7 +326,7 @@ async function uploadScreenshots(
           `   MANUAL FALLBACK: Screenshots für ${locCode} manuell in ASC hochladen:`
         );
         console.warn(`   1. Öffne https://appstoreconnect.apple.com`);
-        console.warn(`   2. StatFlow → Version ${APP_VERSION_STRING} → ${locCode}`);
+        console.warn(`   2. StatsFlow → Version ${APP_VERSION_STRING} → ${locCode}`);
         console.warn(
           `   3. Lade alle ${SLIDE_IDS.length} PNGs aus app-store/screenshots/export/${locKey}/ hoch`
         );
@@ -518,7 +518,7 @@ async function submitForReview(
     );
     console.warn("\n   MANUAL FALLBACK (ASC-UI):");
     console.warn("   1. Öffne https://appstoreconnect.apple.com");
-    console.warn(`   2. StatFlow → Version ${APP_VERSION_STRING}`);
+    console.warn(`   2. StatsFlow → Version ${APP_VERSION_STRING}`);
     console.warn(
       "   3. Prüfe: Pricing, Availability, Age Rating, Encryption Declaration"
     );
@@ -531,7 +531,7 @@ async function submitForReview(
 
 // --- Main ---
 async function main(): Promise<void> {
-  console.log("\n=== StatFlow ASC Submission Script ===");
+  console.log("\n=== StatsFlow ASC Submission Script ===");
   if (DRY_RUN) console.log("MODE: DRY-RUN (keine API-Calls)");
   if (SKIP_SCREENSHOTS) console.log("MODE: --skip-screenshots aktiv");
   console.log("");
