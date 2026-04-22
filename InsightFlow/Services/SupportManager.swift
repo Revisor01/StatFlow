@@ -17,11 +17,11 @@ class SupportManager: ObservableObject {
     @AppStorage("hasSupported") private var hasSupported = false
     @AppStorage("appLaunchCount") private var launchCount = 0
 
-    // Product IDs - diese müssen in App Store Connect erstellt werden
+    // Product IDs — angelegt in App Store Connect (IAP IDs: 6763033557, 6763033333, 6763033384)
     private let productIds = [
-        "de.godsapp.statflow.support.small",   // 0,99€
-        "de.godsapp.statflow.support.medium",  // 2,99€
-        "de.godsapp.statflow.support.large"    // 5,99€
+        "de.godsapp.statflow.support.small",   // 1,99€ — Kleiner Dank
+        "de.godsapp.statflow.support.medium",  // 3,99€ — Großer Dank
+        "de.godsapp.statflow.support.large"    // 5,99€ — Riesen Dank
     ]
 
     private init() {}
