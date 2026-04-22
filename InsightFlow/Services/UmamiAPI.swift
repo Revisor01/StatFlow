@@ -248,7 +248,9 @@ actor UmamiAPI: AnalyticsProvider {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 15
 
-        let body = ["username": username, "password": password]
+        // Umami Cloud expects "email" instead of "username" in the login body.
+        // Self-hosted Umami accepts both. Send both fields to be compatible with either.
+        let body = ["username": username, "email": username, "password": password]
         request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
