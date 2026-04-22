@@ -164,12 +164,13 @@ async function setVersionMetadata(
       continue;
     }
 
-    // AppStoreVersionLocalization (Description, Keywords, PromoText, WhatsNew)
-    const versionLocPayload = {
+    // AppStoreVersionLocalization (Description, Keywords, PromoText)
+    // Note: whatsNew cannot be set on initial version (409 STATE_ERROR from Apple).
+    // Only include it for updates (when version already has a release).
+    const versionLocPayload: Record<string, string> = {
       description: meta.description,
       keywords: meta.keywords,
       promotionalText: meta.promotionalText,
-      whatsNew: meta.whatsNew,
     };
 
     if (versionLocIds[locCode]) {

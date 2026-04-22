@@ -57,7 +57,7 @@ export const METADATA: Record<
   }
 > = {
   de: {
-    name: "StatFlow",
+    name: "StatsFlow",
     subtitle: "Analytics Dashboard für iPhone",
     keywords:
       "analytics,umami,plausible,statistik,dashboard,website,tracking,besucher,self-hosted,datenschutz",
@@ -106,7 +106,7 @@ Für Website-Betreiber, die ihre Self-Hosted Analytics auch unterwegs im Blick b
   },
 
   en: {
-    name: "StatFlow",
+    name: "StatsFlow",
     subtitle: "Analytics Dashboard for iPhone",
     keywords:
       "analytics,umami,plausible,statistics,dashboard,website,tracking,visitors,self-hosted,privacy",
@@ -160,25 +160,25 @@ For website owners who want to keep their self-hosted analytics in sight while o
 export const REVIEW_NOTES = `Test Account 1 — Umami Analytics:
 Server URL: https://t.godsapp.de
 Username: admin
-Password: (see credentials provided via secure channel)
+Password: rn%MWru13
 
 Steps:
 1. Open app, tap "Account hinzufügen" (Add Account)
-2. Select "Umami" as provider
+2. Select "Umami" as provider, then "Self-hosted"
 3. Enter server URL, username, and password
 4. Tap "Anmelden" (Sign In) — dashboard loads with test websites
 
 Test Account 2 — Plausible Analytics:
 Server URL: https://plausible.godsapp.de
-API Key: (see credentials provided via secure channel)
+API Key: 4uJEjvR5JiXZuQRm84fM4C3wMvQqVPgF2xBUiSlSCRcz1Vu4zt1qvEQ0BtDU5U2S
 
 Steps:
 1. Tap "Account hinzufügen"
-2. Select "Plausible" as provider
+2. Select "Plausible" as provider, then "Self-hosted"
 3. Enter server URL and API key
 4. Tap "Anmelden" — dashboard loads with 3 test websites
 
-Note: App requires a self-hosted Umami or Plausible server. No data collection. Credentials in iOS Keychain.`;
+Note: StatFlow connects to the user's own self-hosted Umami or Plausible Analytics server. No data is sent to the developer. All credentials are stored locally in iOS Keychain.`;
 
 // --- URLs ---
 export const PRIVACY_POLICY_URL =
