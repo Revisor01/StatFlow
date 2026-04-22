@@ -576,18 +576,31 @@ struct WebsiteDetailView: View {
 
     // MARK: - Filter Chip Bar
 
-    private let filterDimensions: [(dimension: String, labelKey: String, icon: String)] = [
-        ("visit:source", "filter.source", "link"),
-        ("visit:medium", "filter.medium", "arrow.triangle.branch"),
-        ("visit:campaign", "filter.campaign", "megaphone"),
-        ("visit:country", "filter.country", "globe"),
-        ("visit:device", "filter.device", "iphone"),
-        ("visit:browser", "filter.browser", "globe")
-    ]
+    private var filterDimensions: [(dimension: String, labelKey: String, icon: String)] {
+        if isPlausible {
+            return [
+                ("visit:source", "filter.source", "link"),
+                ("visit:medium", "filter.medium", "arrow.triangle.branch"),
+                ("visit:campaign", "filter.campaign", "megaphone"),
+                ("visit:country", "filter.country", "globe"),
+                ("visit:device", "filter.device", "iphone"),
+                ("visit:browser", "filter.browser", "globe")
+            ]
+        } else {
+            // Umami filter dimensions — mapped to Umami API query parameter names
+            return [
+                ("referrer", "filter.source", "link"),
+                ("browser", "filter.browser", "globe"),
+                ("os", "filter.os", "desktopcomputer"),
+                ("device", "filter.device", "iphone"),
+                ("country", "filter.country", "globe.europe.africa"),
+                ("url", "filter.page", "doc.text")
+            ]
+        }
+    }
 
     @ViewBuilder
     private var filterChipBar: some View {
-        if isPlausible {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(filterDimensions, id: \.dimension) { filter in
@@ -645,7 +658,6 @@ struct WebsiteDetailView: View {
                     .presentationDetents([.medium, .large])
                 }
             }
-        }
     }
 
     // MARK: - Goals Section
@@ -717,6 +729,7 @@ private struct FilterSelectionSheet: View {
 
     private var availableValues: [String] {
         switch dimension {
+        // Plausible dimensions
         case "visit:country":
             return viewModel.countries.map { $0.name }.filter { !$0.isEmpty }
         case "visit:device":
@@ -725,6 +738,19 @@ private struct FilterSelectionSheet: View {
             return viewModel.browsers.map { $0.name }.filter { !$0.isEmpty }
         case "visit:source":
             return viewModel.referrers.map { $0.name }.filter { !$0.isEmpty }
+        // Umami dimensions (same data, different dimension keys)
+        case "country":
+            return viewModel.countries.map { $0.name }.filter { !$0.isEmpty }
+        case "device":
+            return viewModel.devices.map { $0.name }.filter { !$0.isEmpty }
+        case "browser":
+            return viewModel.browsers.map { $0.name }.filter { !$0.isEmpty }
+        case "os":
+            return viewModel.operatingSystems.map { $0.name }.filter { !$0.isEmpty }
+        case "referrer":
+            return viewModel.referrers.map { $0.name }.filter { !$0.isEmpty }
+        case "url":
+            return viewModel.topPages.map { $0.name }.filter { !$0.isEmpty }
         default:
             return []
         }
