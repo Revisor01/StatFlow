@@ -60,6 +60,8 @@ StatFlow ist eine native iOS-App, komplett in Swift und SwiftUI gebaut. Keine ex
 
 Für Website-Betreiber, die ihre Self-Hosted Analytics auch unterwegs im Blick behalten wollen.
 
+StatFlow ist ein unabhängiges Projekt und kein offizielles Produkt von Umami oder Plausible.
+
 ## Description — English (max 4000 chars)
 
 Your website stats. Always with you.
@@ -100,6 +102,8 @@ TECHNOLOGY
 StatFlow is a native iOS app built entirely in Swift and SwiftUI. No external dependencies, no third-party frameworks. Your data stays on your device and your servers.
 
 For website owners who want to keep their self-hosted analytics in sight while on the go.
+
+StatFlow is an independent project and not an official product of Umami or Plausible.
 
 ## What's New (v1.0)
 
