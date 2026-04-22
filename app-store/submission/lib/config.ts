@@ -182,6 +182,6 @@ Note: StatsFlow connects to the user's own self-hosted Umami or Plausible Analyt
 
 // --- URLs ---
 export const PRIVACY_POLICY_URL =
-  "https://simonluthe.de/apps/statflow/datenschutz/";
-export const SUPPORT_URL = "https://simonluthe.de/apps/statflow/";
-export const MARKETING_URL = "https://simonluthe.de/apps/statflow/";
+  "https://simonluthe.de/apps/statsflow/datenschutz/";
+export const SUPPORT_URL = "https://simonluthe.de/apps/statsflow/";
+export const MARKETING_URL = "https://simonluthe.de/apps/statsflow/";
