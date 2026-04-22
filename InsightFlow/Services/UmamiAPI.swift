@@ -7,6 +7,21 @@ actor UmamiAPI: AnalyticsProvider {
     private var _baseURL: URL?
     private var _token: String?
 
+    /// Active filters set by the ViewModel — applied to all data-fetching calls.
+    var activeFilters: [PlausibleQueryFilter] = []
+
+    func setFilters(_ filters: [PlausibleQueryFilter]) {
+        activeFilters = filters
+    }
+
+    /// Convert active filters to Umami URL query parameters
+    private var filterQueryItems: [URLQueryItem] {
+        activeFilters.compactMap { filter in
+            guard let value = filter.values.first else { return nil }
+            return URLQueryItem(name: filter.dimension, value: value)
+        }
+    }
+
     // MARK: - AnalyticsProvider Protocol
 
     nonisolated let providerType: AnalyticsProviderType = .umami
@@ -308,7 +323,7 @@ actor UmamiAPI: AnalyticsProvider {
             queryItems: [
                 URLQueryItem(name: "startAt", value: String(startAt)),
                 URLQueryItem(name: "endAt", value: String(endAt))
-            ]
+            ] + filterQueryItems
         )
         let response = try decoder.decode(WebsiteStatsResponse.self, from: data)
         return WebsiteStats(from: response)
@@ -325,7 +340,7 @@ actor UmamiAPI: AnalyticsProvider {
                 URLQueryItem(name: "startAt", value: String(startAt)),
                 URLQueryItem(name: "endAt", value: String(endAt)),
                 URLQueryItem(name: "unit", value: dateRange.unit)
-            ]
+            ] + filterQueryItems
         )
         return try decoder.decode(PageviewsData.self, from: data)
     }
@@ -748,7 +763,7 @@ actor UmamiAPI: AnalyticsProvider {
                 URLQueryItem(name: "type", value: type.rawValue),
                 URLQueryItem(name: "unit", value: dateRange.unit),
                 URLQueryItem(name: "limit", value: String(limit))
-            ]
+            ] + filterQueryItems
         )
         if let jsonString = String(data: data, encoding: .utf8) {
             Logger.api.debug("getMetrics(\(type.rawValue)): \(jsonString.prefix(500))")

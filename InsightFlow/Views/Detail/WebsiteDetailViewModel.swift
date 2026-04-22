@@ -394,9 +394,12 @@ class WebsiteDetailViewModel: ObservableObject {
         // Remove any existing filter for this dimension before adding new one
         activeFilters.removeAll { $0.dimension == filter.dimension }
         activeFilters.append(filter)
+        // Sync to UmamiAPI actor so all API calls pick up the filter
+        Task { await UmamiAPI.shared.setFilters(activeFilters) }
     }
 
     func removeFilter(dimension: String) {
         activeFilters.removeAll { $0.dimension == dimension }
+        Task { await UmamiAPI.shared.setFilters(activeFilters) }
     }
 }
