@@ -510,6 +510,8 @@
 "filter.country" = "Country";
 "filter.device" = "Device";
 "filter.browser" = "Browser";
+"filter.os" = "OS";
+"filter.page" = "Page";
 "filter.select" = "Select Filter";
 "filter.clear" = "Clear";
 
