@@ -514,7 +514,9 @@
 "filter.page" = "Page";
 "filter.language" = "Language";
 "filter.select" = "Select Filter";
+"filter.nodata" = "No data available for this filter";
 "filter.clear" = "Clear";
+"loading" = "Loading…";
 
 // MARK: - Setup Guide
 "setupGuide.title" = "Analytics Setup";
