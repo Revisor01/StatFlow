@@ -513,6 +513,7 @@
 "filter.browser" = "Browser";
 "filter.os" = "Betriebssystem";
 "filter.page" = "Seite";
+"filter.language" = "Sprache";
 "filter.select" = "Filter auswählen";
 "filter.clear" = "Zurücksetzen";
 
