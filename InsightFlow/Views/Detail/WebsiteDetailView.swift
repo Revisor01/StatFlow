@@ -610,7 +610,7 @@ struct WebsiteDetailView: View {
                             if activeFilter != nil {
                                 viewModel.removeFilter(dimension: filter.dimension)
                                 Task { await viewModel.loadData(dateRange: selectedDateRange) }
-                            } else if !viewModel.isLoading {
+                            } else {
                                 filterSheetDimension = filter.dimension
                                 showFilterSheet = true
                             }
@@ -638,7 +638,6 @@ struct WebsiteDetailView: View {
                                 Capsule()
                                     .stroke(activeFilter != nil ? Color.clear : Color(.separator), lineWidth: 1)
                             )
-                            .opacity(viewModel.isLoading && activeFilter == nil ? 0.5 : 1.0)
                         }
                         .buttonStyle(.plain)
                     }
@@ -767,11 +766,19 @@ private struct FilterSelectionSheet: View {
     var body: some View {
         NavigationStack {
             Group {
-                if availableValues.isEmpty {
+                if viewModel.isLoading && availableValues.isEmpty {
+                    VStack(spacing: 16) {
+                        ProgressView()
+                        Text(String(localized: "loading"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if availableValues.isEmpty {
                     ContentUnavailableView(
                         String(localized: String.LocalizationValue(dimensionLabel)),
                         systemImage: "line.3.horizontal.decrease.circle",
-                        description: Text(String(localized: "filter.select"))
+                        description: Text(String(localized: "filter.nodata"))
                     )
                 } else {
                     List(availableValues, id: \.self) { value in
