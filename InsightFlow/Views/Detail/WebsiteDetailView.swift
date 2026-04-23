@@ -595,7 +595,7 @@ struct WebsiteDetailView: View {
                 ("os", "filter.os", "desktopcomputer"),
                 ("device", "filter.device", "iphone"),
                 ("country", "filter.country", "globe.europe.africa"),
-                ("url", "filter.page", "doc.text")
+                ("language", "filter.language", "textformat.abc")
             ]
         }
     }
@@ -610,7 +610,7 @@ struct WebsiteDetailView: View {
                             if activeFilter != nil {
                                 viewModel.removeFilter(dimension: filter.dimension)
                                 Task { await viewModel.loadData(dateRange: selectedDateRange) }
-                            } else {
+                            } else if !viewModel.isLoading {
                                 filterSheetDimension = filter.dimension
                                 showFilterSheet = true
                             }
@@ -638,6 +638,7 @@ struct WebsiteDetailView: View {
                                 Capsule()
                                     .stroke(activeFilter != nil ? Color.clear : Color(.separator), lineWidth: 1)
                             )
+                            .opacity(viewModel.isLoading && activeFilter == nil ? 0.5 : 1.0)
                         }
                         .buttonStyle(.plain)
                     }
@@ -756,8 +757,8 @@ private struct FilterSelectionSheet: View {
             return viewModel.operatingSystems.map { $0.name }.filter { !$0.isEmpty }
         case "referrer":
             return viewModel.referrers.map { $0.name }.filter { !$0.isEmpty }
-        case "url":
-            return viewModel.topPages.map { $0.name }.filter { !$0.isEmpty }
+        case "language":
+            return viewModel.languages.map { $0.name }.filter { !$0.isEmpty }
         default:
             return []
         }

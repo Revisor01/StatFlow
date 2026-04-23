@@ -512,6 +512,7 @@
 "filter.browser" = "Browser";
 "filter.os" = "OS";
 "filter.page" = "Page";
+"filter.language" = "Language";
 "filter.select" = "Select Filter";
 "filter.clear" = "Clear";
 
