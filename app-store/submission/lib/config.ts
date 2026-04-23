@@ -157,7 +157,7 @@ For website owners who want to keep their self-hosted analytics in sight while o
 
 // --- App Review Notes ---
 // Aus app-store/review-notes.md übernommen (Test-Accounts in app-store/secrets.md).
-export const REVIEW_NOTES = `Test Account 1 — Umami Analytics:
+export const REVIEW_NOTES = `Test Account 1 — Umami Analytics (Self-hosted):
 Server URL: https://t.godsapp.de
 Username: admin
 Password: rn%MWru13
@@ -168,17 +168,41 @@ Steps:
 3. Enter server URL, username, and password
 4. Tap "Anmelden" (Sign In) — dashboard loads with test websites
 
-Test Account 2 — Plausible Analytics:
+Test Account 2 — Umami Analytics (Cloud):
+Select "Umami" as provider, then "Cloud"
+Email: mail@simonluthe.de
+Password: rn%MWru13
+
+Steps:
+1. Tap "Account hinzufügen"
+2. Select "Umami", then "Cloud"
+3. Enter email and password
+4. Tap "Anmelden" — dashboard loads
+
+Test Account 3 — Plausible Analytics (Self-hosted):
 Server URL: https://plausible.godsapp.de
 API Key: 4uJEjvR5JiXZuQRm84fM4C3wMvQqVPgF2xBUiSlSCRcz1Vu4zt1qvEQ0BtDU5U2S
 
 Steps:
 1. Tap "Account hinzufügen"
-2. Select "Plausible" as provider, then "Self-hosted"
+2. Select "Plausible", then "Self-hosted"
 3. Enter server URL and API key
 4. Tap "Anmelden" — dashboard loads with 3 test websites
 
-Note: StatsFlow connects to the user's own self-hosted Umami or Plausible Analytics server. No data is sent to the developer. All credentials are stored locally in iOS Keychain.`;
+Test Account 4 — Plausible Analytics (Cloud):
+Select "Plausible" as provider, then "Cloud"
+API Key: 7cHCns6R_KgCDRraBXzwJOr0LtEitx158cxrDFLURUjH3yIl0FWX6-is5BRsht15
+Site: kirche-bewegt.de
+
+Steps:
+1. Tap "Account hinzufügen"
+2. Select "Plausible", then "Cloud"
+3. Enter API key
+4. Tap "Anmelden" — dashboard loads with 1 website (kirche-bewegt.de)
+
+Important: For Plausible Cloud (Test Account 4), sites must be added manually in the Plausible web dashboard (plausible.io) before they appear in StatsFlow. The test account already has kirche-bewegt.de configured.
+
+Note: StatsFlow supports both self-hosted and cloud-hosted Umami and Plausible Analytics. No data is sent to the developer. All credentials are stored locally in iOS Keychain.`;
 
 // --- URLs ---
 export const PRIVACY_POLICY_URL =
