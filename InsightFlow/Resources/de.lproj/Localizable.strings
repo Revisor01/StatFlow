@@ -515,7 +515,9 @@
 "filter.page" = "Seite";
 "filter.language" = "Sprache";
 "filter.select" = "Filter auswählen";
+"filter.nodata" = "Keine Daten für diesen Filter verfügbar";
 "filter.clear" = "Zurücksetzen";
+"loading" = "Laden…";
 
 // MARK: - Setup Guide
 "setupGuide.title" = "Analytics einrichten";
