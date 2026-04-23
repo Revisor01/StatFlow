@@ -1,7 +1,7 @@
 /*
   InfoPlist.strings (German)
-  StatFlow
+  StatsFlow
 */
 
-CFBundleDisplayName = "StatFlow";
-CFBundleName = "StatFlow";
+CFBundleDisplayName = "StatsFlow";
+CFBundleName = "StatsFlow";
