@@ -584,7 +584,8 @@ struct WebsiteDetailView: View {
                 ("visit:campaign", "filter.campaign", "megaphone"),
                 ("visit:country", "filter.country", "globe"),
                 ("visit:device", "filter.device", "iphone"),
-                ("visit:browser", "filter.browser", "globe")
+                ("visit:browser", "filter.browser", "globe"),
+                ("event:page", "filter.page", "doc.text")
             ]
         } else {
             // Umami filter dimensions — mapped to Umami API query parameter names
@@ -633,6 +634,10 @@ struct WebsiteDetailView: View {
                             .background(activeFilter != nil ? Color.accentColor : Color(.secondarySystemBackground))
                             .foregroundStyle(activeFilter != nil ? .white : .primary)
                             .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .stroke(activeFilter != nil ? Color.clear : Color(.separator), lineWidth: 1)
+                            )
                         }
                         .buttonStyle(.plain)
                     }
@@ -655,7 +660,7 @@ struct WebsiteDetailView: View {
                         viewModel: viewModel,
                         selectedDateRange: selectedDateRange
                     )
-                    .presentationDetents([.medium, .large])
+                    .presentationDetents([.medium])
                 }
             }
     }
@@ -738,6 +743,8 @@ private struct FilterSelectionSheet: View {
             return viewModel.browsers.map { $0.name }.filter { !$0.isEmpty }
         case "visit:source":
             return viewModel.referrers.map { $0.name }.filter { !$0.isEmpty }
+        case "event:page":
+            return viewModel.topPages.map { $0.name }.filter { !$0.isEmpty }
         // Umami dimensions (same data, different dimension keys)
         case "country":
             return viewModel.countries.map { $0.name }.filter { !$0.isEmpty }
