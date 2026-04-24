@@ -350,6 +350,8 @@
 "onboarding.welcome.subtitle" = "Deine Website-Statistiken immer dabei – datenschutzfreundlich und übersichtlich.";
 "onboarding.welcome.umami" = "Open Source, selbst gehostet";
 "onboarding.welcome.plausible" = "Einfach und datenschutzfreundlich";
+"onboarding.welcome.both" = "Beides parallel";
+"onboarding.welcome.both.text" = "Alle Accounts in einer App verwalten";
 "onboarding.metrics.title" = "Besucher verstehen";
 "onboarding.metrics.subtitle" = "Lerne die wichtigsten Metriken kennen:";
 "onboarding.metrics.visitors" = "Besucher: Eindeutige Besucher deiner Website";
@@ -365,14 +367,14 @@
 "onboarding.notifications.daily" = "Tägliche Statistik-Updates";
 "onboarding.notifications.weekly" = "Wöchentliche Zusammenfassungen";
 "onboarding.notifications.custom" = "Individuelle Zeitplanung";
-"onboarding.comparison.title" = "Umami vs Plausible";
-"onboarding.comparison.subtitle" = "Beide Anbieter unterscheiden sich in Features:";
-"onboarding.comparison.both" = "Beide Anbieter";
-"onboarding.comparison.both.text" = "Dashboard, Charts, Seitenaufrufe, Besucher, Bounces";
-"onboarding.comparison.umami" = "Umami Extras";
-"onboarding.comparison.umami.text" = "Sessions, Journeys, Share Links, Echtzeit-Details";
-"onboarding.comparison.plausible" = "Plausible";
-"onboarding.comparison.plausible.text" = "Privacy-first – keine einzelnen Sessions oder Journeys";
+"onboarding.features.title" = "Mächtige Werkzeuge";
+"onboarding.features.subtitle" = "Mehr als nur Zahlen:";
+"onboarding.features.events" = "Events & Goals";
+"onboarding.features.events.text" = "Custom Events, Funnels und UTM-Kampagnen tracken";
+"onboarding.features.compare" = "Zeiträume vergleichen";
+"onboarding.features.compare.text" = "Wochen, Monate, Jahre — nebeneinander";
+"onboarding.features.filter" = "Daten filtern";
+"onboarding.features.filter.text" = "Nach Gerät, Browser, Land, Quelle und mehr";
 
 // MARK: - Login
 "login.title" = "Anmelden";
