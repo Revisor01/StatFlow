@@ -12,7 +12,8 @@ struct OnboardingView: View {
             description: String(localized: "onboarding.welcome.subtitle"),
             details: [
                 OnboardingDetail(icon: "chart.bar.xaxis", color: .blue, title: "Umami", text: String(localized: "onboarding.welcome.umami")),
-                OnboardingDetail(icon: "chart.line.uptrend.xyaxis", color: .indigo, title: "Plausible", text: String(localized: "onboarding.welcome.plausible"))
+                OnboardingDetail(icon: "chart.line.uptrend.xyaxis", color: .indigo, title: "Plausible", text: String(localized: "onboarding.welcome.plausible")),
+                OnboardingDetail(icon: "arrow.triangle.branch", color: .green, title: String(localized: "onboarding.welcome.both"), text: String(localized: "onboarding.welcome.both.text"))
             ]
         ),
         OnboardingPage(
@@ -38,14 +39,14 @@ struct OnboardingView: View {
             ]
         ),
         OnboardingPage(
-            icon: "arrow.left.arrow.right",
+            icon: "slider.horizontal.3",
             iconColor: .indigo,
-            title: String(localized: "onboarding.comparison.title"),
-            description: String(localized: "onboarding.comparison.subtitle"),
+            title: String(localized: "onboarding.features.title"),
+            description: String(localized: "onboarding.features.subtitle"),
             details: [
-                OnboardingDetail(icon: "checkmark.circle.fill", color: .green, title: String(localized: "onboarding.comparison.both"), text: String(localized: "onboarding.comparison.both.text")),
-                OnboardingDetail(icon: "chart.bar.xaxis", color: .blue, title: String(localized: "onboarding.comparison.umami"), text: String(localized: "onboarding.comparison.umami.text")),
-                OnboardingDetail(icon: "lock.shield", color: .indigo, title: String(localized: "onboarding.comparison.plausible"), text: String(localized: "onboarding.comparison.plausible.text"))
+                OnboardingDetail(icon: "target", color: .orange, title: String(localized: "onboarding.features.events"), text: String(localized: "onboarding.features.events.text")),
+                OnboardingDetail(icon: "arrow.left.arrow.right", color: .blue, title: String(localized: "onboarding.features.compare"), text: String(localized: "onboarding.features.compare.text")),
+                OnboardingDetail(icon: "line.3.horizontal.decrease", color: .indigo, title: String(localized: "onboarding.features.filter"), text: String(localized: "onboarding.features.filter.text"))
             ]
         ),
         OnboardingPage(

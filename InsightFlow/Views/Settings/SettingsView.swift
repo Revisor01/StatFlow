@@ -368,11 +368,8 @@ struct SettingsView: View {
             Button(role: .destructive) {
                 showLogoutConfirmation = true
             } label: {
-                HStack {
-                    Spacer()
-                    Label("settings.logout", systemImage: "rectangle.portrait.and.arrow.right")
-                    Spacer()
-                }
+                Label("settings.logout", systemImage: "rectangle.portrait.and.arrow.right")
+                    .foregroundStyle(.red)
             }
         } footer: {
             VStack(spacing: 4) {
