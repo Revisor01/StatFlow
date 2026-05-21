@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-04-05)
 Phase: 23 (screenshots-assets-submission-en-fr-de) — EXECUTING
 Plan: 1 of 7
 Status: Executing Phase 23
-Last activity: 2026-04-14 -- Phase 23 execution started
+Last activity: 2026-05-21 - Completed quick task 260521-ske: Fix push notification snapshot freeze + today bars dropping UTC-skewed datapoints
 
 ## Accumulated Context
 
@@ -60,6 +60,7 @@ None
 | 260406-jli | Fix line chart X-axis labels showing time instead of dates in month view | 2026-04-06 | 3c2fd19 | [260406-jli](./quick/260406-jli-fix-line-chart-x-axis-labels-showing-tim/) |
 | 260406-jtt | Rename Widget from "Umami Insights" to "StatFlow" | 2026-04-06 | 2dc75b8 | [260406-jtt](./quick/260406-jtt-rename-widget-from-umami-insights-to-sta/) |
 | 260407-w5b | Fix "Alle" account filter resets after returning from detail view | 2026-04-07 | 2e3206a | [260407-w5b](./quick/260407-w5b-fix-dashboard-account-filter-resets-from/) |
+| 260521-ske | Fix push notification frozen snapshot + today bars dropping UTC-skewed datapoints | 2026-05-21 | 65b2bcd | [260521-ske](./quick/260521-ske-notif-snapshot-today-bars/) |
 
 ## Session Continuity
 
