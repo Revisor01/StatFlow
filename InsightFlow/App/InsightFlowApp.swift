@@ -8,9 +8,13 @@ struct PrivacyFlowApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var notificationManager = NotificationManager()
     @ObservedObject private var quickActionManager = QuickActionManager.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         registerBackgroundTasks()
+        // Initial BGTask einplanen — ohne dies wird nie ein Task in die Queue gestellt
+        // und der Handler läuft nie. Re-Submit erfolgt zusätzlich bei scenePhase == .background.
+        Self.scheduleAppRefresh()
         // Cache-Cleanup im Hintergrund beim App-Start (FIX-03)
         Task.detached(priority: .background) {
             AnalyticsCacheService.shared.clearStaleEntries(olderThan: 7)
@@ -28,6 +32,13 @@ struct PrivacyFlowApp: App {
                 .environmentObject(quickActionManager)
                 .onOpenURL { url in
                     handleDeepLink(url)
+                }
+                .onChange(of: scenePhase) { _, newPhase in
+                    // Re-Submit BGTask, sobald die App in den Hintergrund geht — sonst kann iOS
+                    // den nächsten Refresh nicht planen und der Notification-Body bleibt eingefroren.
+                    if newPhase == .background {
+                        Self.scheduleAppRefresh()
+                    }
                 }
         }
     }
@@ -76,11 +87,18 @@ struct PrivacyFlowApp: App {
     }
 
     private static func handleAppRefresh(task: BGAppRefreshTask) {
+        // Nächsten Refresh-Task sofort wieder einplanen, sonst läuft die Kette nach einem
+        // Hintergrund-Lauf nicht weiter.
         scheduleAppRefresh()
 
-        let operation = Task {
+        // WICHTIG: scheduleAllNotifications() statt sendScheduledNotifications() aufrufen.
+        // UNCalendarNotificationTrigger(repeats: true) friert den content.body beim Planen
+        // ein. scheduleAllNotifications() entfernt pending Requests und legt sie mit frisch
+        // geladenen Stats neu an — das ist exakt der Fix für den Frozen-Body-Bug.
+        // NotificationManager ist @MainActor-isoliert, deshalb das @MainActor-Task.
+        let operation = Task { @MainActor in
             let manager = NotificationManager()
-            await manager.sendScheduledNotifications()
+            await manager.scheduleAllNotifications()
         }
 
         task.expirationHandler = {
@@ -93,7 +111,7 @@ struct PrivacyFlowApp: App {
         }
     }
 
-    private static func scheduleAppRefresh() {
+    static func scheduleAppRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: "de.godsapp.statflow.refresh")
 
         // Lade konfigurierte Zeit oder Standard 9:00 Uhr
@@ -113,12 +131,16 @@ struct PrivacyFlowApp: App {
         components.hour = hour
         components.minute = minute
 
+        // Lead time: 30 Minuten vor der eigentlichen Notification-Zeit refreshen, damit das
+        // System einen Puffer hat um den BGTask zu feuern bevor der Calendar-Trigger zuschlägt.
+        let leadTime: TimeInterval = -30 * 60 // 30 Minuten früher
         if let scheduledDate = Calendar.current.date(from: components) {
-            // Falls Zeit heute schon vorbei ist, nimm morgen
-            if scheduledDate < Date() {
-                request.earliestBeginDate = Calendar.current.date(byAdding: .day, value: 1, to: scheduledDate)
+            let target = scheduledDate.addingTimeInterval(leadTime)
+            if target < Date() {
+                // Heutiger Slot bereits vorbei → für morgen planen
+                request.earliestBeginDate = Calendar.current.date(byAdding: .day, value: 1, to: target)
             } else {
-                request.earliestBeginDate = scheduledDate
+                request.earliestBeginDate = target
             }
         } else {
             request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
