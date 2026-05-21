@@ -172,28 +172,69 @@ class WebsiteDetailViewModel: ObservableObject {
         var utcCalendar = Calendar(identifier: .gregorian)
         utcCalendar.timeZone = TimeZone(identifier: "UTC")!
 
+        // Frühestes / spätestes Datum in den API-Daten ermitteln. Nur im `today`-Zweig
+        // verwendet, um UTC-vs-lokal-Skew abzufangen ohne andere Presets zu verändern.
+        var earliestDataDate: Date? = nil
+        var latestDataDate: Date? = nil
+        for point in data {
+            let pointDate = point.date
+            if earliestDataDate == nil || pointDate < earliestDataDate! { earliestDataDate = pointDate }
+            if latestDataDate == nil || pointDate > latestDataDate! { latestDataDate = pointDate }
+        }
+
         if isHourly {
-            let baseDate: Date
+            let nowStartOfDay = utcCalendar.startOfDay(for: now)
+
+            // Slot-Anfang und -Ende abhängig vom Preset bestimmen.
+            let startOfDay: Date
+            let lastHourOffset: Int // Stunden seit startOfDay (inklusiver Endwert)
+
             switch dateRange.preset {
             case .today:
-                baseDate = now
+                // Die frühere von (heutiger UTC-startOfDay) und (UTC-startOfDay des frühesten
+                // Datenpunkts) verwenden — fängt den Fall ab, dass lokales "heute" UTC-mäßig
+                // bereits gestern Abend begonnen hat (z.B. CEST 01:30 → UTC 23:30 vom Vortag).
+                let earliestUtcStart: Date
+                if let earliest = earliestDataDate {
+                    earliestUtcStart = utcCalendar.startOfDay(for: earliest)
+                } else {
+                    earliestUtcStart = nowStartOfDay
+                }
+                startOfDay = min(nowStartOfDay, earliestUtcStart)
+
+                // Aktuelle Stunde relativ zu startOfDay (kann >23 sein wenn startOfDay
+                // auf dem vorherigen UTC-Tag liegt).
+                let currentHourOffset = Int(
+                    (now.timeIntervalSince(startOfDay) / 3600.0).rounded(.down)
+                )
+                // Stunden-Offset des spätesten Datenpunkts. Kann currentHourOffset
+                // überschreiten, wenn die API-Daten in einer UTC-Stunde *vor* der
+                // aktuellen UTC-Uhrzeit des Geräts liegen.
+                let latestDataHourOffset: Int
+                if let latest = latestDataDate {
+                    latestDataHourOffset = Int(
+                        (latest.timeIntervalSince(startOfDay) / 3600.0).rounded(.down)
+                    )
+                } else {
+                    latestDataHourOffset = currentHourOffset
+                }
+                lastHourOffset = max(currentHourOffset, latestDataHourOffset)
+
             case .yesterday:
-                baseDate = calendar.date(byAdding: .day, value: -1, to: now) ?? now
+                let yesterday = calendar.date(byAdding: .day, value: -1, to: now) ?? now
+                startOfDay = utcCalendar.startOfDay(for: yesterday)
+                lastHourOffset = 23
+
             default:
-                baseDate = dateRange.dates.start
+                startOfDay = utcCalendar.startOfDay(for: dateRange.dates.start)
+                lastHourOffset = 23
             }
 
-            let startOfDay = utcCalendar.startOfDay(for: baseDate)
-            let currentHour: Int
-            if dateRange.preset == .today {
-                // Show up to current hour in UTC
-                currentHour = utcCalendar.component(.hour, from: now)
-            } else {
-                currentHour = 23
-            }
+            // Defensive Untergrenze — sollte im normalen Flow nicht eintreten.
+            let upperBound = max(0, lastHourOffset)
 
-            for hour in 0...currentHour {
-                if let hourDate = utcCalendar.date(byAdding: .hour, value: hour, to: startOfDay) {
+            for hourOffset in 0...upperBound {
+                if let hourDate = utcCalendar.date(byAdding: .hour, value: hourOffset, to: startOfDay) {
                     let comps = utcCalendar.dateComponents([.year, .month, .day, .hour], from: hourDate)
                     let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"
                     let value = dataByComponent[key] ?? 0
