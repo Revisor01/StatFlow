@@ -37,6 +37,7 @@ struct WebsiteDetailView: View {
     let website: Website
 
     @StateObject private var viewModel: WebsiteDetailViewModel
+    @Environment(\.scenePhase) private var scenePhase
     @State private var selectedDateRange: DateRange = .today
     @State private var selectedChartPoint: TimeSeriesPoint?
     @State private var selectedMetric: ChartMetric = .pageviews
@@ -146,9 +147,24 @@ struct WebsiteDetailView: View {
         }
         .task(id: selectedDateRange) {
             await viewModel.loadData(dateRange: selectedDateRange)
+            // Periodisches stilles Nachladen starten/neu aufsetzen für den
+            // gewählten Zeitraum, solange die Ansicht sichtbar ist.
+            viewModel.startAutoRefresh(dateRange: selectedDateRange)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            // Im Hintergrund kein Polling (Akku); beim Zurückkehren wieder starten.
+            switch newPhase {
+            case .active:
+                viewModel.startAutoRefresh(dateRange: selectedDateRange)
+            case .background, .inactive:
+                viewModel.stopAutoRefresh()
+            @unknown default:
+                break
+            }
         }
         .onDisappear {
             viewModel.cancelLoading()
+            viewModel.stopAutoRefresh()
         }
     }
 

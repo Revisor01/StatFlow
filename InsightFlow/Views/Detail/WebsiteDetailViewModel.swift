@@ -43,14 +43,16 @@ class WebsiteDetailViewModel: ObservableObject {
         self.account = account
     }
 
-    func loadData(dateRange: DateRange) async {
+    /// `silent`: lädt im Hintergrund neu, ohne den Lade-Spinner zu zeigen
+    /// (für periodisches Auto-Refresh der Tages-Stats, solange die Ansicht offen ist).
+    func loadData(dateRange: DateRange, silent: Bool = false) async {
         // Cancel vorherigen Load — verhindert Background-Battery-Drain (FIX-02)
         loadingTask?.cancel()
         let task = Task {
-            isLoading = true
+            if !silent { isLoading = true }
             isOffline = false
             defer {
-                if !Task.isCancelled {
+                if !Task.isCancelled && !silent {
                     isLoading = false
                 }
             }
@@ -98,6 +100,30 @@ class WebsiteDetailViewModel: ObservableObject {
     func cancelLoading() {
         loadingTask?.cancel()
         loadingTask = nil
+    }
+
+    // MARK: - Periodisches Hintergrund-Refresh
+
+    private var autoRefreshTask: Task<Void, Never>?
+    private let autoRefreshInterval: Duration = .seconds(45)
+
+    /// Startet ein stilles periodisches Nachladen der Tages-Stats, solange die
+    /// Detailansicht offen ist. Der erste Load läuft hier NICHT — den übernimmt
+    /// `.task(id: selectedDateRange)` in der View. Hält nur die Werte aktuell.
+    func startAutoRefresh(dateRange: DateRange) {
+        autoRefreshTask?.cancel()
+        autoRefreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: self?.autoRefreshInterval ?? .seconds(45))
+                guard !Task.isCancelled, let self else { return }
+                await self.loadData(dateRange: dateRange, silent: true)
+            }
+        }
+    }
+
+    func stopAutoRefresh() {
+        autoRefreshTask?.cancel()
+        autoRefreshTask = nil
     }
 
     private func loadStats(dateRange: DateRange) async {
