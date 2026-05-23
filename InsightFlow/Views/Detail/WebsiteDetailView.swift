@@ -51,9 +51,9 @@ struct WebsiteDetailView: View {
         AnalyticsManager.shared.providerType == .plausible
     }
 
-    init(website: Website) {
+    init(website: Website, account: AnalyticsAccount? = nil) {
         self.website = website
-        _viewModel = StateObject(wrappedValue: WebsiteDetailViewModel(websiteId: website.id, domain: website.domain ?? ""))
+        _viewModel = StateObject(wrappedValue: WebsiteDetailViewModel(websiteId: website.id, domain: website.domain ?? "", account: account))
     }
 
     var body: some View {

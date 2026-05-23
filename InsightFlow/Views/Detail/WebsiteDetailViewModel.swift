@@ -5,6 +5,11 @@ import os
 class WebsiteDetailViewModel: ObservableObject {
     let websiteId: String
     let domain: String
+    /// Besitzender Account dieser Website. Wird (falls gesetzt) vor jedem Load als
+    /// Provider konfiguriert, damit die Detailansicht im "Alle Accounts"-Modus nicht
+    /// versehentlich gegen den falschen (zuletzt aktiven) Account abfragt und
+    /// dadurch eingefrorene Werte anzeigt.
+    let account: AnalyticsAccount?
 
     @Published var stats: WebsiteStats?
     @Published var activeVisitors: Int = 0
@@ -32,9 +37,10 @@ class WebsiteDetailViewModel: ObservableObject {
     @Published var error: String?
     private var loadingTask: Task<Void, Never>?
 
-    init(websiteId: String, domain: String = "") {
+    init(websiteId: String, domain: String = "", account: AnalyticsAccount? = nil) {
         self.websiteId = websiteId
         self.domain = domain
+        self.account = account
     }
 
     func loadData(dateRange: DateRange) async {
@@ -48,6 +54,12 @@ class WebsiteDetailViewModel: ObservableObject {
                     isLoading = false
                 }
             }
+
+            // Provider für den besitzenden Account konfigurieren, BEVOR Daten geladen
+            // werden. Stellt sicher, dass alle nachfolgenden API-Calls (auch nach
+            // Datumswechsel) gegen den korrekten Account/Server laufen.
+            await ensureProviderConfigured()
+            guard !Task.isCancelled else { return }
 
             await withTaskGroup(of: Void.self) { group in
                 group.addTask { await self.loadStats(dateRange: dateRange) }
@@ -72,6 +84,15 @@ class WebsiteDetailViewModel: ObservableObject {
         }
         loadingTask = task
         await task.value
+    }
+
+    /// Konfiguriert den Provider für den besitzenden Account, falls dieser nicht
+    /// bereits aktiv ist. No-op, wenn kein Account übergeben wurde (Single-Account-Flow).
+    private func ensureProviderConfigured() async {
+        guard let account else { return }
+        if AccountManager.shared.activeAccount?.id != account.id {
+            await AccountManager.shared.configureProviderForAccount(account)
+        }
     }
 
     func cancelLoading() {

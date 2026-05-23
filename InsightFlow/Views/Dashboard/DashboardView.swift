@@ -7,6 +7,7 @@ struct DashboardView: View {
     @EnvironmentObject private var quickActionManager: QuickActionManager
     @Environment(\.scenePhase) private var scenePhase
     @State private var selectedWebsite: Website?
+    @State private var selectedWebsiteAccount: AnalyticsAccount?
     @State private var selectedDateRange: DateRange = .today
     @State private var showingAddSite = false
     @State private var showingAddUmamiSite = false
@@ -14,6 +15,10 @@ struct DashboardView: View {
     @State private var isReordering = false
     @State private var showAllAccounts = false
     @State private var websiteAccountMap: [String: AnalyticsAccount] = [:]
+    // Verhindert Voll-Reload bei jedem Tab-Wechsel: der initiale Load läuft nur einmal.
+    // Aktualisierungen erfolgen weiterhin über Pull-to-Refresh, Datumswechsel,
+    // Account-Wechsel und scenePhase == .active.
+    @State private var hasLoadedInitially = false
 
     var body: some View {
         NavigationStack {
@@ -60,13 +65,7 @@ struct DashboardView: View {
                                                 : nil
                                         )
                                         .onTapGesture {
-                                            Task {
-                                                if showAllAccounts,
-                                                   let account = websiteAccountMap[website.id] {
-                                                    await accountManager.setActiveAccount(account)
-                                                }
-                                                selectedWebsite = website
-                                            }
+                                            openDetail(for: website)
                                         }
                                     }
                                 }
@@ -149,7 +148,7 @@ struct DashboardView: View {
                 }
             }
             .navigationDestination(item: $selectedWebsite) { website in
-                WebsiteDetailView(website: website)
+                WebsiteDetailView(website: website, account: selectedWebsiteAccount)
             }
             .sheet(isPresented: $showingAddSite) {
                 AddPlausibleSiteView {
@@ -176,12 +175,11 @@ struct DashboardView: View {
             }
         }
         .task {
-            if showAllAccounts {
-                let map = await viewModel.loadAllAccountsData(dateRange: selectedDateRange, accounts: accountManager.accounts)
-                websiteAccountMap = map
-            } else {
-                await viewModel.loadData(dateRange: selectedDateRange)
-            }
+            // Nur initial laden — verhindert Voll-Reload bei jedem Tab-Wechsel.
+            // Folge-Updates laufen über die spezifischen onChange/refresh-Handler.
+            guard !hasLoadedInitially else { return }
+            hasLoadedInitially = true
+            await performInitialLoad()
         }
         .onChange(of: selectedDateRange) { _, newValue in
             Task {
@@ -191,7 +189,7 @@ struct DashboardView: View {
         .onChange(of: quickActionManager.selectedWebsiteId) { _, websiteId in
             if let websiteId = websiteId,
                let website = viewModel.websites.first(where: { $0.id == websiteId }) {
-                selectedWebsite = website
+                openDetail(for: website)
                 quickActionManager.clearSelection()
             }
         }
@@ -199,7 +197,7 @@ struct DashboardView: View {
             // Verarbeite pending Deep-Link nachdem Websites geladen wurden
             if let pending = quickActionManager.pendingDeepLink,
                let website = websites.first(where: { $0.id == pending.websiteId }) {
-                selectedWebsite = website
+                openDetail(for: website)
                 quickActionManager.pendingDeepLink = nil
             }
         }
@@ -219,6 +217,30 @@ struct DashboardView: View {
                 }
             }
         }
+    }
+
+    /// Initialer Daten-Load (einmalig). Respektiert den "Alle Accounts"-Modus.
+    private func performInitialLoad() async {
+        if showAllAccounts {
+            let map = await viewModel.loadAllAccountsData(dateRange: selectedDateRange, accounts: accountManager.accounts)
+            websiteAccountMap = map
+        } else {
+            await viewModel.loadData(dateRange: selectedDateRange)
+        }
+    }
+
+    /// Öffnet die Detailansicht und gibt den besitzenden Account explizit mit,
+    /// damit die Detailansicht den richtigen Provider/Account konfiguriert
+    /// (verhindert eingefrorene Werte durch falschen Singleton-Account-Kontext im "Alle"-Modus).
+    private func openDetail(for website: Website) {
+        if showAllAccounts {
+            // Im "Alle"-Modus den besitzenden Account aus der Map auflösen.
+            selectedWebsiteAccount = websiteAccountMap[website.id]
+        } else {
+            // Im Einzel-Account-Modus ist der aktive Account der Besitzer.
+            selectedWebsiteAccount = accountManager.activeAccount
+        }
+        selectedWebsite = website
     }
 
     /// Use AccountManager as source of truth for provider type
