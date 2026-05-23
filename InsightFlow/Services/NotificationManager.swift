@@ -362,11 +362,6 @@ class NotificationManager: ObservableObject {
             websites = sites.map { WebsiteInfo(id: $0, name: $0) }
         }
 
-        // Bestimme aktivierte Websites und ob Summary verwendet werden soll
-        let enabledWebsites = websites.filter { ws in
-            guard let setting = settings[ws.id] else { return false }
-            return setting != .disabled
-        }
         // Einzel-Notifications pro Website
         for website in websites {
                 guard let setting = settings[website.id], setting != .disabled else { continue }
