@@ -175,11 +175,16 @@ struct DashboardView: View {
             }
         }
         .task {
-            // Nur initial laden — verhindert Voll-Reload bei jedem Tab-Wechsel.
-            // Folge-Updates laufen über die spezifischen onChange/refresh-Handler.
-            guard !hasLoadedInitially else { return }
-            hasLoadedInitially = true
-            await performInitialLoad()
+            // Stale-while-revalidate: Beim ersten Mal voll laden (mit Spinner).
+            // Bei jedem weiteren Tab-Wechsel die vorhandenen Werte sofort zeigen
+            // und still im Hintergrund revalidieren — kein nerviger Voll-Reload,
+            // aber die Zahlen bleiben aktuell.
+            if !hasLoadedInitially {
+                hasLoadedInitially = true
+                await performInitialLoad(silent: false)
+            } else {
+                await performInitialLoad(silent: true)
+            }
         }
         .onChange(of: selectedDateRange) { _, newValue in
             Task {
@@ -219,13 +224,17 @@ struct DashboardView: View {
         }
     }
 
-    /// Initialer Daten-Load (einmalig). Respektiert den "Alle Accounts"-Modus.
-    private func performInitialLoad() async {
+    /// Daten-Load. `silent` = Hintergrund-Revalidierung ohne Spinner (Stale-while-revalidate
+    /// bei Tab-Wechsel). Respektiert den "Alle Accounts"-Modus.
+    private func performInitialLoad(silent: Bool = false) async {
+        // Bei stiller Revalidierung ohne vorhandene Daten doch einen sichtbaren Load
+        // erzwingen — sonst stünde der Nutzer vor einem leeren Dashboard ohne Feedback.
+        let effectiveSilent = silent && viewModel.hasData
         if showAllAccounts {
-            let map = await viewModel.loadAllAccountsData(dateRange: selectedDateRange, accounts: accountManager.accounts)
+            let map = await viewModel.loadAllAccountsData(dateRange: selectedDateRange, accounts: accountManager.accounts, silent: effectiveSilent)
             websiteAccountMap = map
         } else {
-            await viewModel.loadData(dateRange: selectedDateRange)
+            await viewModel.loadData(dateRange: selectedDateRange, silent: effectiveSilent)
         }
     }
 
