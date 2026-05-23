@@ -77,8 +77,9 @@ class DashboardViewModel: ObservableObject {
     }
 
     /// Loads websites from all accounts into a flat list, returns a map of website-id -> account
-    func loadAllAccountsData(dateRange: DateRange, accounts: [AnalyticsAccount]) async -> [String: AnalyticsAccount] {
-        isLoading = true
+    /// `silent`: Hintergrund-Revalidierung ohne Lade-Spinner (vorhandene Werte bleiben sichtbar).
+    func loadAllAccountsData(dateRange: DateRange, accounts: [AnalyticsAccount], silent: Bool = false) async -> [String: AnalyticsAccount] {
+        if !silent { isLoading = true }
         currentDateRange = dateRange
         isOffline = false
 
@@ -131,11 +132,18 @@ class DashboardViewModel: ObservableObject {
             await AccountManager.shared.setActiveAccount(original)
         }
 
-        isLoading = false
+        if !silent { isLoading = false }
         return accountMap
     }
 
-    func loadData(dateRange: DateRange, clearFirst: Bool = false) async {
+    /// True sobald mindestens einmal Daten im Speicher liegen — erlaubt der View,
+    /// beim Tab-Wechsel die vorhandenen Werte zu zeigen und still nachzuladen.
+    var hasData: Bool { !websites.isEmpty }
+
+    /// `silent`: lädt im Hintergrund neu, ohne den Lade-Spinner zu zeigen
+    /// (stale-while-revalidate). Vorhandene Werte bleiben sichtbar und werden
+    /// erst überschrieben, wenn frische Daten eintreffen.
+    func loadData(dateRange: DateRange, clearFirst: Bool = false, silent: Bool = false) async {
         loadingTask?.cancel()
         let task = Task {
             if clearFirst {
@@ -144,11 +152,11 @@ class DashboardViewModel: ObservableObject {
                 sparklineData = [:]
                 activeVisitors = [:]
             }
-            isLoading = true
+            if !silent { isLoading = true }
             currentDateRange = dateRange
             isOffline = false
             offlineCacheDate = nil
-            defer { if !Task.isCancelled { isLoading = false } }
+            defer { if !Task.isCancelled && !silent { isLoading = false } }
 
             // Lade die Website-Reihenfolge für den aktuellen Account
             loadWebsiteOrder()
