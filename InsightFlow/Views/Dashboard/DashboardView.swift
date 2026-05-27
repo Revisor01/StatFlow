@@ -235,6 +235,9 @@ struct DashboardView: View {
             websiteAccountMap = map
         } else {
             await viewModel.loadData(dateRange: selectedDateRange, silent: effectiveSilent)
+            // Übrige Standard-Zeiträume still vorladen, damit der Zeitraumwechsel
+            // sofort die korrekten Werte zeigt (nur Single-Account-Modus).
+            viewModel.prefetchOtherRanges(except: selectedDateRange)
         }
     }
 

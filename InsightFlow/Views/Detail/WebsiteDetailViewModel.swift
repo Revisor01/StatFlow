@@ -36,11 +36,13 @@ class WebsiteDetailViewModel: ObservableObject {
     @Published var isOffline = false
     @Published var error: String?
     private var loadingTask: Task<Void, Never>?
+    private let cache: AnalyticsCacheService
 
-    init(websiteId: String, domain: String = "", account: AnalyticsAccount? = nil) {
+    init(websiteId: String, domain: String = "", account: AnalyticsAccount? = nil, cache: AnalyticsCacheService = .shared) {
         self.websiteId = websiteId
         self.domain = domain
         self.account = account
+        self.cache = cache
     }
 
     /// `silent`: lädt im Hintergrund neu, ohne den Lade-Spinner zu zeigen
@@ -102,6 +104,40 @@ class WebsiteDetailViewModel: ObservableObject {
         loadingTask = nil
     }
 
+    /// Zeiträume, die im Hintergrund vorgeladen und gecacht werden, damit beim
+    /// Umschalten der Chips sofort der korrekte Wert steht (kein sichtbares Springen).
+    private static let prefetchPresets: [DateRangePreset] = [.today, .yesterday, .thisWeek, .last7Days]
+
+    private var prefetchTask: Task<Void, Never>?
+
+    /// Lädt still die Hero-Stats für die übrigen Standard-Zeiträume in den Cache.
+    /// Aktualisiert KEINE @Published-Werte — befüllt nur den Cache, damit `loadStats`
+    /// (cache-first) beim Zeitraumwechsel sofort den richtigen Wert anzeigen kann.
+    func prefetchOtherRanges(except current: DateRange) {
+        prefetchTask?.cancel()
+        prefetchTask = Task { [weak self] in
+            guard let self else { return }
+            await self.ensureProviderConfigured()
+            guard let provider = AnalyticsManager.shared.currentProvider else { return }
+            for preset in Self.prefetchPresets where preset != current.preset {
+                if Task.isCancelled { return }
+                let range = DateRange(preset: preset)
+                do {
+                    let analyticsStats = try await provider.getAnalyticsStats(websiteId: self.websiteId, dateRange: range)
+                    if Task.isCancelled { return }
+                    self.cache.saveStats(CachedStats(from: analyticsStats), websiteId: self.websiteId, dateRangeId: preset.rawValue)
+                } catch {
+                    // Vorladen ist best-effort — Fehler still ignorieren.
+                }
+            }
+        }
+    }
+
+    func stopPrefetch() {
+        prefetchTask?.cancel()
+        prefetchTask = nil
+    }
+
     // MARK: - Periodisches Hintergrund-Refresh
 
     private var autoRefreshTask: Task<Void, Never>?
@@ -128,12 +164,30 @@ class WebsiteDetailViewModel: ObservableObject {
 
     private func loadStats(dateRange: DateRange) async {
         guard let provider = AnalyticsManager.shared.currentProvider else { return }
+        let dateRangeId = dateRange.preset.rawValue
+
+        // Cache-first: gecachten Wert für genau diesen Zeitraum sofort anzeigen,
+        // damit beim Öffnen / Zeitraumwechsel direkt die korrekte Zahl steht statt
+        // eines leeren oder fremden Werts. Danach wird still revalidiert.
+        if let cached = cache.loadStats(websiteId: websiteId, dateRangeId: dateRangeId) {
+            let cachedStats = cached.data.toAnalyticsStats().toWebsiteStats()
+            if stats != cachedStats {
+                stats = cachedStats
+                totalVisitors = cachedStats.visitors.value
+            }
+        }
+
         do {
             let analyticsStats = try await provider.getAnalyticsStats(websiteId: websiteId, dateRange: dateRange)
             guard !Task.isCancelled else { return }
             let websiteStats = analyticsStats.toWebsiteStats()
-            stats = websiteStats
-            totalVisitors = websiteStats.visitors.value
+            // Nur überschreiben, wenn sich der Wert wirklich geändert hat — verhindert
+            // sichtbares Springen der Zahl beim stillen Hintergrund-Refresh.
+            if stats != websiteStats {
+                stats = websiteStats
+                totalVisitors = websiteStats.visitors.value
+            }
+            cache.saveStats(CachedStats(from: analyticsStats), websiteId: websiteId, dateRangeId: dateRangeId)
         } catch {
             guard !Task.isCancelled else { return }
             if error.isNetworkError {

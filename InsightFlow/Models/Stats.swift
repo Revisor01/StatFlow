@@ -17,7 +17,7 @@ struct StatsComparison: Codable, Sendable {
     let totaltime: Int
 }
 
-struct WebsiteStats: Sendable {
+struct WebsiteStats: Sendable, Equatable {
     let pageviews: StatValue
     let visitors: StatValue
     let visits: StatValue
@@ -72,7 +72,7 @@ struct WebsiteStats: Sendable {
     }
 }
 
-struct StatValue: Codable, Sendable {
+struct StatValue: Codable, Sendable, Equatable {
     let value: Int
     let change: Int
 
@@ -97,7 +97,7 @@ struct PageviewsData: Codable, Sendable {
     let sessions: [TimeSeriesPoint]
 }
 
-struct TimeSeriesPoint: Codable, Identifiable, Sendable {
+struct TimeSeriesPoint: Codable, Identifiable, Sendable, Equatable {
     let x: String
     let y: Int
 
@@ -112,7 +112,7 @@ struct TimeSeriesPoint: Codable, Identifiable, Sendable {
     var value: Int { y }
 }
 
-struct MetricItem: Codable, Identifiable, Sendable {
+struct MetricItem: Codable, Identifiable, Sendable, Equatable {
     let x: String?
     let y: Int
 

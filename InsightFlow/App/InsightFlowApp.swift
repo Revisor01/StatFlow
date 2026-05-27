@@ -97,6 +97,9 @@ struct PrivacyFlowApp: App {
         // geladenen Stats neu an — das ist exakt der Fix für den Frozen-Body-Bug.
         // NotificationManager ist @MainActor-isoliert, deshalb das @MainActor-Task.
         let operation = Task { @MainActor in
+            // UmamiAPI-Aktor-Filter clearen, sonst leaken in der Detail-View gesetzte
+            // Filter in den Background-Refresh und reduzieren Stats auf 0.
+            await UmamiAPI.shared.setFilters([])
             let manager = NotificationManager()
             await manager.scheduleAllNotifications()
         }
