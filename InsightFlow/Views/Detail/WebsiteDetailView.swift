@@ -147,6 +147,9 @@ struct WebsiteDetailView: View {
         }
         .task(id: selectedDateRange) {
             await viewModel.loadData(dateRange: selectedDateRange)
+            // Übrige Standard-Zeiträume still in den Cache vorladen, damit beim
+            // Umschalten der Chips sofort der korrekte Wert steht.
+            viewModel.prefetchOtherRanges(except: selectedDateRange)
             // Periodisches stilles Nachladen starten/neu aufsetzen für den
             // gewählten Zeitraum, solange die Ansicht sichtbar ist.
             viewModel.startAutoRefresh(dateRange: selectedDateRange)
@@ -165,6 +168,7 @@ struct WebsiteDetailView: View {
         .onDisappear {
             viewModel.cancelLoading()
             viewModel.stopAutoRefresh()
+            viewModel.stopPrefetch()
         }
     }
 

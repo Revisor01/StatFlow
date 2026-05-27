@@ -241,6 +241,61 @@ class DashboardViewModel: ObservableObject {
         await loadData(dateRange: dateRange)
     }
 
+    /// Zeiträume, die im Hintergrund vorgeladen und gecacht werden, damit beim
+    /// Umschalten des globalen Zeitraums sofort die korrekten Werte stehen.
+    private static let prefetchPresets: [DateRangePreset] = [.today, .yesterday, .thisWeek, .last7Days]
+
+    private var prefetchTask: Task<Void, Never>?
+
+    /// Lädt still die Stats der übrigen Standard-Zeiträume für alle Websites in den
+    /// Cache. Aktualisiert KEINE @Published-Werte — befüllt nur den Cache, damit
+    /// `loadStats` (cache-first) beim Zeitraumwechsel sofort den Wert zeigen kann.
+    /// Nur im Single-Account-Modus, wo der Provider stabil konfiguriert ist.
+    func prefetchOtherRanges(except current: DateRange) {
+        prefetchTask?.cancel()
+        let websiteIds = websites.map { $0.id }
+        guard !websiteIds.isEmpty else { return }
+        prefetchTask = Task { [weak self] in
+            guard let self else { return }
+            for preset in Self.prefetchPresets where preset != current.preset {
+                if Task.isCancelled { return }
+                let range = DateRange(preset: preset)
+                await withTaskGroup(of: Void.self) { group in
+                    for websiteId in websiteIds {
+                        group.addTask { await self.prefetchStats(for: websiteId, dateRange: range) }
+                    }
+                }
+            }
+        }
+    }
+
+    private func prefetchStats(for websiteId: String, dateRange: DateRange) async {
+        do {
+            let analyticsStats: AnalyticsStats
+            if isPlausible {
+                analyticsStats = try await plausibleAPI.getAnalyticsStats(websiteId: websiteId, dateRange: dateRange)
+            } else {
+                let websiteStats = try await umamiAPI.getStats(websiteId: websiteId, dateRange: dateRange)
+                analyticsStats = AnalyticsStats(
+                    visitors: websiteStats.visitors,
+                    pageviews: websiteStats.pageviews,
+                    visits: websiteStats.visits,
+                    bounces: websiteStats.bounces,
+                    totaltime: websiteStats.totaltime
+                )
+            }
+            if Task.isCancelled { return }
+            cache.saveStats(CachedStats(from: analyticsStats), websiteId: websiteId, dateRangeId: dateRange.preset.rawValue)
+        } catch {
+            // Vorladen ist best-effort — Fehler still ignorieren.
+        }
+    }
+
+    func stopPrefetch() {
+        prefetchTask?.cancel()
+        prefetchTask = nil
+    }
+
     func updateWebsite(_ website: Website) {
         if let index = websites.firstIndex(where: { $0.id == website.id }) {
             websites[index] = website
@@ -276,6 +331,16 @@ class DashboardViewModel: ObservableObject {
     private func loadStats(for websiteId: String, dateRange: DateRange) async {
         let dateRangeId = dateRange.preset.rawValue
 
+        // Cache-first: gecachten Wert für genau diesen Zeitraum sofort anzeigen,
+        // damit beim Zeitraumwechsel direkt der korrekte (vorgeladene) Wert steht
+        // statt der alten Zahl, die dann sichtbar springt.
+        if let cached = cache.loadStats(websiteId: websiteId, dateRangeId: dateRangeId) {
+            let cachedStats = cached.data.toAnalyticsStats().toWebsiteStats()
+            if stats[websiteId] != cachedStats {
+                stats[websiteId] = cachedStats
+            }
+        }
+
         do {
             let analyticsStats: AnalyticsStats
             if isPlausible {
@@ -292,7 +357,12 @@ class DashboardViewModel: ObservableObject {
             }
 
             guard !Task.isCancelled else { return }
-            stats[websiteId] = analyticsStats.toWebsiteStats()
+            // Nur überschreiben, wenn sich der Wert wirklich geändert hat — verhindert
+            // sichtbares Springen der Zahl beim stillen Hintergrund-Refresh.
+            let newStats = analyticsStats.toWebsiteStats()
+            if stats[websiteId] != newStats {
+                stats[websiteId] = newStats
+            }
 
             // Cache die Stats
             cache.saveStats(CachedStats(from: analyticsStats), websiteId: websiteId, dateRangeId: dateRangeId)
@@ -334,7 +404,10 @@ class DashboardViewModel: ObservableObject {
             let rawData = chartPoints.map { point in
                 TimeSeriesPoint(x: DateFormatters.iso8601.string(from: point.date), y: point.value)
             }
-            sparklineData[websiteId] = fillMissingTimeSlots(data: rawData, dateRange: dateRange)
+            let filled = fillMissingTimeSlots(data: rawData, dateRange: dateRange)
+            if sparklineData[websiteId] != filled {
+                sparklineData[websiteId] = filled
+            }
 
             // Cache die Sparkline-Daten
             cache.saveSparkline(chartPoints.toCached(), websiteId: websiteId, dateRangeId: dateRangeId)
