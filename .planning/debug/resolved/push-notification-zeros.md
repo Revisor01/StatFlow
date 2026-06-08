@@ -1,6 +1,6 @@
 ---
 slug: push-notification-zeros
-status: fixing
+status: resolved
 trigger: "Push-Nachrichten zeigen jetzt immer 0 0 0 an (Regression vermutlich aus Quick-Task 260521-ske)"
 created: 2026-05-27
 updated: 2026-05-27
