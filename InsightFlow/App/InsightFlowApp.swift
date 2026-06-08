@@ -40,6 +40,14 @@ struct PrivacyFlowApp: App {
                         Self.scheduleAppRefresh()
                     }
                 }
+                .task {
+                    // Beim ersten Vordergrund-Start alle noch pending (ggf. aus einem alten
+                    // Build eingefrorenen) Notification-Requests löschen und mit frischen
+                    // Stats neu planen. Verhindert, dass alte Bodies (z. B. die entfernte
+                    // 4-Werte-Summary) per repeats:true weiter gefeuert werden.
+                    await UmamiAPI.shared.setFilters([])
+                    await notificationManager.scheduleAllNotifications()
+                }
         }
     }
 
