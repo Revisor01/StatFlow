@@ -81,6 +81,8 @@ struct WebsiteDetailView: View {
                         selectedChartStyle: $selectedChartStyle,
                         selectedDateRange: selectedDateRange
                     )
+                } else if viewModel.isChartLoading {
+                    ChartLoadingSkeleton()
                 }
 
                 // Schnellzugriff
