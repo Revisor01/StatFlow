@@ -33,6 +33,9 @@ class WebsiteDetailViewModel: ObservableObject {
     @Published var totalVisitors: Int = 0
     @Published var activeFilters: [PlausibleQueryFilter] = []
     @Published var isLoading = false
+    /// True, solange für den aktuellen Zeitraum noch KEINE Chart-Daten vorliegen
+    /// (weder aus Cache noch vom Netzwerk). Steuert das Lade-Skeleton des Graphen.
+    @Published var isChartLoading = false
     @Published var isOffline = false
     @Published var error: String?
     private var loadingTask: Task<Void, Never>?
@@ -211,6 +214,19 @@ class WebsiteDetailViewModel: ObservableObject {
 
     private func loadPageviews(dateRange: DateRange) async {
         guard let provider = AnalyticsManager.shared.currentProvider else { return }
+        let dateRangeId = dateRange.preset.rawValue
+
+        // Cache-first: zuletzt gerenderten Graphen für genau diesen Zeitraum sofort
+        // anzeigen (analog zu loadStats), damit beim Öffnen / Zeitraumwechsel kein
+        // leerer Platz entsteht. Danach wird still revalidiert.
+        if let cached = cache.loadChart(websiteId: websiteId, dateRangeId: dateRangeId) {
+            if pageviewsData != cached.data.pageviews { pageviewsData = cached.data.pageviews }
+            if sessionsData != cached.data.visitors { sessionsData = cached.data.visitors }
+        }
+
+        // Skeleton nur zeigen, wenn wirklich noch nichts da ist (kein Cache-Treffer).
+        isChartLoading = pageviewsData.isEmpty
+
         do {
             // Load both in parallel
             async let pageviewTask = provider.getPageviewsData(websiteId: websiteId, dateRange: dateRange)
@@ -226,11 +242,18 @@ class WebsiteDetailViewModel: ObservableObject {
                 dateRange: dateRange
             )
             guard !Task.isCancelled else { return }
-            // Update both at once to avoid partial render
-            pageviewsData = filledPageviews
-            sessionsData = filledSessions
+            // Update both at once to avoid partial render — nur bei echter Änderung,
+            // damit der stille Refresh den Graphen nicht unnötig neu zeichnet.
+            if pageviewsData != filledPageviews { pageviewsData = filledPageviews }
+            if sessionsData != filledSessions { sessionsData = filledSessions }
+            isChartLoading = false
+            cache.saveChart(CachedChart(pageviews: filledPageviews, visitors: filledSessions),
+                            websiteId: websiteId, dateRangeId: dateRangeId)
         } catch {
-            if !Task.isCancelled { Logger.ui.error("Failed to load pageviews: \(error.localizedDescription)") }
+            if !Task.isCancelled {
+                isChartLoading = false
+                Logger.ui.error("Failed to load pageviews: \(error.localizedDescription)")
+            }
         }
     }
 

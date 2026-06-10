@@ -52,6 +52,10 @@ final class AnalyticsCacheService: @unchecked Sendable {
         "sparkline_\(websiteId)_\(dateRangeId)"
     }
 
+    private func chartKey(websiteId: String, dateRangeId: String) -> String {
+        "chart_\(websiteId)_\(dateRangeId)"
+    }
+
     private func metricsKey(websiteId: String, dateRangeId: String, metricType: String) -> String {
         "metrics_\(websiteId)_\(dateRangeId)_\(metricType)"
     }
@@ -142,6 +146,18 @@ final class AnalyticsCacheService: @unchecked Sendable {
 
     func loadSparkline(websiteId: String, dateRangeId: String) -> CachedData<[CachedChartPoint]>? {
         load(forKey: sparklineKey(websiteId: websiteId, dateRangeId: dateRangeId), type: [CachedChartPoint].self)
+    }
+
+    // MARK: - Detail Chart Cache (Pageviews + Visitors als Zeitreihe)
+
+    /// Speichert die beiden Chart-Zeitreihen (pageviews + visitors) für den Detail-Graphen.
+    /// Gleiche kurze TTL wie Sparklines (15 Min), da es Live-Verlaufsdaten sind.
+    func saveChart(_ chart: CachedChart, websiteId: String, dateRangeId: String) {
+        save(chart, forKey: chartKey(websiteId: websiteId, dateRangeId: dateRangeId), ttl: sparklineTTL)
+    }
+
+    func loadChart(websiteId: String, dateRangeId: String) -> CachedData<CachedChart>? {
+        load(forKey: chartKey(websiteId: websiteId, dateRangeId: dateRangeId), type: CachedChart.self)
     }
 
     // MARK: - Metrics Cache
@@ -386,6 +402,13 @@ struct CachedStatValue: Codable {
     func toStatValue() -> StatValue {
         StatValue(value: value, change: change)
     }
+}
+
+/// Gecachte Detail-Chart-Daten: beide Zeitreihen, die der Detail-Graph rendert.
+/// TimeSeriesPoint ist bereits Codable, daher direkt speicherbar.
+struct CachedChart: Codable {
+    let pageviews: [TimeSeriesPoint]
+    let visitors: [TimeSeriesPoint]
 }
 
 /// Codable Version von AnalyticsChartPoint
