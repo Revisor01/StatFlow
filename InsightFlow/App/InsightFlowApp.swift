@@ -86,25 +86,42 @@ struct PrivacyFlowApp: App {
     }
 
     private func registerBackgroundTasks() {
+        // WICHTIG: Der Completion-Block muss nonisolated sein. BGTaskScheduler ruft ihn auf
+        // seiner eigenen Hintergrund-Queue (com.apple.BGTaskScheduler) auf, NICHT auf dem
+        // MainActor. Da registerBackgroundTasks() als App-Methode @MainActor-isoliert ist,
+        // würde ein normales Closure die Isolation erben — die Swift-Runtime prüft dann beim
+        // Eintritt swift_task_checkIsolated, stellt "nicht auf MainActor" fest und löst einen
+        // EXC_BREAKPOINT (SIGTRAP) aus. Genau das war der tägliche Background-Crash.
+        // `using: nil` heißt explizit: Apple wählt die Queue, also darf der Block nicht
+        // MainActor-isoliert sein.
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: "de.godsapp.statflow.refresh",
             using: nil
-        ) { task in
-            Self.handleAppRefresh(task: task as! BGAppRefreshTask)
+        ) { @Sendable task in
+            guard let refreshTask = task as? BGAppRefreshTask else {
+                task.setTaskCompleted(success: false)
+                return
+            }
+            Self.handleAppRefresh(task: refreshTask)
         }
     }
 
-    private static func handleAppRefresh(task: BGAppRefreshTask) {
+    private nonisolated static func handleAppRefresh(task: BGAppRefreshTask) {
         // Nächsten Refresh-Task sofort wieder einplanen, sonst läuft die Kette nach einem
         // Hintergrund-Lauf nicht weiter.
         scheduleAppRefresh()
 
+        // Die eigentliche Arbeit läuft auf dem MainActor (NotificationManager ist
+        // @MainActor-isoliert). `task` selbst bleibt im nonisolated Kontext und wird NICHT
+        // über eine Concurrency-Boundary geschickt — BGAppRefreshTask ist nicht Sendable.
+        // expirationHandler und setTaskCompleted sind thread-safe (Apple-API) und werden
+        // daher synchron bzw. aus dem nonisolated Task heraus aufgerufen.
+        //
         // WICHTIG: scheduleAllNotifications() statt sendScheduledNotifications() aufrufen.
         // UNCalendarNotificationTrigger(repeats: true) friert den content.body beim Planen
         // ein. scheduleAllNotifications() entfernt pending Requests und legt sie mit frisch
         // geladenen Stats neu an — das ist exakt der Fix für den Frozen-Body-Bug.
-        // NotificationManager ist @MainActor-isoliert, deshalb das @MainActor-Task.
-        let operation = Task { @MainActor in
+        let work = Task { @MainActor in
             // UmamiAPI-Aktor-Filter clearen, sonst leaken in der Detail-View gesetzte
             // Filter in den Background-Refresh und reduzieren Stats auf 0.
             await UmamiAPI.shared.setFilters([])
@@ -112,17 +129,22 @@ struct PrivacyFlowApp: App {
             await manager.scheduleAllNotifications()
         }
 
+        // Wird die BGTask-Frist überschritten, bricht iOS ab → laufende Arbeit canceln.
         task.expirationHandler = {
-            operation.cancel()
+            work.cancel()
         }
 
+        // BGAppRefreshTask ist nicht Sendable, seine Methoden sind aber thread-safe. Über
+        // eine @unchecked-Sendable-Box dürfen wir die Referenz sicher in den await-Task
+        // reichen, um nach Abschluss setTaskCompleted aufzurufen.
+        let box = UncheckedSendableBox(task)
         Task {
-            await operation.value
-            task.setTaskCompleted(success: true)
+            _ = await work.result
+            box.value.setTaskCompleted(success: !work.isCancelled)
         }
     }
 
-    static func scheduleAppRefresh() {
+    nonisolated static func scheduleAppRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: "de.godsapp.statflow.refresh")
 
         // Lade konfigurierte Zeit oder Standard 9:00 Uhr
@@ -163,6 +185,15 @@ struct PrivacyFlowApp: App {
             Logger.ui.error("Could not schedule app refresh: \(error.localizedDescription)")
         }
     }
+}
+
+// MARK: - Sendable Box für nicht-Sendable, aber thread-safe Apple-Typen
+
+/// Reicht eine nicht-Sendable Referenz (z. B. BGAppRefreshTask) sicher über eine
+/// Concurrency-Boundary, wenn deren Methoden dokumentiert thread-safe sind.
+private struct UncheckedSendableBox<Value>: @unchecked Sendable {
+    let value: Value
+    init(_ value: Value) { self.value = value }
 }
 
 // MARK: - App Delegate for Notification & Quick Action Handling
