@@ -316,3 +316,46 @@ struct CustomDateRangePicker: View {
         }
     }
 }
+
+// MARK: - Chart Loading Skeleton
+
+/// Dezenter Platzhalter für den Detail-Graphen, solange noch keine Chart-Daten
+/// (weder aus Cache noch vom Netzwerk) vorliegen. Verhindert die leere Stelle,
+/// die zuvor wie ein „Hängen" der Graph-Generierung wirkte.
+struct ChartLoadingSkeleton: View {
+    @State private var pulse = false
+
+    // Feste Pseudo-Höhen für eine ruhige, gleichmäßige Balken-Silhouette.
+    private let barHeights: [CGFloat] = [0.35, 0.55, 0.4, 0.7, 0.5, 0.85, 0.6, 0.45, 0.75, 0.5, 0.65, 0.4]
+
+    var body: some View {
+        GlassCard {
+            VStack(alignment: .leading, spacing: 16) {
+                // Header-Platzhalter
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(.tertiarySystemGroupedBackground))
+                        .frame(width: 18, height: 18)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(.tertiarySystemGroupedBackground))
+                        .frame(width: 90, height: 16)
+                    Spacer()
+                }
+
+                // Balken-Silhouette
+                HStack(alignment: .bottom, spacing: 6) {
+                    ForEach(barHeights.indices, id: \.self) { i in
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color(.tertiarySystemGroupedBackground))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 180 * barHeights[i])
+                    }
+                }
+                .frame(height: 180, alignment: .bottom)
+            }
+            .opacity(pulse ? 0.45 : 0.9)
+            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: pulse)
+            .onAppear { pulse = true }
+        }
+    }
+}
