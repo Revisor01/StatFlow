@@ -11,8 +11,12 @@ struct SessionsView: View {
     @StateObject private var viewModel: SessionsViewModel
     @StateObject private var journeyViewModel: JourneyViewModel
     @State private var selectedSession: Session?
-    @State private var selectedDateRange: DateRange = .thisWeek
+    @AppStorage("sessions.dateRangePreset") private var storedPreset: String = DateRangePreset.thisWeek.rawValue
     @State private var selectedTab: SessionsTab = .journeys
+
+    private var selectedDateRange: DateRange {
+        DateRange(preset: DateRangePreset(rawValue: storedPreset) ?? .thisWeek)
+    }
 
     init(website: Website) {
         self.website = website
@@ -68,7 +72,8 @@ struct SessionsView: View {
         .task {
             await journeyViewModel.loadJourneys(dateRange: selectedDateRange)
         }
-        .onChange(of: selectedDateRange) { _, newValue in
+        .onChange(of: storedPreset) { _, _ in
+            let newValue = selectedDateRange
             Task {
                 if selectedTab == .journeys {
                     await journeyViewModel.loadJourneys(dateRange: newValue)
@@ -181,7 +186,7 @@ struct SessionsView: View {
                 ForEach(DateRange.allCases, id: \.preset) { range in
                     Button {
                         withAnimation(.spring(duration: 0.3)) {
-                            selectedDateRange = range
+                            storedPreset = range.preset.rawValue
                         }
                     } label: {
                         Text(range.displayName)

@@ -6,8 +6,12 @@ struct EventsView: View {
     let website: Website
 
     @StateObject private var viewModel: EventsViewModel
-    @State private var selectedDateRange: DateRange = .thisWeek
+    @AppStorage("events.dateRangePreset") private var storedPreset: String = DateRangePreset.thisWeek.rawValue
     @State private var selectedEvent: AnalyticsMetricItem?
+
+    private var selectedDateRange: DateRange {
+        DateRange(preset: DateRangePreset(rawValue: storedPreset) ?? .thisWeek)
+    }
 
     init(website: Website) {
         self.website = website
@@ -74,9 +78,9 @@ struct EventsView: View {
         .task {
             await viewModel.loadEvents(dateRange: selectedDateRange)
         }
-        .onChange(of: selectedDateRange) { _, newValue in
+        .onChange(of: storedPreset) { _, _ in
             Task {
-                await viewModel.loadEvents(dateRange: newValue)
+                await viewModel.loadEvents(dateRange: selectedDateRange)
             }
         }
         .refreshable {
@@ -105,7 +109,7 @@ struct EventsView: View {
                 ForEach(DateRange.allCases, id: \.preset) { range in
                     Button {
                         withAnimation(.spring(duration: 0.3)) {
-                            selectedDateRange = range
+                            storedPreset = range.preset.rawValue
                         }
                     } label: {
                         Text(range.displayName)
