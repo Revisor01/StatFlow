@@ -236,48 +236,12 @@ class NotificationManager: ObservableObject {
                 content.threadIdentifier = "account-\(account.id.uuidString)"
 
                 // Subtitle basierend auf Setting und Datenquelle
-                let periodText: String
-                if setting == .weekly {
-                    periodText = "Letzte 7 Tage"
-                } else {
-                    switch dateRange {
-                    case .today: periodText = "Heute"
-                    case .yesterday: periodText = "Gestern"
-                    default: periodText = "Gestern"
-                    }
-                }
-                content.subtitle = periodText
+                content.subtitle = Self.notificationPeriodText(setting: setting, dateRange: dateRange)
 
                 if let stats = stats {
-                    var bodyParts: [String] = []
-
-                    // Besucher mit Änderung
-                    var visitorsText = "\(stats.visitors.value.formatted()) Besucher"
-                    if stats.visitors.changePercentage != 0 {
-                        let arrow = stats.visitors.changePercentage > 0 ? "↑" : "↓"
-                        visitorsText += " \(arrow)\(abs(Int(stats.visitors.changePercentage)))%"
-                    }
-                    bodyParts.append(visitorsText)
-
-                    // Aufrufe mit Änderung
-                    var pageviewsText = "\(stats.pageviews.value.formatted()) Aufrufe"
-                    if stats.pageviews.changePercentage != 0 {
-                        let arrow = stats.pageviews.changePercentage > 0 ? "↑" : "↓"
-                        pageviewsText += " \(arrow)\(abs(Int(stats.pageviews.changePercentage)))%"
-                    }
-                    bodyParts.append(pageviewsText)
-
-                    // Besuche mit Änderung
-                    var visitsText = "\(stats.visits.value.formatted()) Besuche"
-                    if stats.visits.changePercentage != 0 {
-                        let arrow = stats.visits.changePercentage > 0 ? "↑" : "↓"
-                        visitsText += " \(arrow)\(abs(Int(stats.visits.changePercentage)))%"
-                    }
-                    bodyParts.append(visitsText)
-
-                    content.body = bodyParts.joined(separator: " • ")
+                    content.body = Self.notificationBody(stats: stats)
                 } else {
-                    content.body = "Tippe um deine Statistiken zu sehen"
+                    content.body = String(localized: "notifications.tapToView")
                 }
 
                 // Trigger basierend auf Setting
@@ -420,48 +384,9 @@ class NotificationManager: ObservableObject {
                 content.threadIdentifier = "account-\(account.id.uuidString)"
 
                 // Subtitle basierend auf Setting und Datenquelle
-                let periodText: String
-                if setting == .weekly {
-                    periodText = "Letzte 7 Tage"
-                } else {
-                    switch dateRange {
-                    case .today: periodText = "Heute"
-                    case .yesterday: periodText = "Gestern"
-                    default: periodText = "Gestern"
-                    }
-                }
-
                 content.title = "\(website.name) (\(account.displayName))"
-                content.subtitle = periodText
-
-                // Build detailed body
-                var bodyParts: [String] = []
-
-                // Besucher mit Änderung
-                var visitorsText = "\(stats.visitors.value.formatted()) Besucher"
-                if stats.visitors.changePercentage != 0 {
-                    let arrow = stats.visitors.changePercentage > 0 ? "↑" : "↓"
-                    visitorsText += " \(arrow)\(abs(Int(stats.visitors.changePercentage)))%"
-                }
-                bodyParts.append(visitorsText)
-
-                // Aufrufe mit Änderung
-                var pageviewsText = "\(stats.pageviews.value.formatted()) Aufrufe"
-                if stats.pageviews.changePercentage != 0 {
-                    let arrow = stats.pageviews.changePercentage > 0 ? "↑" : "↓"
-                    pageviewsText += " \(arrow)\(abs(Int(stats.pageviews.changePercentage)))%"
-                }
-                bodyParts.append(pageviewsText)
-
-                // Besuche mit Änderung
-                var visitsText = "\(stats.visits.value.formatted()) Besuche"
-                if stats.visits.changePercentage != 0 {
-                    let arrow = stats.visits.changePercentage > 0 ? "↑" : "↓"
-                    visitsText += " \(arrow)\(abs(Int(stats.visits.changePercentage)))%"
-                }
-                bodyParts.append(visitsText)
-
-                content.body = bodyParts.joined(separator: " • ")
+                content.subtitle = NotificationManager.notificationPeriodText(setting: setting, dateRange: dateRange)
+                content.body = NotificationManager.notificationBody(stats: stats)
 
                 let request = UNNotificationRequest(
                     identifier: "stats-\(account.id.uuidString)-\(website.id)-\(Date().timeIntervalSince1970)",
@@ -471,6 +396,36 @@ class NotificationManager: ObservableObject {
 
                 try? await UNUserNotificationCenter.current().add(request)
             }
+    }
+
+    // MARK: - Localized notification content
+
+    /// Localized subtitle describing the reporting period, following the app language.
+    nonisolated static func notificationPeriodText(setting: NotificationSetting, dateRange: DateRange) -> String {
+        if setting == .weekly {
+            return String(localized: "notifications.last7days")
+        }
+        switch dateRange {
+        case .today: return String(localized: "notifications.period.today")
+        default: return String(localized: "notifications.period.yesterday")
+        }
+    }
+
+    /// Localized notification body ("1.234 Visitors ↑5% • …"), following the app language.
+    nonisolated static func notificationBody(stats: AnalyticsStats) -> String {
+        func withChange(_ base: String, _ metric: StatValue) -> String {
+            guard metric.changePercentage != 0 else { return base }
+            let arrow = metric.changePercentage > 0 ? "↑" : "↓"
+            return base + " \(arrow)\(abs(Int(metric.changePercentage)))%"
+        }
+        let visitors = String(localized: "notifications.body.visitors \(stats.visitors.value.formatted())")
+        let pageviews = String(localized: "notifications.body.pageviews \(stats.pageviews.value.formatted())")
+        let visits = String(localized: "notifications.body.visits \(stats.visits.value.formatted())")
+        return [
+            withChange(visitors, stats.visitors),
+            withChange(pageviews, stats.pageviews),
+            withChange(visits, stats.visits)
+        ].joined(separator: " • ")
     }
 
 }
