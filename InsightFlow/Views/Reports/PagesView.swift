@@ -4,7 +4,12 @@ struct PagesView: View {
     let website: Website
 
     @StateObject private var viewModel: PagesViewModel
-    @State private var selectedDateRange: DateRange = .thisWeek
+    // Persist the chosen preset so the filter is remembered across visits.
+    @AppStorage("pages.dateRangePreset") private var storedPreset: String = DateRangePreset.thisWeek.rawValue
+
+    private var selectedDateRange: DateRange {
+        DateRange(preset: DateRangePreset(rawValue: storedPreset) ?? .thisWeek)
+    }
 
     init(website: Website) {
         self.website = website
@@ -33,7 +38,7 @@ struct PagesView: View {
                 Menu {
                     ForEach(DateRange.allCases, id: \.preset) { range in
                         Button {
-                            selectedDateRange = range
+                            storedPreset = range.preset.rawValue
                         } label: {
                             if selectedDateRange.preset == range.preset {
                                 Label(range.displayName, systemImage: "checkmark")
@@ -51,9 +56,9 @@ struct PagesView: View {
         .task {
             await viewModel.loadData(dateRange: selectedDateRange)
         }
-        .onChange(of: selectedDateRange) { _, newValue in
+        .onChange(of: storedPreset) { _, _ in
             Task {
-                await viewModel.loadData(dateRange: newValue)
+                await viewModel.loadData(dateRange: selectedDateRange)
             }
         }
     }

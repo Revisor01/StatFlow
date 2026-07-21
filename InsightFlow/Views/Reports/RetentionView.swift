@@ -5,7 +5,11 @@ struct RetentionView: View {
     let website: Website
 
     @StateObject private var viewModel: RetentionViewModel
-    @State private var selectedDateRange: DateRange = .thisWeek
+    @AppStorage("retention.dateRangePreset") private var storedPreset: String = DateRangePreset.last30Days.rawValue
+
+    private var selectedDateRange: DateRange {
+        DateRange(preset: DateRangePreset(rawValue: storedPreset) ?? .last30Days)
+    }
 
     init(website: Website) {
         self.website = website
@@ -44,9 +48,9 @@ struct RetentionView: View {
         .task {
             await viewModel.loadRetention(dateRange: selectedDateRange)
         }
-        .onChange(of: selectedDateRange) { _, newValue in
+        .onChange(of: storedPreset) { _, _ in
             Task {
-                await viewModel.loadRetention(dateRange: newValue)
+                await viewModel.loadRetention(dateRange: selectedDateRange)
             }
         }
         .refreshable {
@@ -120,7 +124,7 @@ struct RetentionView: View {
                 ForEach([DateRange.last7Days, .last30Days, .thisMonth, .lastMonth], id: \.preset) { range in
                     Button {
                         withAnimation(.spring(duration: 0.3)) {
-                            selectedDateRange = range
+                            storedPreset = range.preset.rawValue
                         }
                     } label: {
                         Text(range.displayName)

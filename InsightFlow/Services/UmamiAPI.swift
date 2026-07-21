@@ -386,19 +386,27 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Event Data
 
-    func getEventDataFields(websiteId: String, dateRange: DateRange) async throws -> [EventDataFieldValue] {
+    func getEventDataFields(websiteId: String, dateRange: DateRange, eventName: String? = nil) async throws -> [EventDataField] {
         let dates = dateRange.dates
         let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
         let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
 
+        var queryItems = [
+            URLQueryItem(name: "startAt", value: String(startAt)),
+            URLQueryItem(name: "endAt", value: String(endAt))
+        ]
+        // Scope to a single event so only that event's properties come back.
+        // Umami's route expects the query param `event`.
+        if let eventName {
+            queryItems.append(URLQueryItem(name: "event", value: eventName))
+        }
+
         let data = try await request(
             endpoint: "api/websites/\(websiteId)/event-data/fields",
-            queryItems: [
-                URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt))
-            ]
+            queryItems: queryItems
         )
-        return try decoder.decode([EventDataFieldValue].self, from: data)
+        // The fields endpoint returns { propertyName, dataType, total } — no `value` field.
+        return try decoder.decode([EventDataField].self, from: data)
     }
 
     func getEventDataValues(websiteId: String, dateRange: DateRange, eventName: String, propertyName: String) async throws -> [EventDataValue] {
@@ -411,7 +419,8 @@ actor UmamiAPI: AnalyticsProvider {
             queryItems: [
                 URLQueryItem(name: "startAt", value: String(startAt)),
                 URLQueryItem(name: "endAt", value: String(endAt)),
-                URLQueryItem(name: "eventName", value: eventName),
+                // Umami's route expects the query param `event`, not `eventName`.
+                URLQueryItem(name: "event", value: eventName),
                 URLQueryItem(name: "propertyName", value: propertyName)
             ]
         )
@@ -668,7 +677,12 @@ actor UmamiAPI: AnalyticsProvider {
         // Umami stores UTM data in query metrics — parse utm_ params from query strings
         let queryMetrics = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .query, limit: 100)
 
-        var items: [UTMReportItem] = []
+        // Umami returns one query-metric row per distinct query string, so two
+        // URLs that share the same UTM tags but differ in other params (e.g. gclid,
+        // or a different utm_content) arrive as separate rows. Aggregate by the full
+        // UTM tuple and sum visitors, otherwise the same campaign shows up as
+        // seemingly duplicate entries.
+        var aggregated: [String: UTMReportItem] = [:]
         for metric in queryMetrics {
             let query = metric.name
             guard query.contains("utm_") else { continue }
@@ -683,17 +697,34 @@ actor UmamiAPI: AnalyticsProvider {
             let content = params.first(where: { $0.name == "utm_content" })?.value
             let term = params.first(where: { $0.name == "utm_term" })?.value
 
-            items.append(UTMReportItem(
-                source: source,
-                medium: medium,
-                campaign: campaign,
-                content: content,
-                term: term,
-                visitors: metric.value
-            ))
+            // Key on the full UTM tuple so only genuine duplicates are merged.
+            let key = [source, medium, campaign, content, term]
+                .map { $0 ?? "" }
+                .joined(separator: "|")
+
+            if let existing = aggregated[key] {
+                aggregated[key] = UTMReportItem(
+                    source: existing.source,
+                    medium: existing.medium,
+                    campaign: existing.campaign,
+                    content: existing.content,
+                    term: existing.term,
+                    visitors: existing.visitors + metric.value
+                )
+            } else {
+                aggregated[key] = UTMReportItem(
+                    source: source,
+                    medium: medium,
+                    campaign: campaign,
+                    content: content,
+                    term: term,
+                    visitors: metric.value
+                )
+            }
         }
 
-        Logger.api.debug("getUTMReport: parsed \(items.count) UTM entries from query metrics")
+        let items = Array(aggregated.values)
+        Logger.api.debug("getUTMReport: parsed \(items.count) aggregated UTM entries from query metrics")
         return items
     }
 
@@ -738,14 +769,22 @@ actor UmamiAPI: AnalyticsProvider {
         let data = try await postRequest(endpoint: "api/reports/attribution", body: body)
         let response = try decoder.decode(AttributionResponse.self, from: data)
 
-        // Attribution = only traffic sources (referrers, paid ads)
+        // Attribution covers referrers, paid ads and all UTM dimensions the
+        // server returns. Previously only referrer/paidAds were mapped, so sites
+        // driven mainly by UTM-tagged campaigns showed an empty report.
         var items: [AttributionItem] = []
-        for entry in response.referrer ?? [] {
-            items.append(AttributionItem(category: "Referrer", name: entry.name, count: entry.value))
+        func append(_ entries: [AttributionEntry]?, category: String, kind: AttributionItem.Kind) {
+            for entry in entries ?? [] {
+                items.append(AttributionItem(category: category, kind: kind, name: entry.name, count: entry.value))
+            }
         }
-        for entry in response.paidAds ?? [] {
-            items.append(AttributionItem(category: "Paid Ads", name: entry.name, count: entry.value))
-        }
+        append(response.referrer, category: String(localized: "attribution.category.referrer"), kind: .referrer)
+        append(response.paidAds, category: String(localized: "attribution.category.paidAds"), kind: .paidAds)
+        append(response.utm_source, category: String(localized: "attribution.category.utmSource"), kind: .utm)
+        append(response.utm_medium, category: String(localized: "attribution.category.utmMedium"), kind: .utm)
+        append(response.utm_campaign, category: String(localized: "attribution.category.utmCampaign"), kind: .utm)
+        append(response.utm_content, category: String(localized: "attribution.category.utmContent"), kind: .utm)
+        append(response.utm_term, category: String(localized: "attribution.category.utmTerm"), kind: .utm)
 
         return items
     }
