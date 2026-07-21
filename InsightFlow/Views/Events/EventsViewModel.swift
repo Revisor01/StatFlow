@@ -13,7 +13,7 @@ class EventsViewModel: ObservableObject {
 
     // Detail-View properties
     @Published var selectedEventProperties: [String] = []
-    @Published var selectedEventValues: [String: [EventDataFieldValue]] = [:]
+    @Published var selectedEventValues: [String: [EventDataValue]] = [:]
 
     private var loadingTask: Task<Void, Never>?
     private let api: UmamiAPI
@@ -85,23 +85,37 @@ class EventsViewModel: ObservableObject {
             defer { if !Task.isCancelled { isLoading = false } }
 
             do {
-                // event-data/fields returns all property+value combinations across all events
+                // event-data/fields returns { propertyName, dataType, total }.
+                // Scope to the tapped event so we only show its own properties.
                 let allFields = try await api.getEventDataFields(
                     websiteId: websiteId,
-                    dateRange: dateRange
+                    dateRange: dateRange,
+                    eventName: eventName
                 )
                 guard !Task.isCancelled else { return }
 
-                // Group by propertyName, collect values per property
-                let propertyNames = Set(allFields.map { $0.propertyName })
-                selectedEventProperties = propertyNames.sorted()
+                let propertyNames = allFields.map { $0.propertyName }.sorted()
+                selectedEventProperties = propertyNames
 
-                var valuesDict: [String: [EventDataFieldValue]] = [:]
+                // The fields endpoint carries no value breakdown — load values per property
+                // from event-data/values (scoped to the tapped event). Failures per property
+                // are non-fatal: we still show the property name.
+                var valuesDict: [String: [EventDataValue]] = [:]
                 for name in propertyNames {
-                    valuesDict[name] = allFields
-                        .filter { $0.propertyName == name }
-                        .sorted { $0.total > $1.total }
+                    guard !Task.isCancelled else { return }
+                    do {
+                        let values = try await api.getEventDataValues(
+                            websiteId: websiteId,
+                            dateRange: dateRange,
+                            eventName: eventName,
+                            propertyName: name
+                        )
+                        valuesDict[name] = values.sorted { $0.total > $1.total }
+                    } catch {
+                        Logger.ui.error("EventDataValues error for \(name): \(error.localizedDescription)")
+                    }
                 }
+                guard !Task.isCancelled else { return }
                 selectedEventValues = valuesDict
             } catch {
                 guard !Task.isCancelled else { return }
