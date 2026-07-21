@@ -70,7 +70,7 @@ struct UTMReportRow: View {
                     }
                 } else {
                     HStack {
-                        Text("\(item.visitors) Besucher")
+                        Text(String(localized: "utm.visitors \(item.visitors)"))
                             .font(.subheadline)
                             .fontWeight(.semibold)
                         Spacer()
@@ -81,7 +81,7 @@ struct UTMReportRow: View {
                 HStack(spacing: 16) {
                     if let source = item.source {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Quelle")
+                            Text(String(localized: "utm.source"))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             TagBadge(text: source, color: .blue)
@@ -89,7 +89,7 @@ struct UTMReportRow: View {
                     }
                     if let medium = item.medium {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Medium")
+                            Text(String(localized: "utm.medium"))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             TagBadge(text: medium, color: .green)
@@ -97,7 +97,7 @@ struct UTMReportRow: View {
                     }
                     if let content = item.content {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Inhalt")
+                            Text(String(localized: "utm.content"))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             TagBadge(text: content, color: .purple)
@@ -105,7 +105,7 @@ struct UTMReportRow: View {
                     }
                     if let term = item.term {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Suchbegriff")
+                            Text(String(localized: "utm.term"))
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                             TagBadge(text: term, color: .cyan)
@@ -161,6 +161,14 @@ struct AttributionReportView: View {
 struct AttributionRow: View {
     let item: AttributionItem
 
+    private func badgeColor(for kind: AttributionItem.Kind) -> Color {
+        switch kind {
+        case .referrer: return .blue
+        case .paidAds: return .pink
+        case .utm: return .purple
+        }
+    }
+
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
@@ -169,7 +177,7 @@ struct AttributionRow: View {
                     .fontWeight(.medium)
                     .lineLimit(1)
 
-                TagBadge(text: item.category, color: item.category == "Referrer" ? .blue : .purple)
+                TagBadge(text: item.category, color: badgeColor(for: item.kind))
             }
 
             Spacer()
