@@ -37,6 +37,7 @@
 "dashboard.addSite" = "Add Website";
 "dashboard.removeSite" = "Remove Website";
 "dashboard.removeSite.confirm.title" = "Remove Website?";
+"dashboard.removeSite.typeToConfirm %@" = "To confirm, type the website name “%@” below.";
 "dashboard.removeSite.confirm.umami" = "This will permanently delete the website and all its data from Umami. This action cannot be undone.";
 "dashboard.removeSite.confirm.plausible" = "This will remove the website from the app. Your data in Plausible will not be affected.";
 "dashboard.empty.title" = "No Websites";
@@ -242,6 +243,11 @@
 "notifications.datasource.auto.desc" = "Morning: yesterday, Evening: today";
 "notifications.last7days" = "Last 7 Days";
 "notifications.tapToView" = "Tap to view your statistics";
+"notifications.body.visitors %@" = "%@ Visitors";
+"notifications.body.pageviews %@" = "%@ Pageviews";
+"notifications.body.visits %@" = "%@ Visits";
+"notifications.period.today" = "Today";
+"notifications.period.yesterday" = "Yesterday";
 
 // MARK: - Support / Donation
 "support.title" = "Support";
@@ -474,10 +480,22 @@
 "reports.funnel.subtitle" = "Conversion paths";
 "reports.utm" = "UTM Campaigns";
 "reports.utm.subtitle" = "Campaign link tracking";
+"utm.visitors %lld" = "%lld Visitors";
+"utm.source" = "Source";
+"utm.medium" = "Medium";
+"utm.content" = "Content";
+"utm.term" = "Search Term";
 "reports.goals" = "Goals";
 "reports.goals.subtitle" = "Goal tracking";
 "reports.attribution" = "Sources";
 "reports.attribution.subtitle" = "Referrers and traffic sources";
+"attribution.category.referrer" = "Referrer";
+"attribution.category.paidAds" = "Paid Ads";
+"attribution.category.utmSource" = "UTM Source";
+"attribution.category.utmMedium" = "UTM Medium";
+"attribution.category.utmCampaign" = "UTM Campaign";
+"attribution.category.utmContent" = "UTM Content";
+"attribution.category.utmTerm" = "UTM Term";
 "reports.empty.utm" = "No UTM Data";
 "reports.empty.utm.description" = "No UTM campaign data for this period.";
 "reports.empty.attribution" = "No Attribution Data";

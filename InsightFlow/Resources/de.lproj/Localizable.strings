@@ -37,6 +37,7 @@
 "dashboard.addSite" = "Website hinzufügen";
 "dashboard.removeSite" = "Website entfernen";
 "dashboard.removeSite.confirm.title" = "Website entfernen?";
+"dashboard.removeSite.typeToConfirm %@" = "Gib zur Bestätigung den Website-Namen „%@“ unten ein.";
 "dashboard.removeSite.confirm.umami" = "Die Website und alle zugehörigen Daten werden dauerhaft aus Umami gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.";
 "dashboard.removeSite.confirm.plausible" = "Die Website wird aus der App entfernt. Deine Daten in Plausible bleiben erhalten.";
 "dashboard.empty.title" = "Keine Websites";
@@ -243,6 +244,11 @@
 "notifications.datasource.auto.desc" = "Morgens: gestern, Abends: heute";
 "notifications.last7days" = "Letzte 7 Tage";
 "notifications.tapToView" = "Tippe um deine Statistiken zu sehen";
+"notifications.body.visitors %@" = "%@ Besucher";
+"notifications.body.pageviews %@" = "%@ Aufrufe";
+"notifications.body.visits %@" = "%@ Besuche";
+"notifications.period.today" = "Heute";
+"notifications.period.yesterday" = "Gestern";
 
 // MARK: - Support / Donation
 "support.title" = "Unterstützen";
@@ -475,10 +481,22 @@
 "reports.funnel.subtitle" = "Conversion-Pfade";
 "reports.utm" = "UTM-Kampagnen";
 "reports.utm.subtitle" = "Link-Tracking";
+"utm.visitors %lld" = "%lld Besucher";
+"utm.source" = "Quelle";
+"utm.medium" = "Medium";
+"utm.content" = "Inhalt";
+"utm.term" = "Suchbegriff";
 "reports.goals" = "Goals";
 "reports.goals.subtitle" = "Ziel-Tracking";
 "reports.attribution" = "Herkunft";
 "reports.attribution.subtitle" = "Referrer und Verweise";
+"attribution.category.referrer" = "Referrer";
+"attribution.category.paidAds" = "Bezahlte Anzeigen";
+"attribution.category.utmSource" = "UTM-Quelle";
+"attribution.category.utmMedium" = "UTM-Medium";
+"attribution.category.utmCampaign" = "UTM-Kampagne";
+"attribution.category.utmContent" = "UTM-Inhalt";
+"attribution.category.utmTerm" = "UTM-Begriff";
 "reports.empty.utm" = "Keine UTM-Daten";
 "reports.empty.utm.description" = "Keine UTM-Kampagnendaten im gewählten Zeitraum.";
 "reports.empty.attribution" = "Keine Attribution-Daten";
