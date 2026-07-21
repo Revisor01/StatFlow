@@ -69,6 +69,7 @@ struct WebsiteCard: View {
     @State private var showTrackingCode = false
     @State private var showShareSheet = false
     @State private var showDeleteConfirmation = false
+    @State private var showDeleteSheet = false
     @ObservedObject private var settingsManager = DashboardSettingsManager.shared
 
     private var serverURL: String {
@@ -112,7 +113,14 @@ struct WebsiteCard: View {
             // Website löschen für beide Provider
             if onRemoveSite != nil {
                 Button(role: .destructive) {
-                    showDeleteConfirmation = true
+                    // Umami delete is a permanent server-side wipe → require the
+                    // user to type the website name. Plausible only removes the
+                    // site locally, so a simple confirmation alert is enough.
+                    if isUmamiProvider {
+                        showDeleteSheet = true
+                    } else {
+                        showDeleteConfirmation = true
+                    }
                 } label: {
                     Label(String(localized: "dashboard.removeSite"), systemImage: "trash")
                 }
@@ -136,6 +144,11 @@ struct WebsiteCard: View {
             Text(isUmamiProvider
                 ? String(localized: "dashboard.removeSite.confirm.umami")
                 : String(localized: "dashboard.removeSite.confirm.plausible"))
+        }
+        .sheet(isPresented: $showDeleteSheet) {
+            DeleteWebsiteConfirmSheet(websiteName: website.name) {
+                onRemoveSite?()
+            }
         }
     }
 
@@ -644,6 +657,64 @@ struct DashboardShareLinkSheet: View {
                     Button(String(localized: "button.done")) { dismiss() }
                 }
             }
+        }
+    }
+}
+
+// MARK: - Delete Confirmation Sheet (type-to-confirm)
+
+/// Destructive-delete confirmation that requires typing the website name.
+/// Used for Umami sites, where deletion permanently wipes all server-side data.
+struct DeleteWebsiteConfirmSheet: View {
+    let websiteName: String
+    let onConfirm: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var typedName: String = ""
+    @FocusState private var fieldFocused: Bool
+
+    private var canDelete: Bool {
+        typedName.trimmingCharacters(in: .whitespaces) == websiteName
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text(String(localized: "dashboard.removeSite.confirm.umami"))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Section {
+                    Text(String(localized: "dashboard.removeSite.typeToConfirm \(websiteName)"))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                    TextField(websiteName, text: $typedName)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .focused($fieldFocused)
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        onConfirm()
+                        dismiss()
+                    } label: {
+                        Text(String(localized: "button.delete"))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .disabled(!canDelete)
+                }
+            }
+            .navigationTitle(String(localized: "dashboard.removeSite.confirm.title"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(String(localized: "button.cancel")) { dismiss() }
+                }
+            }
+            .onAppear { fieldFocused = true }
         }
     }
 }
