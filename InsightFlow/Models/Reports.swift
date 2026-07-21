@@ -86,7 +86,10 @@ struct UTMReportItem: Codable, Identifiable, Sendable {
     let term: String?
     let visitors: Int
 
-    var id: String { "\(source ?? "")-\(medium ?? "")-\(campaign ?? "")" }
+    // Include all UTM dimensions so distinct combinations never collide in ForEach.
+    var id: String {
+        [source, medium, campaign, content, term].map { $0 ?? "" }.joined(separator: "|")
+    }
 }
 
 // MARK: - Goal Report
@@ -146,7 +149,12 @@ struct AttributionTotal: Codable, Sendable {
 
 /// Flat item for display in the UI
 struct AttributionItem: Identifiable, Sendable {
-    let category: String   // "Referrer", "Paid Ads", etc.
+    enum Kind: Sendable {
+        case referrer, paidAds, utm
+    }
+
+    let category: String   // localized label, e.g. "Referrer", "UTM Source"
+    let kind: Kind         // language-independent, drives badge color
     let name: String
     let count: Int
 
