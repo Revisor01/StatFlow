@@ -101,7 +101,8 @@ StatFlow verwendet MVVM mit klarer Schichttrennung und einem einheitlichen Provi
    ```bash
    git clone https://github.com/Revisor01/StatFlow.git
    ```
-2. `StatFlow.xcodeproj` in Xcode 16+ öffnen
+2. `InsightFlow.xcodeproj` in Xcode 16+ öffnen (der Xcode-Zielname stammt aus der
+   Entwicklungshistorie der App und wurde bei der Umbenennung zu StatFlow beibehalten)
 3. Bundle ID in den Signing-Einstellungen auf die eigene Team-ID anpassen
 4. Auf Gerät oder Simulator bauen und ausführen
 
