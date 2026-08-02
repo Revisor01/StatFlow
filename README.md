@@ -77,11 +77,13 @@ StatFlow verwendet MVVM mit klarer Schichttrennung und einem einheitlichen Provi
 
 ## Screenshots
 
-*Screenshots werden nach dem ersten App Store Release ergänzt.*
+| Dashboard | Website-Detail |
+|-----------|----------------|
+| <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="280"> | <img src="docs/screenshots/details.png" alt="Website-Detail" width="280"> |
 
-| Dashboard | Website-Detail | Widgets | Einstellungen |
-|-----------|---------------|---------|---------------|
-| *folgt* | *folgt* | *folgt* | *folgt* |
+| Echtzeit | Widgets & Benachrichtigungen |
+|----------|------------------------------|
+| <img src="docs/screenshots/realtime.png" alt="Echtzeit-Ansicht" width="280"> | <img src="docs/screenshots/combo.png" alt="Widgets und Benachrichtigungen" width="280"> |
 
 ## Voraussetzungen
 
@@ -92,8 +94,10 @@ StatFlow verwendet MVVM mit klarer Schichttrennung und einem einheitlichen Provi
 
 ### App Store
 
-<!-- TODO: App Store Badge und Link einfuegen, sobald verfuegbar -->
-*Demnächst im App Store verfügbar.*
+Verfügbar im App Store: **[StatsFlow](https://apps.apple.com/app/id6761671122)**
+
+> Im App Store heißt die App **StatsFlow** — der Name *StatFlow* war dort bereits vergeben.
+> Repository, Quellcode und Dokumentation verwenden weiterhin *StatFlow*.
 
 ### Selbst kompilieren
 

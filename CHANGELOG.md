@@ -6,16 +6,26 @@ Das Format basiert auf [Keep a Changelog 1.1.0](https://keepachangelog.com/de/1.
 und dieses Projekt folgt [Semantic Versioning 2.0.0](https://semver.org/lang/de/).
 
 Die App hieß in ihrer Entwicklungsgeschichte zunächst *InsightFlow*, dann *PrivacyFlow*
-und trägt seit März 2026 den Namen **StatFlow**. Der Xcode-Zielname `InsightFlow` ist
-aus dieser Historie erhalten geblieben.
+und trägt seit März 2026 den Namen **StatFlow** — im App Store als *StatsFlow*, da der
+kürzere Name dort bereits vergeben war. Der Xcode-Zielname `InsightFlow` ist aus dieser
+Historie erhalten geblieben.
+
+Die Versionen 1.0 bis 1.0.6 sind die im App Store ausgelieferten Releases. Die Versionen
+0.1.0 bis 1.3.0 stammen aus der Vorgeschichte als InsightFlow bzw. PrivacyFlow, vor der
+ersten Store-Veröffentlichung.
 
 ## [Unreleased]
+
+### Hinzugefügt
+
+- Screenshots im README (`docs/screenshots/`).
 
 ### Entfernt
 
 - App-Store-Grafiken und Screenshot-Generator aus dem Repository entfernt. Die Grafik-Erstellung
   läuft jetzt zentral über `~/Documents/social-posts-studio` (Projekt `statflow`); Secrets liegen
   in `~/.claude/secrets/`.
+- Ordner `app-store-screenshots-playbook/` entfernt — durch die zentrale Grafik-Werkstatt ersetzt.
 - Duplizierte App-Icon-Dateien (`AppIcon1.png`, `AppIcon2.png`, `AppIcon3.png`) aus dem
   Repository-Root entfernt — identische Originale liegen unter `InsightFlow/Resources/`.
 
@@ -44,7 +54,7 @@ Build 5 und 6.
 - Absturz (`EXC_BREAKPOINT`) durch Nebenläufigkeitsfehler im täglichen Background-Task behoben.
 - Alle Benachrichtigungen werden beim Wechsel in den Vordergrund neu geplant.
 
-## [1.0.4] – 2026-05-27
+## [1.0.4] – 2026-06-08
 
 Build 4.
 
@@ -76,86 +86,37 @@ Build 2.
 - Stunden-Balken der Tagesansicht verloren durch UTC-Verschiebung einzelne Datenpunkte.
 - Benachrichtigungstexte werden über den Background-Task-Handler aktualisiert.
 
-## [1.0.0] – 2026-04-24
-
-Erstes App-Store-Release als **StatFlow** (Build 1).
+## [1.0.1] – 2026-04-24
 
 ### Hinzugefügt
 
 - Filter für Umami: Quelle, Browser, Betriebssystem, Gerät, Land und Seite.
-- Onboarding zeigt Feature-Übersicht statt Anbietervergleich.
 
 ### Geändert
 
 - iPad-Unterstützung entfernt — die App erscheint als reine iPhone-App.
-- App-Store-Metadaten, Screenshots und Einreichungsskripte für DE und EN erstellt.
+- Onboarding zeigt eine Feature-Übersicht statt eines Anbietervergleichs.
+- App im Store zu *StatsFlow* umbenannt.
 
 ### Behoben
 
 - Umami-Login sendet Benutzername und E-Mail gemeinsam.
 - Filter-Sheet zeigt einen Ladeindikator statt einer leeren Vollbildansicht.
+- Darstellung der Filter-Chips und des Logout-Buttons korrigiert.
 
-## [2.7] – 2026-04-04
+## [1.0] – 2026-04-04
 
-Interner Meilenstein: Stabilität & Architektur.
+Erstes App-Store-Release (Build 1).
 
-### Geändert
+Native iOS-App für Umami und Plausible Analytics mit Multi-Account-Unterstützung,
+Echtzeit-Dashboard, Detailanalysen, Periodenvergleich, Events und Reports,
+Home-Screen-Widgets, Push-Benachrichtigungen, Offline-Modus, Dark Mode sowie
+deutscher und englischer Lokalisierung.
 
-- Architektur- und Stabilitätsarbeiten abgeschlossen (Cache-Lebenszyklus, Widget-Race-Conditions,
-  Abbruch laufender Requests, modaler Account-Flow).
-
-## [2.6] – 2026-04-03
-
-Interner Meilenstein: Design Polish.
-
-## [2.5] – 2026-03-29
-
-Interner Meilenstein: Pre-Release Polish. README und Repository-Struktur überarbeitet.
-
-## [2.4] – 2026-03-28
-
-Interner Meilenstein: Umbenennung zu **StatFlow** — Bundle-IDs, URL-Schema, Anzeigename und
-Lokalisierungs-Strings angepasst.
-
-## [2.3] – 2026-03-28
-
-Interner Meilenstein: API-Datenscreens & Analytics-Setup (Events, Reports, Sessions).
-
-## [2.2] – 2026-03-28
-
-Interner Meilenstein: Support & API-Abdeckung.
-
-### Hinzugefügt
-
-- Vollständige Umami- und Plausible-API-Abdeckung.
-- Push-Benachrichtigungen mit täglicher oder wöchentlicher Zusammenfassung.
-- Support-Bereich und Branding.
-
-## [2.1] – 2026-03-28
-
-Interner Meilenstein: UX-Politur & Features.
-
-### Hinzugefügt
-
-- Ansicht über alle Accounts hinweg.
-
-### Behoben
-
-- Widget-Deep-Links.
-
-## [2.0] – 2026-03-28
-
-Interner Meilenstein: Code-Qualität & Security-Hardening.
-
-### Hinzugefügt
-
-- Unit-Test-Target (`InsightFlowTests`) mit Tests für Keychain, DateRange, API-Parsing,
-  Cache-Service und ViewModels.
-
-### Geändert
-
-- Zugangsdaten werden pro Account-ID in der iOS-Keychain isoliert.
-- Widget-Extension aufgeteilt und Architektur nach Schichten getrennt.
+Der Entwicklung ging eine umfangreiche Überarbeitung voraus: Security-Hardening
+(Zugangsdaten pro Account isoliert in der iOS-Keychain), Aufbau der Unit-Test-Suite,
+vollständige Umami- und Plausible-API-Abdeckung sowie die Umbenennung von PrivacyFlow
+zu StatFlow.
 
 ## [1.3.0] – 2026-01-10
 
@@ -171,7 +132,7 @@ Als *PrivacyFlow* veröffentlicht.
 
 - Anpassungsmodus für das Dashboard.
 
-## [1.0.0-privacyflow] – 2026-01-09
+## [1.0.0] – 2026-01-09
 
 ### Geändert
 
@@ -196,17 +157,10 @@ Erste Fassung als *InsightFlow*.
 [1.0.5]: https://github.com/Revisor01/StatFlow/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/Revisor01/StatFlow/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/Revisor01/StatFlow/compare/v1.0.2...v1.0.3
-[1.0.2]: https://github.com/Revisor01/StatFlow/compare/v1.0.0-statflow...v1.0.2
-[1.0.0]: https://github.com/Revisor01/StatFlow/compare/v2.7...v1.0.0-statflow
-[2.7]: https://github.com/Revisor01/StatFlow/compare/v2.6...v2.7
-[2.6]: https://github.com/Revisor01/StatFlow/compare/v2.5...v2.6
-[2.5]: https://github.com/Revisor01/StatFlow/compare/v2.4...v2.5
-[2.4]: https://github.com/Revisor01/StatFlow/compare/v2.3...v2.4
-[2.3]: https://github.com/Revisor01/StatFlow/compare/v2.2...v2.3
-[2.2]: https://github.com/Revisor01/StatFlow/compare/v2.1...v2.2
-[2.1]: https://github.com/Revisor01/StatFlow/compare/v2.0...v2.1
-[2.0]: https://github.com/Revisor01/StatFlow/compare/v1.3.0...v2.0
+[1.0.2]: https://github.com/Revisor01/StatFlow/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/Revisor01/StatFlow/compare/v1.0...v1.0.1
+[1.0]: https://github.com/Revisor01/StatFlow/compare/v1.3.0...v1.0
 [1.3.0]: https://github.com/Revisor01/StatFlow/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Revisor01/StatFlow/compare/v1.0.0...v1.2.0
-[1.0.0-privacyflow]: https://github.com/Revisor01/StatFlow/releases/tag/v1.0.0
+[1.0.0]: https://github.com/Revisor01/StatFlow/commit/4a74e96
 [0.1.0]: https://github.com/Revisor01/StatFlow/commit/49bcf4c
