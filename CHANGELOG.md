@@ -197,7 +197,7 @@ Erste Fassung als *InsightFlow*.
 [1.0.4]: https://github.com/Revisor01/StatFlow/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/Revisor01/StatFlow/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/Revisor01/StatFlow/compare/v1.0.0-statflow...v1.0.2
-[1.0.0]: https://github.com/Revisor01/StatFlow/releases/tag/v1.0.0-statflow
+[1.0.0]: https://github.com/Revisor01/StatFlow/compare/v2.7...v1.0.0-statflow
 [2.7]: https://github.com/Revisor01/StatFlow/compare/v2.6...v2.7
 [2.6]: https://github.com/Revisor01/StatFlow/compare/v2.5...v2.6
 [2.5]: https://github.com/Revisor01/StatFlow/compare/v2.4...v2.5
@@ -209,4 +209,4 @@ Erste Fassung als *InsightFlow*.
 [1.3.0]: https://github.com/Revisor01/StatFlow/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/Revisor01/StatFlow/compare/v1.0.0...v1.2.0
 [1.0.0-privacyflow]: https://github.com/Revisor01/StatFlow/releases/tag/v1.0.0
-[0.1.0]: https://github.com/Revisor01/StatFlow/releases/tag/v1.0.0
+[0.1.0]: https://github.com/Revisor01/StatFlow/commit/49bcf4c
