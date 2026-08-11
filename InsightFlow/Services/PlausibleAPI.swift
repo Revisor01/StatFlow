@@ -200,6 +200,37 @@ actor PlausibleAPI: AnalyticsProvider {
         }
     }
 
+    /// Native date_range-Kurzformen der Plausible Query API v2.
+    /// Belegt in priv/json-schemas/query-api-schema.json → definitions.date_range_shorthand
+    /// (Tag v3.2.1). "28d", "91d" und "3mo" sind seit CE 3.x nutzbar:
+    /// "28d"/"91d" sind dort explizit gelistet, "3mo" trifft das Muster ^\d+mo$.
+    ///
+    /// Hinweis: DateRange ist ein providerübergreifendes Modell und wurde bewusst
+    /// NICHT erweitert. Diese Kurzperioden gibt es deshalb nicht über DateRange.preset,
+    /// sondern nur über die Methoden mit `shorthand:`-Parameter (siehe unten).
+    enum PlausibleDateShorthand: String, Sendable {
+        case day = "day"
+        case last7Days = "7d"
+        case last28Days = "28d"
+        case last30Days = "30d"
+        case last91Days = "91d"
+        case month = "month"
+        case last3Months = "3mo"
+        case last6Months = "6mo"
+        case last12Months = "12mo"
+        case year = "year"
+        case all = "all"
+
+        /// Nur day/month/year lassen sich laut Schema sinnvoll trimmen
+        /// (include.trim_relative_date_range).
+        var supportsTrimRelativeDateRange: Bool {
+            switch self {
+            case .day, .month, .year: return true
+            default: return false
+            }
+        }
+    }
+
     /// Calculates previous period date range for comparison
     private func plausiblePreviousDateRange(for dateRange: DateRange) -> Any {
         let formatter = DateFormatter()
@@ -391,7 +422,7 @@ actor PlausibleAPI: AnalyticsProvider {
 
         let data = try await postRequest(endpoint: "api/v2/query", body: body)
         let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
-        return response.results.first?.metrics.first.map { Int($0) } ?? 0
+        return response.results.first?.intMetric(at: 0) ?? 0
     }
 
     // MARK: - Metrics
@@ -492,6 +523,199 @@ actor PlausibleAPI: AnalyticsProvider {
 
     func getUTMContent(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
         return try await getBreakdown(websiteId: websiteId, dateRange: dateRange, dimension: "visit:utm_content", filters: filters)
+    }
+
+    // MARK: - Engagement Metrics (Plausible CE 3.x)
+
+    /// Durchschnittliche Scroll-Tiefe pro Seite.
+    /// scroll_depth verlangt laut JSON-Schema einen event:page-Filter ODER
+    /// eine event:page-Dimension — deshalb fest auf ["event:page"] gebrochen.
+    /// Der Wert kann null sein (metrics.ex: default_value(:scroll_depth, …) -> nil),
+    /// wenn keine Engagement-Daten vorliegen; dann bleibt scrollDepth hier nil.
+    ///
+    /// Metrik-Reihenfolge im Response: [0] = scroll_depth, [1] = visitors
+    func getScrollDepth(
+        websiteId: String,
+        dateRange: DateRange,
+        filters: [PlausibleQueryFilter] = [],
+        limit: Int? = nil
+    ) async throws -> [PlausiblePageEngagement] {
+        let body = buildQueryBody(
+            siteId: websiteId,
+            metrics: ["scroll_depth", "visitors"],
+            dateRange: dateRange,
+            dimensions: ["event:page"],
+            filters: filters,
+            limit: limit
+        )
+
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        return response.results.map { apiResult in
+            PlausiblePageEngagement(
+                page: apiResult.dimensions.first ?? "Unknown",
+                visitors: apiResult.intMetric(at: 1),
+                scrollDepth: apiResult.metric(at: 0)
+            )
+        }
+    }
+
+    /// Engagement-Kennzahlen pro Seite.
+    /// time_on_page und scroll_depth verlangen beide eine event:page-Dimension
+    /// oder einen event:page-Filter (JSON-Schema, metric-Definition).
+    ///
+    /// Metrik-Reihenfolge im Response:
+    /// [0] visitors, [1] pageviews, [2] time_on_page, [3] scroll_depth
+    func getPageEngagement(
+        websiteId: String,
+        dateRange: DateRange,
+        filters: [PlausibleQueryFilter] = [],
+        limit: Int? = nil
+    ) async throws -> [PlausiblePageEngagement] {
+        let body = buildQueryBody(
+            siteId: websiteId,
+            metrics: ["visitors", "pageviews", "time_on_page", "scroll_depth"],
+            dateRange: dateRange,
+            dimensions: ["event:page"],
+            filters: filters,
+            limit: limit
+        )
+
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        return response.results.map { apiResult in
+            PlausiblePageEngagement(
+                page: apiResult.dimensions.first ?? "Unknown",
+                visitors: apiResult.intMetric(at: 0),
+                pageviews: apiResult.intMetric(at: 1),
+                timeOnPage: apiResult.metric(at: 2),
+                scrollDepth: apiResult.metric(at: 3)
+            )
+        }
+    }
+
+    // HINWEIS zu exit_rate:
+    // exit_rate steht zwar in lib/plausible/stats/metrics.ex, ist aber in
+    // priv/json-schemas/query-api-schema.json (definitions.metric) NICHT
+    // enthalten. Jeder /api/v2/query-Request wird laut
+    // lib/plausible/stats/json_schema.ex gegen genau dieses Schema validiert
+    // ("internal queries expose some metrics ... not available on the public API").
+    // exit_rate ist damit dashboard-intern und über den API-Key NICHT abfragbar —
+    // deshalb bewusst keine Methode dafür. Ersatz: getExitPages() liefert die
+    // Ausstiegsseiten nach Besuchern.
+
+    /// Aggregierte Engagement-Kennzahlen fürs ganze Site (ohne Dimensionen).
+    /// Hier NUR Metriken, die ohne event:page-Kontext erlaubt sind —
+    /// time_on_page und scroll_depth gehören nicht dazu (siehe getPageEngagement).
+    ///
+    /// Metrik-Reihenfolge im Response:
+    /// [0] visitors, [1] visits, [2] pageviews, [3] views_per_visit,
+    /// [4] bounce_rate, [5] visit_duration
+    func getEngagementSummary(
+        websiteId: String,
+        dateRange: DateRange,
+        filters: [PlausibleQueryFilter] = []
+    ) async throws -> PlausibleEngagementSummary {
+        let body = buildQueryBody(
+            siteId: websiteId,
+            metrics: ["visitors", "visits", "pageviews", "views_per_visit", "bounce_rate", "visit_duration"],
+            dateRange: dateRange,
+            filters: filters
+        )
+
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        guard let result = response.results.first else { return PlausibleEngagementSummary() }
+        return PlausibleEngagementSummary(from: result)
+    }
+
+    /// Wie getEngagementSummary, aber mit nativer Kurzperiode (28d/91d/3mo …),
+    /// die DateRange nicht abbilden kann.
+    func getEngagementSummary(
+        websiteId: String,
+        shorthand: PlausibleDateShorthand,
+        filters: [PlausibleQueryFilter] = [],
+        trimRelativeDateRange: Bool = false
+    ) async throws -> PlausibleEngagementSummary {
+        let body = buildQueryBody(
+            siteId: websiteId,
+            metrics: ["visitors", "visits", "pageviews", "views_per_visit", "bounce_rate", "visit_duration"],
+            shorthand: shorthand,
+            filters: filters,
+            trimRelativeDateRange: trimRelativeDateRange
+        )
+
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        guard let result = response.results.first else { return PlausibleEngagementSummary() }
+        return PlausibleEngagementSummary(from: result)
+    }
+
+    /// Breakdown mit nativer Kurzperiode (28d/91d/3mo …).
+    /// Metrik-Reihenfolge: [0] visitors
+    func getBreakdown(
+        websiteId: String,
+        shorthand: PlausibleDateShorthand,
+        dimension: String,
+        filters: [PlausibleQueryFilter] = [],
+        limit: Int? = nil
+    ) async throws -> [AnalyticsMetricItem] {
+        let body = buildQueryBody(
+            siteId: websiteId,
+            metrics: ["visitors"],
+            shorthand: shorthand,
+            dimensions: [dimension],
+            filters: filters,
+            limit: limit
+        )
+
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        return response.results.map { apiResult in
+            let result = PlausibleBreakdownResult(from: apiResult)
+            return AnalyticsMetricItem(name: result.dimension, value: result.visitors)
+        }
+    }
+
+    // MARK: - Behavioral Filters (Plausible CE 3.x)
+
+    /// Breakdown, eingeschränkt auf Besucher, die ein bestimmtes Goal
+    /// ausgelöst (bzw. NICHT ausgelöst) haben.
+    /// Serialisiert als ["has_done", ["is", "event:goal", ["Signup"]]].
+    func getBreakdownForVisitorsWhoDid(
+        websiteId: String,
+        dateRange: DateRange,
+        dimension: String,
+        goalName: String,
+        negated: Bool = false,
+        additionalFilters: [PlausibleQueryFilter] = [],
+        limit: Int? = nil
+    ) async throws -> [AnalyticsMetricItem] {
+        let behavioral: PlausibleQueryFilter = negated
+            ? .hasNotDone(values: [goalName])
+            : .hasDone(values: [goalName])
+
+        let body = buildQueryBody(
+            siteId: websiteId,
+            metrics: ["visitors"],
+            dateRange: dateRange,
+            dimensions: [dimension],
+            filters: additionalFilters + [behavioral],
+            limit: limit
+        )
+
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        return response.results.map { apiResult in
+            let result = PlausibleBreakdownResult(from: apiResult)
+            return AnalyticsMetricItem(name: result.dimension, value: result.visitors)
+        }
     }
 
     private func getBreakdown(websiteId: String, dateRange: DateRange, dimension: String, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
@@ -639,8 +863,8 @@ actor PlausibleAPI: AnalyticsProvider {
 
         return response.results.map { apiResult in
             let goalName = apiResult.dimensions.first ?? "Unknown"
-            let visitors = apiResult.metrics.count > 0 ? Int(apiResult.metrics[0]) : 0
-            let events = apiResult.metrics.count > 1 ? Int(apiResult.metrics[1]) : 0
+            let visitors = apiResult.intMetric(at: 0)
+            let events = apiResult.intMetric(at: 1)
             return GoalConversion(goalName: goalName, visitors: visitors, events: events)
         }
     }
@@ -746,6 +970,32 @@ actor PlausibleAPI: AnalyticsProvider {
         if !dimensions.isEmpty { body["dimensions"] = dimensions }
         if !filters.isEmpty { body["filters"] = filters.map { $0.toQueryParam() } }
         if let limit = limit { body["limit"] = limit }
+        return body
+    }
+
+    /// Wie buildQueryBody, aber mit nativer date_range-Kurzform statt DateRange.
+    /// Nötig für 28d/91d/3mo, die DateRange nicht abbilden kann.
+    private func buildQueryBody(
+        siteId: String,
+        metrics: [String],
+        shorthand: PlausibleDateShorthand,
+        dimensions: [String] = [],
+        filters: [PlausibleQueryFilter] = [],
+        limit: Int? = nil,
+        trimRelativeDateRange: Bool = false
+    ) -> [String: Any] {
+        var body: [String: Any] = [
+            "site_id": siteId,
+            "metrics": metrics,
+            "date_range": shorthand.rawValue
+        ]
+        if !dimensions.isEmpty { body["dimensions"] = dimensions }
+        if !filters.isEmpty { body["filters"] = filters.map { $0.toQueryParam() } }
+        if let limit = limit { body["limit"] = limit }
+        // include.trim_relative_date_range wirkt laut Schema nur bei day/month/year.
+        if trimRelativeDateRange && shorthand.supportsTrimRelativeDateRange {
+            body["include"] = ["trim_relative_date_range": true]
+        }
         return body
     }
 
@@ -871,9 +1121,106 @@ struct PlausibleAPIResponse: Codable {
     let results: [PlausibleAPIResult]
 }
 
+/// Eine Ergebniszeile der v2-Query-API.
+///
+/// WICHTIG: Metriken werden POSITIONSBASIERT gelesen — die Reihenfolge
+/// entspricht exakt dem "metrics"-Array im Request. Bei jeder neuen Abfrage
+/// muss die Reihenfolge am Aufrufer dokumentiert sein.
+///
+/// Einzelne Werte können `null` sein: metrics.ex (v3.2.1) definiert
+/// default_value(…) -> nil für visit_duration, exit_rate, scroll_depth und
+/// time_on_page. Deshalb:
+///   - `rawMetrics` behält null als nil (für Engagement-Metriken)
+///   - `metrics` bildet null auf 0 ab (Bestandsverhalten für Zählmetriken)
 struct PlausibleAPIResult: Codable {
-    let metrics: [Double]
+    /// Nullable Rohwerte — nil bedeutet "kein Wert", nicht "0".
+    let rawMetrics: [Double?]
     let dimensions: [String]
+
+    /// Kompatibilitäts-Sicht: null wird zu 0. Für Zählmetriken
+    /// (visitors, pageviews, visits, events) unverändert korrekt.
+    var metrics: [Double] { rawMetrics.map { $0 ?? 0 } }
+
+    enum CodingKeys: String, CodingKey {
+        case metrics, dimensions
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        rawMetrics = try container.decodeIfPresent([Double?].self, forKey: .metrics) ?? []
+        dimensions = try container.decodeIfPresent([String].self, forKey: .dimensions) ?? []
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(rawMetrics, forKey: .metrics)
+        try container.encode(dimensions, forKey: .dimensions)
+    }
+
+    /// Zugriff auf eine Metrik-Position; nil bei fehlend ODER null.
+    func metric(at index: Int) -> Double? {
+        guard index >= 0, index < rawMetrics.count else { return nil }
+        return rawMetrics[index]
+    }
+
+    /// Wie metric(at:), aber mit 0 als Fallback für Zählmetriken.
+    func intMetric(at index: Int) -> Int {
+        Int(metric(at: index) ?? 0)
+    }
+}
+
+// MARK: - Engagement Result Models
+
+/// Engagement-Werte pro Seite. Alle Engagement-Metriken sind optional,
+/// weil Plausible ohne passende Daten null liefert.
+struct PlausiblePageEngagement: Identifiable, Sendable {
+    let id = UUID()
+    let page: String
+    let visitors: Int
+    let pageviews: Int
+    /// Durchschnittliche Verweildauer in Sekunden.
+    let timeOnPage: Double?
+    /// Durchschnittliche Scroll-Tiefe in Prozent (0–100).
+    let scrollDepth: Double?
+
+    init(
+        page: String,
+        visitors: Int = 0,
+        pageviews: Int = 0,
+        timeOnPage: Double? = nil,
+        scrollDepth: Double? = nil
+    ) {
+        self.page = page
+        self.visitors = visitors
+        self.pageviews = pageviews
+        self.timeOnPage = timeOnPage
+        self.scrollDepth = scrollDepth
+    }
+}
+
+/// Aggregierte Engagement-Kennzahlen ohne Dimension.
+/// Reihenfolge wie im Request:
+/// [0] visitors, [1] visits, [2] pageviews, [3] views_per_visit,
+/// [4] bounce_rate, [5] visit_duration
+struct PlausibleEngagementSummary: Sendable {
+    var visitors: Int = 0
+    var visits: Int = 0
+    var pageviews: Int = 0
+    var viewsPerVisit: Double?
+    var bounceRate: Double?
+    /// Durchschnittliche Besuchsdauer in Sekunden (kann null sein).
+    var visitDuration: Double?
+
+    init() {}
+
+    init(from apiResult: PlausibleAPIResult) {
+        visitors = apiResult.intMetric(at: 0)
+        visits = apiResult.intMetric(at: 1)
+        pageviews = apiResult.intMetric(at: 2)
+        viewsPerVisit = apiResult.metric(at: 3)
+        bounceRate = apiResult.metric(at: 4)
+        visitDuration = apiResult.metric(at: 5)
+    }
 }
 
 // Helper to parse stats response (metrics in order: visitors, pageviews, visits, bounce_rate, visit_duration)
@@ -887,11 +1234,12 @@ struct PlausibleStatsResult {
     init() {}
 
     init(from apiResult: PlausibleAPIResult) {
-        if apiResult.metrics.count > 0 { visitors = Int(apiResult.metrics[0]) }
-        if apiResult.metrics.count > 1 { pageviews = Int(apiResult.metrics[1]) }
-        if apiResult.metrics.count > 2 { visits = Int(apiResult.metrics[2]) }
-        if apiResult.metrics.count > 3 { bounceRate = apiResult.metrics[3] }
-        if apiResult.metrics.count > 4 { visitDuration = Int(apiResult.metrics[4]) }
+        visitors = apiResult.intMetric(at: 0)
+        pageviews = apiResult.intMetric(at: 1)
+        visits = apiResult.intMetric(at: 2)
+        bounceRate = apiResult.metric(at: 3) ?? 0
+        // visit_duration kann laut metrics.ex null sein → 0 als Fallback
+        visitDuration = apiResult.intMetric(at: 4)
     }
 }
 
@@ -902,7 +1250,7 @@ struct PlausibleTimeseriesResult {
 
     init(from apiResult: PlausibleAPIResult) {
         date = apiResult.dimensions.first ?? ""
-        value = apiResult.metrics.first.map { Int($0) } ?? 0
+        value = apiResult.intMetric(at: 0)
     }
 }
 
@@ -913,7 +1261,7 @@ struct PlausibleBreakdownResult {
 
     init(from apiResult: PlausibleAPIResult) {
         dimension = apiResult.dimensions.first ?? "Unknown"
-        visitors = apiResult.metrics.first.map { Int($0) } ?? 0
+        visitors = apiResult.intMetric(at: 0)
     }
 }
 
