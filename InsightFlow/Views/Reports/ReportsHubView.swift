@@ -174,12 +174,18 @@ struct ReportCategoryCard: View {
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    // Zweizeilig reservieren, damit alle Kacheln gleich hoch bleiben,
+                    // auch wenn ein Untertitel nur eine Zeile braucht.
+                    .lineLimit(2, reservesSpace: true)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
     }
 }
