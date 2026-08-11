@@ -491,6 +491,9 @@
 "reports.goals.subtitle" = "Ziel-Tracking";
 "reports.attribution" = "Herkunft";
 "reports.attribution.subtitle" = "Referrer und Verweise";
+"reports.webvitals.subtitle" = "Ladezeiten deiner Seiten";
+"reports.visittimes.subtitle" = "Wann deine Website besucht wird";
+"reports.revenue.subtitle" = "Umsätze und zahlende Nutzer";
 "attribution.category.referrer" = "Referrer";
 "attribution.category.paidAds" = "Bezahlte Anzeigen";
 "attribution.category.utmSource" = "UTM-Quelle";
@@ -628,3 +631,154 @@
 
 "glossary.term.funnels.title" = "Funnels (Trichter)";
 "glossary.term.funnels.desc" = "Eine Abfolge von Seiten, die Besucher der Reihe nach aufrufen sollen — z.B. Startseite → Preise → Checkout → Danke. Funnels zeigen, wo Besucher in einem mehrstufigen Prozess abspringen.";
+
+// MARK: - Segmente & erweiterte Filter (Umami v3)
+
+"segments.title" = "Segmente & Filter";
+"segments.search.prompt" = "Segmente durchsuchen";
+"segments.section.segments" = "Segmente";
+"segments.section.segments.empty" = "Für diese Website sind keine Segmente angelegt.";
+"segments.section.cohorts" = "Cohorts";
+"segments.section.cohorts.empty" = "Für diese Website sind keine Cohorts angelegt.";
+"segments.none" = "Kein Segment";
+"segments.cohorts.none" = "Keine Cohort";
+"segments.loading" = "Segmente werden geladen …";
+"segments.empty" = "Keine Segmente";
+"segments.empty.description" = "Lege Segmente und Cohorts in Umami an, um deine Statistiken hier gezielt einzugrenzen.";
+"segments.empty.search" = "Keine Treffer";
+"segments.empty.search.description" = "Für deine Suche gibt es weder Segmente noch Cohorts. Versuch einen anderen Begriff.";
+"segments.error" = "Segmente konnten nicht geladen werden";
+"segments.retry" = "Erneut versuchen";
+"segments.unsupported" = "Nur für Umami verfügbar";
+"segments.unsupported.description" = "Segmente und Cohorts gibt es ab Umami v3. Plausible bietet diese Funktion nicht an.";
+
+"filters.title" = "Erweiterte Filter";
+"filters.match.title" = "Verknüpfung";
+"filters.match.all" = "Alle Bedingungen";
+"filters.match.any" = "Beliebige Bedingung";
+"filters.match.all.description" = "Es zählen nur Besuche, auf die alle gesetzten Filter zutreffen.";
+"filters.match.any.description" = "Es zählen Besuche, auf die mindestens ein gesetzter Filter zutrifft.";
+"filters.excludeBounce" = "Absprünge ausschließen";
+"filters.excludeBounce.description" = "Besuche mit nur einem Seitenaufruf werden nicht mitgezählt.";
+
+// MARK: - Web Vitals (Ladezeiten)
+
+"webvitals.title" = "Ladezeiten";
+"webvitals.loading" = "Ladezeiten werden geladen …";
+"webvitals.empty" = "Keine Messwerte";
+"webvitals.empty.description" = "Für diesen Zeitraum liegen keine Ladezeit-Messungen vor. Prüfe, ob das Tracking-Skript auf deiner Website eingebunden ist.";
+"webvitals.offline" = "Offline – Ladezeiten nicht verfügbar";
+"webvitals.error" = "Ladezeiten konnten nicht geladen werden";
+
+"webvitals.metric.picker" = "Kennzahl";
+"webvitals.metric.lcp" = "Größter Inhalt (LCP)";
+"webvitals.metric.lcp.description" = "Wie lange es dauert, bis das größte sichtbare Element der Seite geladen ist. Gut sind höchstens 2,5 Sekunden.";
+"webvitals.metric.inp" = "Reaktionszeit (INP)";
+"webvitals.metric.inp.description" = "Wie schnell die Seite auf Klicks und Eingaben reagiert. Gut sind höchstens 200 Millisekunden.";
+"webvitals.metric.cls" = "Layout-Verschiebung (CLS)";
+"webvitals.metric.cls.description" = "Wie stark Inhalte während des Ladens verrutschen. Der Wert hat keine Einheit — gut sind höchstens 0,1.";
+"webvitals.metric.fcp" = "Erster Inhalt (FCP)";
+"webvitals.metric.fcp.description" = "Wie lange es dauert, bis der erste Inhalt sichtbar wird. Gut sind höchstens 1,8 Sekunden.";
+"webvitals.metric.ttfb" = "Serverantwort (TTFB)";
+"webvitals.metric.ttfb.description" = "Wie lange der Server bis zum ersten Byte der Antwort braucht. Gut sind höchstens 800 Millisekunden.";
+
+"webvitals.rating.good" = "Gut";
+"webvitals.rating.needsImprovement" = "Verbesserungswürdig";
+"webvitals.rating.poor" = "Schlecht";
+"webvitals.rating.basis" = "Bewertet nach dem 75. Perzentil";
+
+"webvitals.percentile.p50" = "p50";
+"webvitals.percentile.p50.hint" = "Hälfte der Aufrufe";
+"webvitals.percentile.p75" = "p75";
+"webvitals.percentile.p75.hint" = "Maßgeblicher Wert";
+"webvitals.percentile.p95" = "p95";
+"webvitals.percentile.p95.hint" = "Langsamste Aufrufe";
+
+"webvitals.samples %lld" = "%lld gemessene Aufrufe";
+
+"webvitals.chart.title" = "Verlauf";
+"webvitals.chart.subtitle" = "Linie: 75. Perzentil, Fläche: Spanne von p50 bis p95";
+"webvitals.chart.empty" = "Für diesen Zeitraum gibt es keinen Verlauf.";
+"webvitals.chart.range" = "Spanne p50–p95";
+"webvitals.chart.median" = "Gestrichelt: Schwellwerte";
+
+"webvitals.pages.title" = "Langsamste Seiten";
+"webvitals.pages.subtitle" = "Sortiert nach dem 75. Perzentil";
+"webvitals.pages.page" = "Seite";
+
+"webvitals.thresholds.title" = "Schwellwerte";
+"webvitals.thresholds.note" = "Die Schwellwerte stammen aus den offiziellen Core Web Vitals von Google.";
+"webvitals.threshold.good" = "Schwelle gut";
+"webvitals.threshold.poor" = "Schwelle schlecht";
+"webvitals.threshold.upTo %@" = "bis %@";
+"webvitals.threshold.between %@ %@" = "%1$@ bis %2$@";
+"webvitals.threshold.above %@" = "über %@";
+
+"webvitals.axis.time" = "Zeit";
+"webvitals.axis.score" = "Wert";
+"webvitals.unit.milliseconds %@" = "%@ ms";
+"webvitals.unit.seconds %@" = "%@ s";
+
+// MARK: - Umsatz (Revenue, Umami v3)
+
+"revenue.title" = "Umsatz";
+"revenue.loading" = "Umsatzdaten werden geladen …";
+"revenue.error" = "Umsatzdaten konnten nicht geladen werden";
+"revenue.offline" = "Keine Verbindung — Daten können veraltet sein.";
+
+"revenue.empty" = "Noch kein Umsatz erfasst";
+"revenue.empty.description" = "Für diesen Zeitraum und diese Währung liegen keine Umsatzdaten vor.";
+"revenue.setup.title" = "So wird Umsatz erfasst";
+"revenue.setup.description" = "Umami zeichnet Umsatz nur auf, wenn deine Website Ereignisse mit einem Betrag und einer Währung sendet. Prüfe außerdem, ob die hier gewählte Währung zu deinem Tracking passt.";
+
+"revenue.unsupported" = "Nur mit Umami verfügbar";
+"revenue.unsupported.description" = "Plausible kennt keine Umsatzauswertung. Wechsle zu einem Umami-Konto, um Umsätze zu sehen.";
+
+"revenue.currency" = "Währung";
+"revenue.currency.hint" = "Umami liefert die Währung nicht mit — wähle die, in der dein Tracking Beträge sendet.";
+
+"revenue.sum" = "Gesamtumsatz";
+"revenue.count" = "Transaktionen";
+"revenue.average" = "Durchschnitt pro Transaktion";
+"revenue.arpu" = "Durchschnitt pro Nutzer";
+"revenue.uniqueCustomers" = "Zahlende Nutzer";
+"revenue.change.up %@" = "%@ Prozent mehr als im Vorzeitraum";
+"revenue.change.down %@" = "%@ Prozent weniger als im Vorzeitraum";
+
+"revenue.chart.title" = "Umsatzverlauf";
+"revenue.chart.empty" = "Für diesen Zeitraum gibt es keinen Verlauf.";
+"revenue.axis.time" = "Zeit";
+"revenue.axis.amount" = "Umsatz";
+
+"revenue.events.title" = "Umsatz nach Ereignis";
+
+// MARK: - Besuchszeiten (Visit Times, Umami v3)
+
+"visittimes.title" = "Besuchszeiten";
+"visittimes.loading" = "Besuchszeiten werden geladen …";
+"visittimes.error" = "Besuchszeiten konnten nicht geladen werden";
+"visittimes.offline" = "Keine Verbindung — Daten können veraltet sein.";
+
+"visittimes.empty" = "Keine Besuchszeiten";
+"visittimes.empty.description" = "Für diesen Zeitraum wurden keine Besuche aufgezeichnet.";
+
+"webvitals.unsupported" = "Nur mit Umami verfügbar";
+"webvitals.unsupported.description" = "Ladezeiten werden ab Umami 3 erfasst. Plausible bietet diese Auswertung nicht an.";
+"visittimes.unsupported" = "Nur mit Umami verfügbar";
+"visittimes.unsupported.description" = "Plausible liefert keine Aufschlüsselung nach Wochentag und Stunde. Wechsle zu einem Umami-Konto, um Besuchszeiten zu sehen.";
+
+"visittimes.visits" = "Besuche";
+"visittimes.visitors" = "Besucher:innen";
+"visittimes.pageviews" = "Seitenaufrufe";
+"visittimes.countries" = "Länder";
+"visittimes.peak" = "Stärkste Zeit";
+
+"visittimes.heatmap.title" = "Woche im Überblick";
+"visittimes.heatmap.subtitle" = "Je kräftiger die Farbe, desto mehr Besuche in dieser Stunde.";
+"visittimes.legend.less" = "weniger";
+"visittimes.legend.more" = "mehr";
+"visittimes.legend.max %lld" = "Maximum: %lld";
+"visittimes.cell.accessibility %@ %@ %lld" = "%1$@, %2$@: %3$lld Besuche";
+
+"visittimes.hours.title" = "Verteilung über den Tag";
+"visittimes.hours.subtitle" = "Alle Wochentage zusammengefasst, in Stunden deiner Zeitzone.";

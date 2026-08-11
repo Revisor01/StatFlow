@@ -490,6 +490,9 @@
 "reports.goals.subtitle" = "Goal tracking";
 "reports.attribution" = "Sources";
 "reports.attribution.subtitle" = "Referrers and traffic sources";
+"reports.webvitals.subtitle" = "Page loading times";
+"reports.visittimes.subtitle" = "When your site is visited";
+"reports.revenue.subtitle" = "Revenue and paying users";
 "attribution.category.referrer" = "Referrer";
 "attribution.category.paidAds" = "Paid Ads";
 "attribution.category.utmSource" = "UTM Source";
@@ -627,3 +630,154 @@
 
 "glossary.term.funnels.title" = "Funnels";
 "glossary.term.funnels.desc" = "A sequence of pages a visitor should visit in order — for example: Homepage → Pricing → Checkout → Thank You. Funnels reveal where people drop off in a multi-step process.";
+
+// MARK: - Segments & advanced filters (Umami v3)
+
+"segments.title" = "Segments & Filters";
+"segments.search.prompt" = "Search segments";
+"segments.section.segments" = "Segments";
+"segments.section.segments.empty" = "No segments have been created for this website.";
+"segments.section.cohorts" = "Cohorts";
+"segments.section.cohorts.empty" = "No cohorts have been created for this website.";
+"segments.none" = "No segment";
+"segments.cohorts.none" = "No cohort";
+"segments.loading" = "Loading segments …";
+"segments.empty" = "No segments";
+"segments.empty.description" = "Create segments and cohorts in Umami to narrow down your stats here.";
+"segments.empty.search" = "No matches";
+"segments.empty.search.description" = "No segments or cohorts match your search. Try a different term.";
+"segments.error" = "Couldn't load segments";
+"segments.retry" = "Try again";
+"segments.unsupported" = "Available for Umami only";
+"segments.unsupported.description" = "Segments and cohorts require Umami v3. Plausible doesn't offer this feature.";
+
+"filters.title" = "Advanced Filters";
+"filters.match.title" = "Match";
+"filters.match.all" = "All conditions";
+"filters.match.any" = "Any condition";
+"filters.match.all.description" = "Only visits matching every active filter are counted.";
+"filters.match.any.description" = "Visits matching at least one active filter are counted.";
+"filters.excludeBounce" = "Exclude bounces";
+"filters.excludeBounce.description" = "Visits with only a single page view are not counted.";
+
+// MARK: - Web Vitals (Loading Performance)
+
+"webvitals.title" = "Web Vitals";
+"webvitals.loading" = "Loading web vitals …";
+"webvitals.empty" = "No measurements";
+"webvitals.empty.description" = "There are no performance measurements for this period. Check whether the tracking script is embedded on your website.";
+"webvitals.offline" = "Offline – web vitals unavailable";
+"webvitals.error" = "Could not load web vitals";
+
+"webvitals.metric.picker" = "Metric";
+"webvitals.metric.lcp" = "Largest Contentful Paint (LCP)";
+"webvitals.metric.lcp.description" = "How long it takes for the largest visible element on the page to load. Good is 2.5 seconds or less.";
+"webvitals.metric.inp" = "Interaction to Next Paint (INP)";
+"webvitals.metric.inp.description" = "How quickly the page responds to clicks and input. Good is 200 milliseconds or less.";
+"webvitals.metric.cls" = "Cumulative Layout Shift (CLS)";
+"webvitals.metric.cls.description" = "How much content moves around while the page loads. The value has no unit — good is 0.1 or less.";
+"webvitals.metric.fcp" = "First Contentful Paint (FCP)";
+"webvitals.metric.fcp.description" = "How long it takes for the first content to become visible. Good is 1.8 seconds or less.";
+"webvitals.metric.ttfb" = "Time to First Byte (TTFB)";
+"webvitals.metric.ttfb.description" = "How long the server takes to send the first byte of its response. Good is 800 milliseconds or less.";
+
+"webvitals.rating.good" = "Good";
+"webvitals.rating.needsImprovement" = "Needs improvement";
+"webvitals.rating.poor" = "Poor";
+"webvitals.rating.basis" = "Rated by the 75th percentile";
+
+"webvitals.percentile.p50" = "p50";
+"webvitals.percentile.p50.hint" = "Half of all views";
+"webvitals.percentile.p75" = "p75";
+"webvitals.percentile.p75.hint" = "Decisive value";
+"webvitals.percentile.p95" = "p95";
+"webvitals.percentile.p95.hint" = "Slowest views";
+
+"webvitals.samples %lld" = "%lld measured views";
+
+"webvitals.chart.title" = "Over time";
+"webvitals.chart.subtitle" = "Line: 75th percentile, area: range from p50 to p95";
+"webvitals.chart.empty" = "There is no timeline for this period.";
+"webvitals.chart.range" = "Range p50–p95";
+"webvitals.chart.median" = "Dashed: thresholds";
+
+"webvitals.pages.title" = "Slowest pages";
+"webvitals.pages.subtitle" = "Sorted by the 75th percentile";
+"webvitals.pages.page" = "Page";
+
+"webvitals.thresholds.title" = "Thresholds";
+"webvitals.thresholds.note" = "Thresholds are taken from Google's official Core Web Vitals.";
+"webvitals.threshold.good" = "Good threshold";
+"webvitals.threshold.poor" = "Poor threshold";
+"webvitals.threshold.upTo %@" = "up to %@";
+"webvitals.threshold.between %@ %@" = "%1$@ to %2$@";
+"webvitals.threshold.above %@" = "above %@";
+
+"webvitals.axis.time" = "Time";
+"webvitals.axis.score" = "Value";
+"webvitals.unit.milliseconds %@" = "%@ ms";
+"webvitals.unit.seconds %@" = "%@ s";
+
+// MARK: - Revenue (Umami v3)
+
+"revenue.title" = "Revenue";
+"revenue.loading" = "Loading revenue data …";
+"revenue.error" = "Revenue data could not be loaded";
+"revenue.offline" = "No connection — data may be outdated.";
+
+"revenue.empty" = "No revenue recorded yet";
+"revenue.empty.description" = "There is no revenue data for this period and currency.";
+"revenue.setup.title" = "How revenue is tracked";
+"revenue.setup.description" = "Umami only records revenue when your website sends events that include an amount and a currency. Also check whether the currency selected here matches your tracking.";
+
+"revenue.unsupported" = "Available with Umami only";
+"revenue.unsupported.description" = "Plausible has no revenue reporting. Switch to an Umami account to see revenue.";
+
+"revenue.currency" = "Currency";
+"revenue.currency.hint" = "Umami does not report the currency — pick the one your tracking sends amounts in.";
+
+"revenue.sum" = "Total revenue";
+"revenue.count" = "Transactions";
+"revenue.average" = "Average per transaction";
+"revenue.arpu" = "Average per user";
+"revenue.uniqueCustomers" = "Paying users";
+"revenue.change.up %@" = "%@ percent more than the previous period";
+"revenue.change.down %@" = "%@ percent less than the previous period";
+
+"revenue.chart.title" = "Revenue over time";
+"revenue.chart.empty" = "There is no timeline for this period.";
+"revenue.axis.time" = "Time";
+"revenue.axis.amount" = "Revenue";
+
+"revenue.events.title" = "Revenue by event";
+
+// MARK: - Visit Times (Umami v3)
+
+"visittimes.title" = "Visit times";
+"visittimes.loading" = "Loading visit times …";
+"visittimes.error" = "Visit times could not be loaded";
+"visittimes.offline" = "No connection — data may be outdated.";
+
+"visittimes.empty" = "No visit times";
+"visittimes.empty.description" = "No visits were recorded for this period.";
+
+"webvitals.unsupported" = "Available with Umami only";
+"webvitals.unsupported.description" = "Loading times are collected from Umami 3 onwards. Plausible does not offer this report.";
+"visittimes.unsupported" = "Available with Umami only";
+"visittimes.unsupported.description" = "Plausible does not provide a breakdown by weekday and hour. Switch to an Umami account to see visit times.";
+
+"visittimes.visits" = "Visits";
+"visittimes.visitors" = "Visitors";
+"visittimes.pageviews" = "Page views";
+"visittimes.countries" = "Countries";
+"visittimes.peak" = "Busiest time";
+
+"visittimes.heatmap.title" = "The week at a glance";
+"visittimes.heatmap.subtitle" = "The stronger the color, the more visits in that hour.";
+"visittimes.legend.less" = "less";
+"visittimes.legend.more" = "more";
+"visittimes.legend.max %lld" = "Maximum: %lld";
+"visittimes.cell.accessibility %@ %@ %lld" = "%1$@, %2$@: %3$lld visits";
+
+"visittimes.hours.title" = "Distribution across the day";
+"visittimes.hours.subtitle" = "All weekdays combined, in hours of your time zone.";
