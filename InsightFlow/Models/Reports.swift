@@ -162,3 +162,152 @@ struct AttributionItem: Identifiable, Sendable {
 }
 
 
+// MARK: - Umami v3 Performance / Web Vitals
+
+/// Antwort von POST `api/reports/performance`.
+/// `chart` zeigt die Perzentile der über `metric` gewählten Kennzahl im
+/// Zeitverlauf, `summary` alle fünf Web Vitals über den ganzen Zeitraum.
+struct UmamiPerformanceReport: Codable, Sendable {
+    let chart: [UmamiPerformanceChartPoint]
+    let summary: UmamiPerformanceSummary
+    let pages: [UmamiPerformanceMetric]
+    let pageTitles: [UmamiPerformanceMetric]
+    let devices: [UmamiPerformanceMetric]
+    let browsers: [UmamiPerformanceMetric]
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        chart = (try? container.decodeIfPresent([UmamiPerformanceChartPoint].self, forKey: .chart)) as? [UmamiPerformanceChartPoint] ?? []
+        summary = try container.decode(UmamiPerformanceSummary.self, forKey: .summary)
+        pages = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .pages)) as? [UmamiPerformanceMetric] ?? []
+        pageTitles = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .pageTitles)) as? [UmamiPerformanceMetric] ?? []
+        devices = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .devices)) as? [UmamiPerformanceMetric] ?? []
+        browsers = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .browsers)) as? [UmamiPerformanceMetric] ?? []
+    }
+}
+
+/// Web-Vital-Kennzahl, die der Performance-Report als Zeitreihe ausgibt.
+/// FID gibt es in v3 nicht mehr — der Nachfolger heißt INP.
+enum UmamiWebVitalMetric: String, Sendable, CaseIterable {
+    case lcp
+    case inp
+    case cls
+    case fcp
+    case ttfb
+}
+
+/// Perzentil-Tripel, in dem Umami jede Web-Vital-Kennzahl ausdrückt.
+struct UmamiPercentiles: Codable, Sendable {
+    let p50: Double
+    let p75: Double
+    let p95: Double
+
+    enum CodingKeys: String, CodingKey {
+        case p50, p75, p95
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        func number(_ key: CodingKeys) -> Double {
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
+            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+            return 0
+        }
+        p50 = number(.p50)
+        p75 = number(.p75)
+        p95 = number(.p95)
+    }
+}
+
+struct UmamiPerformanceChartPoint: Codable, Sendable {
+    let t: String?
+    let p50: Double
+    let p75: Double
+    let p95: Double
+
+    enum CodingKeys: String, CodingKey {
+        case t, p50, p75, p95
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        t = try? container.decodeIfPresent(String.self, forKey: .t)
+        func number(_ key: CodingKeys) -> Double {
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
+            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+            return 0
+        }
+        p50 = number(.p50)
+        p75 = number(.p75)
+        p95 = number(.p95)
+    }
+}
+
+/// `summary` enthält alle fünf Vitals plus die Zahl der ausgewerteten Events.
+struct UmamiPerformanceSummary: Codable, Sendable {
+    let lcp: UmamiPercentiles
+    let inp: UmamiPercentiles
+    let cls: UmamiPercentiles
+    let fcp: UmamiPercentiles
+    let ttfb: UmamiPercentiles
+    let count: Double
+
+    enum CodingKeys: String, CodingKey {
+        case lcp, inp, cls, fcp, ttfb, count
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        lcp = try container.decode(UmamiPercentiles.self, forKey: .lcp)
+        inp = try container.decode(UmamiPercentiles.self, forKey: .inp)
+        cls = try container.decode(UmamiPercentiles.self, forKey: .cls)
+        fcp = try container.decode(UmamiPercentiles.self, forKey: .fcp)
+        ttfb = try container.decode(UmamiPercentiles.self, forKey: .ttfb)
+        if let value = try? container.decodeIfPresent(Double.self, forKey: .count) {
+            count = value ?? 0
+        } else if let value = try? container.decodeIfPresent(String.self, forKey: .count) {
+            count = Double(value ?? "") ?? 0
+        } else {
+            count = 0
+        }
+    }
+
+    func percentiles(for metric: UmamiWebVitalMetric) -> UmamiPercentiles {
+        switch metric {
+        case .lcp: return lcp
+        case .inp: return inp
+        case .cls: return cls
+        case .fcp: return fcp
+        case .ttfb: return ttfb
+        }
+    }
+}
+
+/// Aufschlüsselung der gewählten Kennzahl nach Seite, Titel, Gerät oder Browser.
+struct UmamiPerformanceMetric: Codable, Sendable, Identifiable {
+    let name: String?
+    let p50: Double
+    let p75: Double
+    let p95: Double
+    let count: Double
+
+    var id: String { name ?? "" }
+
+    enum CodingKeys: String, CodingKey {
+        case name, p50, p75, p95, count
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try? container.decodeIfPresent(String.self, forKey: .name)
+        func number(_ key: CodingKeys) -> Double {
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
+            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+            return 0
+        }
+        p50 = number(.p50)
+        p75 = number(.p75)
+        p95 = number(.p95)
+        count = number(.count)
+    }
+}
