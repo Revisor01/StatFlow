@@ -414,6 +414,7 @@
 "error.invalidResponse" = "Invalid server response";
 "error.unauthorized" = "Unauthorized - please check your credentials";
 "error.server %lld" = "Server error: %lld";
+"error.plausible.sitesAPIUnavailable" = "This function requires the Plausible Sites API, which is only available in Plausible Cloud and Enterprise. Self-hosted Community Edition servers do not provide it.";
 
 // MARK: - Account Switcher
 "account.switcher.title" = "Accounts";
