@@ -47,6 +47,7 @@ struct WebsiteDetailView: View {
     @State private var customEndDate = Date()
     @State private var showFilterSheet = false
     @State private var filterSheetDimension: String?
+    @State private var showSegmentPicker = false
 
     private var isPlausible: Bool {
         AnalyticsManager.shared.providerType == .plausible
@@ -143,6 +144,20 @@ struct WebsiteDetailView: View {
                     }
                 }
             }
+
+            // Segmente und erweiterte Filter gibt es nur bei Umami.
+            if !isPlausible {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showSegmentPicker = true
+                    } label: {
+                        Label(
+                            String(localized: "segments.title"),
+                            systemImage: "line.3.horizontal.decrease.circle"
+                        )
+                    }
+                }
+            }
         }
         .refreshable {
             await viewModel.loadData(dateRange: selectedDateRange)
@@ -236,6 +251,13 @@ struct WebsiteDetailView: View {
                 showCustomDatePicker = false
             }
             .presentationDetents([.medium])
+        }
+        // Segmente/Cohorts gibt es nur bei Umami ab v3.
+        .sheet(isPresented: $showSegmentPicker) {
+            // Die Filter liegen im UmamiAPI-Actor, deshalb nach dem Schließen neu laden.
+            Task { await viewModel.loadData(dateRange: selectedDateRange) }
+        } content: {
+            SegmentPickerView(website: website)
         }
     }
 

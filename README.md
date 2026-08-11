@@ -33,14 +33,14 @@
 
 | Anbieter | API | Funktionen |
 |----------|-----|------------|
-| **Umami** | REST API | Alle Funktionen inkl. Sessions, Journeys, Share-Links |
-| **Plausible** | Stats API v2 | Dashboard, Diagramme, Metriken (keine Einzelsitzungen) |
+| **Umami** | REST API | Alle Funktionen inkl. Sessions, Journeys, Share-Links, Segmente, Ladezeiten (Web Vitals), Besuchszeiten und Umsatz |
+| **Plausible** | Stats API v2 | Dashboard, Diagramme, Metriken inkl. Scrolltiefe und Verhaltensfiltern (keine Einzelsitzungen) |
 
 ### Server-Kompatibilität
 
 | Anbieter | Benötigte Version | Anmerkung |
 |----------|-------------------|-----------|
-| **Umami** | **ab 3.0** (self-hosted) | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. |
+| **Umami** | **ab 3.0** (self-hosted) | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. Segmente, Web Vitals, Besuchszeiten und Umsatz gibt es ebenfalls erst ab v3. |
 | **Plausible** | **ab CE 2.1** bzw. Cloud | Erst ab CE 2.1 gibt es die Query-API `POST /api/v2/query`. Zusätzlich wird `GET /api/v1/stats/realtime/visitors` für Echtzeitdaten genutzt. |
 
 **Wichtige Einschränkungen:**
