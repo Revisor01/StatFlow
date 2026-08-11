@@ -336,11 +336,15 @@ struct Provider: AppIntentTimelineProvider {
             let activeURL = baseURL.appendingPathComponent("api/websites/\(website.id)/active")
             var activeReq = URLRequest(url: activeURL)
             activeReq.setValue("Bearer \(creds.token)", forHTTPHeaderField: "Authorization")
+            // Umami liefert {"visitors": n} — sowohl in v2 als auch in v3.
+            // "x" ist ein Altformat und bleibt nur als Rückfall stehen.
             var active = 0
             if let (activeData, _) = try? await URLSession.shared.data(for: activeReq),
-               let activeJson = try? JSONSerialization.jsonObject(with: activeData) as? [String: Any],
-               let x = activeJson["x"] as? Int {
-                active = x
+               let activeJson = try? JSONSerialization.jsonObject(with: activeData) as? [String: Any] {
+                if let v = activeJson["visitors"] as? Int { active = v }
+                else if let v = activeJson["visitors"] as? Double { active = Int(v) }
+                else if let v = activeJson["x"] as? Int { active = v }
+                else if let v = activeJson["x"] as? Double { active = Int(v) }
             }
 
             widgetLog("Umami returning: visitors=\(visitors), pageviews=\(pageviews), sparkline.count=\(sparkline.count)")

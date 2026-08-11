@@ -538,6 +538,9 @@ actor PlausibleAPI: AnalyticsProvider {
             if httpResponse.statusCode == 401 {
                 throw PlausibleError.unauthorized
             }
+            if httpResponse.statusCode == 404 {
+                throw PlausibleError.sitesAPIUnavailable
+            }
             throw PlausibleError.serverError(httpResponse.statusCode)
         }
 
@@ -567,6 +570,9 @@ actor PlausibleAPI: AnalyticsProvider {
         guard httpResponse.statusCode == 200 || httpResponse.statusCode == 204 else {
             if httpResponse.statusCode == 401 {
                 throw PlausibleError.unauthorized
+            }
+            if httpResponse.statusCode == 404 {
+                throw PlausibleError.sitesAPIUnavailable
             }
             throw PlausibleError.serverError(httpResponse.statusCode)
         }
@@ -607,6 +613,9 @@ actor PlausibleAPI: AnalyticsProvider {
         guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
             if httpResponse.statusCode == 401 {
                 throw PlausibleError.unauthorized
+            }
+            if httpResponse.statusCode == 404 {
+                throw PlausibleError.sitesAPIUnavailable
             }
             throw PlausibleError.serverError(httpResponse.statusCode)
         }
@@ -670,6 +679,9 @@ actor PlausibleAPI: AnalyticsProvider {
             if httpResponse.statusCode == 401 {
                 throw PlausibleError.unauthorized
             }
+            if httpResponse.statusCode == 404 {
+                throw PlausibleError.sitesAPIUnavailable
+            }
             throw PlausibleError.serverError(httpResponse.statusCode)
         }
 
@@ -699,6 +711,9 @@ actor PlausibleAPI: AnalyticsProvider {
         guard httpResponse.statusCode == 200 || httpResponse.statusCode == 204 else {
             if httpResponse.statusCode == 401 {
                 throw PlausibleError.unauthorized
+            }
+            if httpResponse.statusCode == 404 {
+                throw PlausibleError.sitesAPIUnavailable
             }
             throw PlausibleError.serverError(httpResponse.statusCode)
         }
@@ -757,6 +772,9 @@ actor PlausibleAPI: AnalyticsProvider {
         guard httpResponse.statusCode == 200 else {
             if httpResponse.statusCode == 401 {
                 throw PlausibleError.unauthorized
+            }
+            if httpResponse.statusCode == 404 {
+                throw PlausibleError.sitesAPIUnavailable
             }
             throw PlausibleError.serverError(httpResponse.statusCode)
         }
@@ -913,6 +931,9 @@ enum PlausibleError: LocalizedError {
     case unauthorized
     case serverError(Int)
     case apiError(String)
+    /// Die Sites-API (Sites, Goals, Shared Links) gibt es nur in Plausible
+    /// Cloud/Enterprise — auf Community-Edition-Servern ist sie nicht vorhanden.
+    case sitesAPIUnavailable
 
     var errorDescription: String? {
         switch self {
@@ -928,6 +949,8 @@ enum PlausibleError: LocalizedError {
             return String(localized: "error.server \(code)")
         case .apiError(let message):
             return message
+        case .sitesAPIUnavailable:
+            return String(localized: "error.plausible.sitesAPIUnavailable")
         }
     }
 }

@@ -14,6 +14,12 @@ actor UmamiAPI: AnalyticsProvider {
         activeFilters = filters
     }
 
+    /// Zeitzone des Geräts — muss mitgesendet werden, damit Umami dieselbe
+    /// Tages-/Stundeneinteilung verwendet wie das Widget.
+    private var timezoneQueryItem: URLQueryItem {
+        URLQueryItem(name: "timezone", value: TimeZone.current.identifier)
+    }
+
     /// Convert active filters to Umami URL query parameters
     private var filterQueryItems: [URLQueryItem] {
         activeFilters.compactMap { filter in
@@ -322,7 +328,8 @@ actor UmamiAPI: AnalyticsProvider {
             endpoint: "api/websites/\(websiteId)/stats",
             queryItems: [
                 URLQueryItem(name: "startAt", value: String(startAt)),
-                URLQueryItem(name: "endAt", value: String(endAt))
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                timezoneQueryItem
             ] + filterQueryItems
         )
         let response = try decoder.decode(WebsiteStatsResponse.self, from: data)
@@ -339,7 +346,8 @@ actor UmamiAPI: AnalyticsProvider {
             queryItems: [
                 URLQueryItem(name: "startAt", value: String(startAt)),
                 URLQueryItem(name: "endAt", value: String(endAt)),
-                URLQueryItem(name: "unit", value: dateRange.unit)
+                URLQueryItem(name: "unit", value: dateRange.unit),
+                timezoneQueryItem
             ] + filterQueryItems
         )
         return try decoder.decode(PageviewsData.self, from: data)
@@ -801,7 +809,8 @@ actor UmamiAPI: AnalyticsProvider {
                 URLQueryItem(name: "endAt", value: String(endAt)),
                 URLQueryItem(name: "type", value: type.rawValue),
                 URLQueryItem(name: "unit", value: dateRange.unit),
-                URLQueryItem(name: "limit", value: String(limit))
+                URLQueryItem(name: "limit", value: String(limit)),
+                timezoneQueryItem
             ] + filterQueryItems
         )
         if let jsonString = String(data: data, encoding: .utf8) {
