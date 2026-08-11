@@ -19,6 +19,16 @@ ersten Store-Veröffentlichung.
 ### Hinzugefügt
 
 - Screenshots im README (`docs/screenshots/`).
+- Übersicht der unterstützten Server-Versionen von Umami und Plausible samt bekannter
+  Einschränkungen in der Dokumentation.
+
+### Behoben
+
+- Widgets zeigten bei Umami dauerhaft null aktive Besucher an.
+- Widgets und App konnten für denselben Zeitraum unterschiedliche Zahlen anzeigen, weil die
+  Zeitzone des Geräts nicht überall berücksichtigt wurde.
+- Funktionen, die es auf selbst gehosteten Plausible-Servern nicht gibt (Websites anlegen,
+  Ziele verwalten, Share-Links), melden das jetzt verständlich statt mit einem Serverfehler.
 
 ### Entfernt
 

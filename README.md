@@ -36,6 +36,19 @@
 | **Umami** | REST API | Alle Funktionen inkl. Sessions, Journeys, Share-Links |
 | **Plausible** | Stats API v2 | Dashboard, Diagramme, Metriken (keine Einzelsitzungen) |
 
+### Server-Kompatibilität
+
+| Anbieter | Benötigte Version | Anmerkung |
+|----------|-------------------|-----------|
+| **Umami** | **ab 3.0** (self-hosted) | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. |
+| **Plausible** | **ab CE 2.1** bzw. Cloud | Erst ab CE 2.1 gibt es die Query-API `POST /api/v2/query`. Zusätzlich wird `GET /api/v1/stats/realtime/visitors` für Echtzeitdaten genutzt. |
+
+**Wichtige Einschränkungen:**
+
+- **Umami Cloud wird derzeit nicht unterstützt.** Die App meldet sich über `POST /api/auth/login` an und nutzt ein Bearer-Token. Umami Cloud (`api.umami.is`) verlangt stattdessen einen `x-umami-api-key`-Header. Es funktionieren also nur selbst gehostete Instanzen.
+- **Plausibles Sites-API ist Cloud/Enterprise-only.** Websites anlegen und löschen, Ziele verwalten und Share-Links erzeugen laufen über `/api/v1/sites…`. Diese Routen gibt es in der Community Edition nicht — auf CE-Servern meldet die App das als nicht verfügbar. Dashboard, Diagramme und alle Statistiken funktionieren dort uneingeschränkt.
+- Die Plausible-Stats-API v1 ist zwar als „legacy" markiert, in CE 3.2 aber weiterhin verfügbar; ein Abschalttermin ist nicht angekündigt.
+
 ## Architektur
 
 StatFlow verwendet MVVM mit klarer Schichttrennung und einem einheitlichen Provider-Protokoll, das Umami und Plausible abstrahiert.
@@ -88,7 +101,9 @@ StatFlow verwendet MVVM mit klarer Schichttrennung und einem einheitlichen Provi
 ## Voraussetzungen
 
 - iOS 18.0+
-- Eigene Umami-Instanz (Self-Hosted oder Cloud) **oder** eigene Plausible-Instanz (Self-Hosted oder Cloud)
+- Eigene Umami-Instanz ab Version 3.0 (self-hosted) **oder** eigene Plausible-Instanz ab CE 2.1 bzw. Plausible Cloud
+
+Details und Einschränkungen siehe [Server-Kompatibilität](#server-kompatibilität).
 
 ## Installation
 
