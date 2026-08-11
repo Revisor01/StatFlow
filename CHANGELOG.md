@@ -14,7 +14,7 @@ Die Versionen 1.0 bis 1.0.6 sind die im App Store ausgelieferten Releases. Die V
 0.1.0 bis 1.3.0 stammen aus der Vorgeschichte als InsightFlow bzw. PrivacyFlow, vor der
 ersten Store-Veröffentlichung.
 
-## [Unreleased]
+## [Unreleased] - 1.0.7
 
 ### Hinzugefügt
 
