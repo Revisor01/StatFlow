@@ -20,11 +20,126 @@ actor UmamiAPI: AnalyticsProvider {
         URLQueryItem(name: "timezone", value: TimeZone.current.identifier)
     }
 
-    /// Convert active filters to Umami URL query parameters
+    /// Segment-UUID, die an alle Datenabfragen angehängt wird (v3).
+    var activeSegmentId: String?
+
+    /// Cohort-UUID, die an alle Datenabfragen angehängt wird (v3).
+    var activeCohortId: String?
+
+    /// Verknüpfung mehrerer Filter: `all` (UND) oder `any` (ODER).
+    var filterMatch: UmamiFilterMatch?
+
+    /// Nur Sessions ohne Bounce berücksichtigen (v3-Parameter `excludeBounce`).
+    var excludeBounce: Bool = false
+
+    func setSegment(_ segmentId: String?) {
+        activeSegmentId = segmentId
+    }
+
+    func setCohort(_ cohortId: String?) {
+        activeCohortId = cohortId
+    }
+
+    func setFilterMatch(_ match: UmamiFilterMatch?) {
+        filterMatch = match
+    }
+
+    func setExcludeBounce(_ exclude: Bool) {
+        excludeBounce = exclude
+    }
+
+    /// Convert active filters to Umami URL query parameters.
+    ///
+    /// Umami v3 kodiert Operator und Werte im Wert selbst: `<operator>.<value>`,
+    /// wobei `eq`/`neq` mehrere Werte kommasepariert entgegennehmen. Mehrere
+    /// Filter auf derselben Dimension bekommen einen numerischen Suffix
+    /// (`path`, `path2`, …), den Umami serverseitig wieder abschneidet.
+    /// Zusätzlich hängen wir hier segment/cohort/match/excludeBounce an.
     private var filterQueryItems: [URLQueryItem] {
-        activeFilters.compactMap { filter in
-            guard let value = filter.values.first else { return nil }
-            return URLQueryItem(name: filter.dimension, value: value)
+        var items: [URLQueryItem] = []
+        var seen: [String: Int] = [:]
+
+        for filter in activeFilters {
+            guard let dimension = Self.umamiFilterName(for: filter.dimension) else { continue }
+            guard !filter.values.isEmpty else { continue }
+
+            let op = Self.umamiOperator(for: filter.operator_)
+            let encodedValue: String
+            if op == "eq" || op == "neq" {
+                // Gleichheitsoperatoren akzeptieren eine Werteliste.
+                encodedValue = "\(op).\(filter.values.joined(separator: ","))"
+            } else {
+                encodedValue = "\(op).\(filter.values[0])"
+            }
+
+            let count = (seen[dimension] ?? 0) + 1
+            seen[dimension] = count
+            // Der erste Filter je Dimension bleibt unsuffigiert.
+            let name = count == 1 ? dimension : "\(dimension)\(count)"
+            items.append(URLQueryItem(name: name, value: encodedValue))
+        }
+
+        if let activeSegmentId {
+            items.append(URLQueryItem(name: "segment", value: activeSegmentId))
+        }
+        if let activeCohortId {
+            items.append(URLQueryItem(name: "cohort", value: activeCohortId))
+        }
+        if let filterMatch {
+            items.append(URLQueryItem(name: "match", value: filterMatch.rawValue))
+        }
+        if excludeBounce {
+            items.append(URLQueryItem(name: "excludeBounce", value: "true"))
+        }
+
+        return items
+    }
+
+    /// Erlaubte Filterspalten laut `filterParams` in Umami v3.
+    /// Alles andere verwirft der Server ohnehin, daher hier filtern.
+    private static let umamiFilterNames: Set<String> = [
+        "path", "referrer", "title", "query", "os", "browser", "device",
+        "country", "region", "city", "tag", "hostname", "distinctId",
+        "language", "event", "utmSource", "utmMedium", "utmCampaign",
+        "utmContent", "utmTerm"
+    ]
+
+    /// Mappt die Dimensionsnamen des geteilten PlausibleQueryFilter-Typs auf
+    /// Umami-Spalten. Bereits umami-konforme Namen kommen unverändert durch.
+    private static func umamiFilterName(for dimension: String) -> String? {
+        if umamiFilterNames.contains(dimension) { return dimension }
+
+        let mapping: [String: String] = [
+            "visit:source": "referrer",
+            "visit:referrer": "referrer",
+            "visit:country": "country",
+            "visit:region": "region",
+            "visit:city": "city",
+            "visit:device": "device",
+            "visit:browser": "browser",
+            "visit:os": "os",
+            "visit:utm_source": "utmSource",
+            "visit:utm_medium": "utmMedium",
+            "visit:utm_campaign": "utmCampaign",
+            "visit:utm_content": "utmContent",
+            "visit:utm_term": "utmTerm",
+            "event:page": "path",
+            "event:name": "event",
+            "event:hostname": "hostname",
+            "event:props:title": "title"
+        ]
+        return mapping[dimension]
+    }
+
+    /// Übersetzt die Plausible-Operatoren in Umamis Kurzform (`OPERATORS`).
+    private static func umamiOperator(for op: PlausibleFilterOperator) -> String {
+        switch op {
+        case .is_: return "eq"
+        case .isNot: return "neq"
+        case .contains: return "c"
+        case .doesNotContain: return "dnc"
+        case .matches, .matchesWildcard: return "re"
+        case .matchesNot, .matchesWildcardNot: return "nre"
         }
     }
 
@@ -819,7 +934,172 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode([MetricItem].self, from: data)
     }
 
+    // MARK: - Segments (v3)
+
+    /// Segmente bzw. Cohorts einer Website. `type` ist serverseitig Pflicht.
+    func getSegments(websiteId: String, type: UmamiSegmentType = .segment, search: String? = nil) async throws -> [UmamiSegment] {
+        var queryItems = [URLQueryItem(name: "type", value: type.rawValue)]
+        if let search, !search.isEmpty {
+            queryItems.append(URLQueryItem(name: "search", value: search))
+        }
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/segments",
+            queryItems: queryItems
+        )
+        // Umamis pagedQuery liefert einen Envelope; ältere Builds ein nacktes Array.
+        if let response = try? decoder.decode(UmamiSegmentsResponse.self, from: data) {
+            return response.data
+        }
+        return try decoder.decode([UmamiSegment].self, from: data)
+    }
+
+    func getCohorts(websiteId: String, search: String? = nil) async throws -> [UmamiSegment] {
+        try await getSegments(websiteId: websiteId, type: .cohort, search: search)
+    }
+
+    // MARK: - Performance / Web Vitals (v3)
+
+    /// POST `api/reports/performance`. Das Schema verlangt startDate/endDate als
+    /// ISO-Zeitstempel; `metric` steuert nur die Zeitreihe, `summary` enthält
+    /// immer alle fünf Vitals.
+    func getPerformanceReport(
+        websiteId: String,
+        dateRange: DateRange,
+        metric: UmamiWebVitalMetric = .lcp
+    ) async throws -> UmamiPerformanceReport {
+        let dates = dateRange.dates
+
+        let body: [String: Any] = [
+            "websiteId": websiteId,
+            "type": "performance",
+            "filters": umamiFilterBody(dateRange: dateRange),
+            "parameters": [
+                "startDate": isoDate(dates.start),
+                "endDate": isoDate(dates.end),
+                "unit": dateRange.unit,
+                "timezone": TimeZone.current.identifier,
+                "metric": metric.rawValue
+            ]
+        ]
+
+        let data = try await postRequest(endpoint: "api/reports/performance", body: body)
+        return try decoder.decode(UmamiPerformanceReport.self, from: data)
+    }
+
+    // MARK: - Revenue (v3)
+
+    /// GET `api/websites/{id}/revenue/stats` — inkl. Vergleichszeitraum.
+    /// `currency` ist Pflicht und wird serverseitig auf Großschreibung normalisiert.
+    func getRevenueStats(
+        websiteId: String,
+        dateRange: DateRange,
+        currency: String,
+        compare: UmamiCompareMode? = nil
+    ) async throws -> UmamiRevenueStats {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        var queryItems = [
+            URLQueryItem(name: "startAt", value: String(startAt)),
+            URLQueryItem(name: "endAt", value: String(endAt)),
+            URLQueryItem(name: "currency", value: currency.uppercased()),
+            timezoneQueryItem
+        ]
+        if let compare {
+            queryItems.append(URLQueryItem(name: "compare", value: compare.rawValue))
+        }
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/revenue/stats",
+            queryItems: queryItems + filterQueryItems
+        )
+        return try decoder.decode(UmamiRevenueStats.self, from: data)
+    }
+
+    /// GET `api/websites/{id}/revenue/chart` → `{ "chart": [...] }`.
+    func getRevenueChart(
+        websiteId: String,
+        dateRange: DateRange,
+        currency: String
+    ) async throws -> [UmamiRevenueChartPoint] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/revenue/chart",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                URLQueryItem(name: "currency", value: currency.uppercased()),
+                URLQueryItem(name: "unit", value: dateRange.unit),
+                timezoneQueryItem
+            ] + filterQueryItems
+        )
+        return try decoder.decode(UmamiRevenueChartResponse.self, from: data).chart
+    }
+
+    // MARK: - Session Stats (v3)
+
+    /// GET `api/websites/{id}/sessions/stats`.
+    func getSessionStats(websiteId: String, dateRange: DateRange) async throws -> UmamiSessionStats {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/sessions/stats",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                // Ohne Zeitzone rechnet Umami in UTC — die Kennzahlen würden
+                // dann nicht zur Heatmap derselben Ansicht passen.
+                timezoneQueryItem
+            ] + filterQueryItems
+        )
+        return try decoder.decode(UmamiSessionStats.self, from: data)
+    }
+
+    /// GET `api/websites/{id}/sessions/weekly` — 7×24-Matrix (Tag × Stunde).
+    func getWeeklyTraffic(websiteId: String, dateRange: DateRange) async throws -> UmamiWeeklyTraffic {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/sessions/weekly",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                timezoneQueryItem
+            ] + filterQueryItems
+        )
+        return UmamiWeeklyTraffic(days: try decoder.decode([[Int]].self, from: data))
+    }
+
     // MARK: - Private
+
+    /// Filter-Objekt für POST-Reports. Report-Endpunkte erwarten die Filter im
+    /// Body statt in der Query, das Wertformat ist aber dasselbe.
+    /// - Parameter dateRange: Umami löst den Filter serverseitig über
+    ///   `getQueryFilters` auf und liest den Zeitraum dabei aus dem Filter-Objekt
+    ///   selbst. Ohne `startAt`/`endAt` bleibt er dort undefiniert, wodurch
+    ///   Segment- und Cohort-Filter nicht zuverlässig greifen.
+    private func umamiFilterBody(dateRange: DateRange? = nil) -> [String: Any] {
+        var body: [String: Any] = [:]
+        for item in filterQueryItems {
+            body[item.name] = item.value
+        }
+        if let dateRange {
+            let dates = dateRange.dates
+            body["startAt"] = Int(dates.start.timeIntervalSince1970 * 1000)
+            body["endAt"] = Int(dates.end.timeIntervalSince1970 * 1000)
+            body["timezone"] = TimeZone.current.identifier
+        }
+        return body
+    }
 
     private func request(endpoint: String, queryItems: [URLQueryItem] = []) async throws -> Data {
         guard let baseURL = _baseURL, let token = _token else {
@@ -917,6 +1197,20 @@ actor UmamiAPI: AnalyticsProvider {
 
         return data
     }
+}
+
+/// Verknüpfung mehrerer Filter (`match`-Parameter in Umami v3).
+enum UmamiFilterMatch: String, Sendable, CaseIterable {
+    case all
+    case any
+}
+
+/// Vergleichszeitraum (`compare`-Parameter in Umami v3).
+enum UmamiCompareMode: String, Sendable, CaseIterable {
+    /// Unmittelbar vorangehender Zeitraum gleicher Länge.
+    case previous = "prev"
+    /// Gleicher Zeitraum im Vorjahr.
+    case yearOverYear = "yoy"
 }
 
 enum APIError: LocalizedError, Sendable {

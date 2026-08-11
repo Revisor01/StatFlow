@@ -14,7 +14,34 @@ Die Versionen 1.0 bis 1.0.6 sind die im App Store ausgelieferten Releases. Die V
 0.1.0 bis 1.3.0 stammen aus der Vorgeschichte als InsightFlow bzw. PrivacyFlow, vor der
 ersten Store-Veröffentlichung.
 
-## [Unreleased] - 1.0.7
+## [Unreleased] - 1.1.0
+
+### Hinzugefügt
+
+- **Ladezeiten (Web Vitals)**: Neue Auswertung zeigt, wie schnell die eigenen Seiten laden —
+  mit farblicher Bewertung nach den offiziellen Schwellenwerten und den langsamsten Seiten.
+- **Besuchszeiten**: Wochen-Übersicht, die auf einen Blick zeigt, an welchen Tagen und zu
+  welchen Uhrzeiten die Website besucht wird.
+- **Umsatz**: Auswertung der Umsatzdaten inklusive Umsatz je Nutzer und Vergleich zur
+  Vorperiode; Währung wählbar.
+- **Segmente und Cohorts**: In der Website-Ansicht lassen sich gespeicherte Segmente auswählen
+  und Auswertungen darauf einschränken.
+- **Erweiterte Filter**: Mehrere Filterwerte gleichzeitig, Und-/Oder-Verknüpfung sowie die
+  Möglichkeit, Absprünge auszuschließen.
+- **Scrolltiefe und Verweildauer** bei Plausible: neue Kennzahlen dazu, wie weit Besucher
+  auf einer Seite scrollen und wie lange sie bleiben.
+- **Verhaltensfilter** bei Plausible: Auswertungen lassen sich auf Besucher einschränken, die
+  ein bestimmtes Ziel erreicht (oder nicht erreicht) haben.
+
+Die neuen Auswertungen setzen Umami ab Version 3 voraus und sind bei Plausible-Konten
+entsprechend nicht sichtbar.
+
+### Behoben
+
+- Filter mit „enthält nicht" wurden von Plausible abgelehnt, weil die App eine ungültige
+  Schreibweise verwendet hat.
+
+## [1.0.7] – 2026-08-12
 
 ### Hinzugefügt
 
@@ -162,7 +189,8 @@ Erste Fassung als *InsightFlow*.
 - Offline-Caching und verbesserte Diagrammskalierung.
 - Datenschutzerklärung im README.
 
-[Unreleased]: https://github.com/Revisor01/StatFlow/compare/v1.0.6...HEAD
+[Unreleased]: https://github.com/Revisor01/StatFlow/compare/v1.0.7...HEAD
+[1.0.7]: https://github.com/Revisor01/StatFlow/compare/v1.0.6...v1.0.7
 [1.0.6]: https://github.com/Revisor01/StatFlow/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/Revisor01/StatFlow/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/Revisor01/StatFlow/compare/v1.0.3...v1.0.4

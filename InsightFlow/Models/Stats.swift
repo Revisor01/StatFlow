@@ -457,3 +457,222 @@ struct StringOrInt: Codable, Sendable {
         try container.encode(intValue)
     }
 }
+
+// MARK: - Umami v3 Segments
+
+/// Segment bzw. Cohort einer Website (Umami v3, `api/websites/{id}/segments`).
+/// `parameters` bleibt bewusst lose typisiert — das Schema erlaubt beliebige
+/// Filter-/Action-Kombinationen, die die App nicht auswerten muss.
+struct UmamiSegment: Codable, Sendable, Identifiable {
+    let id: String
+    let websiteId: String?
+    let type: String
+    let name: String
+    let parameters: UmamiJSONValue?
+    let createdAt: Date?
+    let updatedAt: Date?
+
+    var segmentType: UmamiSegmentType? { UmamiSegmentType(rawValue: type) }
+}
+
+/// Umami unterscheidet nur diese beiden Segment-Typen (`segmentTypeParam`).
+enum UmamiSegmentType: String, Sendable, CaseIterable {
+    case segment
+    case cohort
+}
+
+/// Paged-Envelope, den Umamis `pagedQuery` für Segment-Listen zurückgibt.
+struct UmamiSegmentsResponse: Codable, Sendable {
+    let data: [UmamiSegment]
+    let count: Int?
+    let page: Int?
+    let pageSize: Int?
+}
+
+/// Minimaler, typloser JSON-Container für Felder ohne festes Schema.
+enum UmamiJSONValue: Codable, Sendable {
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+    case array([UmamiJSONValue])
+    case object([String: UmamiJSONValue])
+    case null
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if container.decodeNil() {
+            self = .null
+        } else if let value = try? container.decode(Bool.self) {
+            self = .bool(value)
+        } else if let value = try? container.decode(Double.self) {
+            self = .number(value)
+        } else if let value = try? container.decode(String.self) {
+            self = .string(value)
+        } else if let value = try? container.decode([UmamiJSONValue].self) {
+            self = .array(value)
+        } else if let value = try? container.decode([String: UmamiJSONValue].self) {
+            self = .object(value)
+        } else {
+            self = .null
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let value): try container.encode(value)
+        case .number(let value): try container.encode(value)
+        case .bool(let value): try container.encode(value)
+        case .array(let value): try container.encode(value)
+        case .object(let value): try container.encode(value)
+        case .null: try container.encodeNil()
+        }
+    }
+
+    var stringValue: String? {
+        if case .string(let value) = self { return value }
+        return nil
+    }
+
+    var doubleValue: Double? {
+        if case .number(let value) = self { return value }
+        return nil
+    }
+}
+
+// MARK: - Umami v3 Sessions
+
+/// `api/websites/{id}/sessions/stats` — jede Kennzahl kommt als `{ "value": n }`.
+struct UmamiSessionStats: Codable, Sendable {
+    struct Metric: Codable, Sendable {
+        let value: Double
+    }
+
+    let pageviews: Metric?
+    let visitors: Metric?
+    let visits: Metric?
+    let countries: Metric?
+    let events: Metric?
+
+    var pageviewCount: Int { Int(pageviews?.value ?? 0) }
+    var visitorCount: Int { Int(visitors?.value ?? 0) }
+    var visitCount: Int { Int(visits?.value ?? 0) }
+    var countryCount: Int { Int(countries?.value ?? 0) }
+    var eventCount: Int { Int(events?.value ?? 0) }
+}
+
+/// `api/websites/{id}/sessions/weekly` liefert eine 7×24-Matrix roher Zahlen
+/// (Index 0 = Sonntag, innere Achse = Stunde 0…23).
+struct UmamiWeeklyTraffic: Sendable {
+    /// Rohmatrix wie vom Server geliefert: 7 Tage × 24 Stunden.
+    let days: [[Int]]
+
+    func value(day: Int, hour: Int) -> Int {
+        guard days.indices.contains(day), days[day].indices.contains(hour) else { return 0 }
+        return days[day][hour]
+    }
+
+    var total: Int { days.flatMap { $0 }.reduce(0, +) }
+}
+
+// MARK: - Umami v3 Revenue
+
+/// `api/websites/{id}/revenue/stats` — flache Kennzahlen plus `comparison`
+/// mit demselben Aufbau. Die SQL-Aliase sind snake_case, der Decoder nutzt
+/// aber keine Konvertierungsstrategie: CodingKeys müssen exakt passen.
+struct UmamiRevenueStats: Codable, Sendable {
+    let sum: Double
+    let count: Double
+    let average: Double
+    let uniqueCount: Double
+    let arpu: Double
+    let comparison: UmamiRevenueStatsComparison?
+
+    enum CodingKeys: String, CodingKey {
+        case sum, count, average, arpu, comparison
+        case uniqueCount = "unique_count"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        sum = Self.decodeNumber(container, .sum)
+        count = Self.decodeNumber(container, .count)
+        average = Self.decodeNumber(container, .average)
+        uniqueCount = Self.decodeNumber(container, .uniqueCount)
+        arpu = Self.decodeNumber(container, .arpu)
+        comparison = try container.decodeIfPresent(UmamiRevenueStatsComparison.self, forKey: .comparison)
+    }
+
+    /// Postgres liefert `sum`/`count` je nach Treiber als String oder Zahl.
+    static func decodeNumber(_ container: KeyedDecodingContainer<CodingKeys>, _ key: CodingKeys) -> Double {
+        if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
+        if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+        return 0
+    }
+}
+
+/// Vergleichszeitraum aus `revenue/stats` — identische Felder, aber ohne
+/// weitere Verschachtelung.
+struct UmamiRevenueStatsComparison: Codable, Sendable {
+    let sum: Double
+    let count: Double
+    let average: Double
+    let uniqueCount: Double
+    let arpu: Double
+
+    enum CodingKeys: String, CodingKey {
+        case sum, count, average, arpu
+        case uniqueCount = "unique_count"
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        func number(_ key: CodingKeys) -> Double {
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
+            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+            return 0
+        }
+        sum = number(.sum)
+        count = number(.count)
+        average = number(.average)
+        uniqueCount = number(.uniqueCount)
+        arpu = number(.arpu)
+    }
+}
+
+/// `api/websites/{id}/revenue/chart` → `{ "chart": [...] }`.
+/// Pro Punkt: x = Event-Name, t = Zeitbucket, y = Umsatz, count = Anzahl.
+struct UmamiRevenueChartResponse: Codable, Sendable {
+    let chart: [UmamiRevenueChartPoint]
+}
+
+struct UmamiRevenueChartPoint: Codable, Sendable {
+    let x: String?
+    let t: String?
+    let y: Double
+    let count: Double
+
+    enum CodingKeys: String, CodingKey {
+        case x, t, y, count
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        x = try? container.decodeIfPresent(String.self, forKey: .x)
+        t = try? container.decodeIfPresent(String.self, forKey: .t)
+        if let value = try? container.decodeIfPresent(Double.self, forKey: .y) {
+            y = value ?? 0
+        } else if let value = try? container.decodeIfPresent(String.self, forKey: .y) {
+            y = Double(value ?? "") ?? 0
+        } else {
+            y = 0
+        }
+        if let value = try? container.decodeIfPresent(Double.self, forKey: .count) {
+            count = value ?? 0
+        } else if let value = try? container.decodeIfPresent(String.self, forKey: .count) {
+            count = Double(value ?? "") ?? 0
+        } else {
+            count = 0
+        }
+    }
+}
