@@ -14,11 +14,21 @@ Die Versionen 1.0 bis 1.0.6 sind die im App Store ausgelieferten Releases. Die V
 0.1.0 bis 1.3.0 stammen aus der Vorgeschichte als InsightFlow bzw. PrivacyFlow, vor der
 ersten Store-Veröffentlichung.
 
-## [Unreleased]
+## [Unreleased] - 1.0.7
 
 ### Hinzugefügt
 
 - Screenshots im README (`docs/screenshots/`).
+- Übersicht der unterstützten Server-Versionen von Umami und Plausible samt bekannter
+  Einschränkungen in der Dokumentation.
+
+### Behoben
+
+- Widgets zeigten bei Umami dauerhaft null aktive Besucher an.
+- Widgets und App konnten für denselben Zeitraum unterschiedliche Zahlen anzeigen, weil die
+  Zeitzone des Geräts nicht überall berücksichtigt wurde.
+- Funktionen, die es auf selbst gehosteten Plausible-Servern nicht gibt (Websites anlegen,
+  Ziele verwalten, Share-Links), melden das jetzt verständlich statt mit einem Serverfehler.
 
 ### Entfernt
 

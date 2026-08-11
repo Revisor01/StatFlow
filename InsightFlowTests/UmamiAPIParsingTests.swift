@@ -72,6 +72,28 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(response.count, 42)
     }
 
+    /// Das Widget parst `/active` per JSONSerialization statt per Codable.
+    /// Frühere Fassungen lasen nur das Altfeld "x" und zeigten deshalb dauerhaft 0 an —
+    /// Umami liefert sowohl in v2 als auch in v3 `{"visitors": n}`.
+    func testWidgetActiveVisitorsParsing() throws {
+        func parseActive(_ raw: String) -> Int {
+            guard let json = try? JSONSerialization.jsonObject(
+                with: raw.data(using: .utf8)!
+            ) as? [String: Any] else { return 0 }
+
+            if let v = json["visitors"] as? Int { return v }
+            if let v = json["visitors"] as? Double { return Int(v) }
+            if let v = json["x"] as? Int { return v }
+            if let v = json["x"] as? Double { return Int(v) }
+            return 0
+        }
+
+        XCTAssertEqual(parseActive(#"{"visitors": 42}"#), 42)
+        XCTAssertEqual(parseActive(#"{"x": 7}"#), 7)
+        XCTAssertEqual(parseActive(#"{"visitors": 0}"#), 0)
+        XCTAssertEqual(parseActive(#"{}"#), 0)
+    }
+
     // MARK: - WebsiteResponse
 
     func testWebsiteResponseDecoding() throws {
