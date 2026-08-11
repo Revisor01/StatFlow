@@ -16,6 +16,10 @@ struct ReportsHubView: View {
         GridItem(.flexible())
     ]
 
+    private var isPlausible: Bool {
+        AnalyticsManager.shared.providerType == .plausible
+    }
+
     private var offlineBanner: some View {
         HStack(spacing: 8) {
             Image(systemName: "wifi.slash")
@@ -93,6 +97,45 @@ struct ReportsHubView: View {
                     )
                 }
                 .buttonStyle(.plain)
+
+                // Ab Umami v3 verfügbar — bei Plausible gibt es diese Auswertungen nicht.
+                if !isPlausible {
+                    NavigationLink {
+                        WebVitalsView(website: website)
+                    } label: {
+                        ReportCategoryCard(
+                            icon: "speedometer",
+                            color: .indigo,
+                            title: String(localized: "webvitals.title"),
+                            subtitle: String(localized: "reports.webvitals.subtitle")
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        VisitTimesView(website: website)
+                    } label: {
+                        ReportCategoryCard(
+                            icon: "clock.badge.checkmark",
+                            color: .teal,
+                            title: String(localized: "visittimes.title"),
+                            subtitle: String(localized: "reports.visittimes.subtitle")
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    NavigationLink {
+                        RevenueView(website: website)
+                    } label: {
+                        ReportCategoryCard(
+                            icon: "eurosign.circle",
+                            color: .green,
+                            title: String(localized: "revenue.title"),
+                            subtitle: String(localized: "reports.revenue.subtitle")
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
                 }
             }
             .padding()
