@@ -103,9 +103,15 @@ struct TimeSeriesPoint: Codable, Identifiable, Sendable, Equatable {
 
     var id: String { x }
 
+    /// Umami liefert Zeitpunkte als "2026-08-06 00:00:00" (Leerzeichen, kein Z),
+    /// Plausible dagegen ISO8601 bzw. reines "yyyy-MM-dd". Ohne den passenden
+    /// Formatter fielen alle Punkte auf `Date()` zurück — das Diagramm war dann
+    /// eine flache Linie, die am Ende hochgeht.
     var date: Date {
         DateFormatters.iso8601WithFractional.date(from: x)
             ?? DateFormatters.iso8601.date(from: x)
+            ?? DateFormatters.yyyyMMddHHmmss.date(from: x)
+            ?? DateFormatters.yyyyMMdd.date(from: x)
             ?? Date()
     }
 
