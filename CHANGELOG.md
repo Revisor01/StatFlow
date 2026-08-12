@@ -55,6 +55,10 @@ alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
 - Die Report-Übersicht zeigte bei Plausible-Konten Auswertungen an, die es dort nicht
   gibt; sie erscheinen jetzt mit einem Hinweis statt mit Fehlern.
 - Kacheln in der Report-Übersicht waren unterschiedlich hoch.
+- Die Diagramme im Dashboard und in der Website-Ansicht zeigten bei Umami unabhängig
+  vom gewählten Zeitraum eine flache Linie mit einem Anstieg am Ende, weil das
+  Datumsformat der Messwerte nicht gelesen werden konnte und alle Punkte auf den
+  aktuellen Zeitpunkt fielen.
 
 ## [1.0.7] – 2026-08-12
 

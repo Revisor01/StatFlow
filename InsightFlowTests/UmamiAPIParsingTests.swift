@@ -158,6 +158,50 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(data.sessions[0].x, "2025-01-15T00:00:00.000Z")
     }
 
+    /// Umami liefert Zeitpunkte als "2026-08-06 00:00:00" — mit Leerzeichen und
+    /// ohne Zeitzonenkennung. Wurde das nicht geparst, fiel `date` auf `Date()`
+    /// zurück und alle Punkte lagen auf demselben Zeitpunkt: Das Diagramm war
+    /// eine flache Linie, die am Ende hochgeht.
+    func testPageviewsUmamiDateFormatIsParsed() throws {
+        let json = """
+        {
+            "pageviews": [
+                {"x": "2026-08-06 00:00:00", "y": 7},
+                {"x": "2026-08-07 00:00:00", "y": 22}
+            ],
+            "sessions": []
+        }
+        """.data(using: .utf8)!
+
+        let data = try JSONDecoder().decode(PageviewsData.self, from: json)
+        let dates = data.pageviews.map(\.date)
+
+        // Die Punkte müssen unterschiedliche Zeitpunkte haben …
+        XCTAssertNotEqual(dates[0], dates[1])
+        // … genau einen Tag auseinander liegen …
+        XCTAssertEqual(dates[1].timeIntervalSince(dates[0]), 86_400, accuracy: 3600)
+        // … und nicht auf „jetzt" zurückgefallen sein.
+        XCTAssertLessThan(dates[1], Date().addingTimeInterval(-60))
+
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: dates[0])
+        XCTAssertEqual(parts.year, 2026)
+        XCTAssertEqual(parts.month, 8)
+        XCTAssertEqual(parts.day, 6)
+    }
+
+    /// Reines Tagesformat (u. a. Plausible) muss ebenfalls geparst werden.
+    func testTimeSeriesPointParsesPlainDate() throws {
+        let json = """
+        {"pageviews": [{"x": "2026-08-06", "y": 5}], "sessions": []}
+        """.data(using: .utf8)!
+
+        let data = try JSONDecoder().decode(PageviewsData.self, from: json)
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: data.pageviews[0].date)
+        XCTAssertEqual(parts.year, 2026)
+        XCTAssertEqual(parts.month, 8)
+        XCTAssertEqual(parts.day, 6)
+    }
+
     // MARK: - MetricItem
 
     func testMetricItemDecoding() throws {
