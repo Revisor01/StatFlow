@@ -381,7 +381,8 @@ actor PlausibleAPI: AnalyticsProvider {
             "metrics": ["visitors"],
             "date_range": "day",
             "dimensions": ["event:page"],
-            "limit": limit
+            // pagination.limit statt flachem "limit" — sonst lehnt die API ab.
+            "pagination": ["limit": limit]
         ]
 
         let data = try await postRequest(endpoint: "api/v2/query", body: body)
@@ -400,7 +401,8 @@ actor PlausibleAPI: AnalyticsProvider {
             "metrics": ["visitors"],
             "date_range": "day",
             "dimensions": ["visit:country"],
-            "limit": limit
+            // pagination.limit statt flachem "limit" — sonst lehnt die API ab.
+            "pagination": ["limit": limit]
         ]
 
         let data = try await postRequest(endpoint: "api/v2/query", body: body)
@@ -718,6 +720,175 @@ actor PlausibleAPI: AnalyticsProvider {
         }
     }
 
+    // MARK: - Akquisekanäle & Hostnames (Plausible CE 3.x)
+
+    /// Akquisekanäle (Direct, Organic Search, Social, Referral, Paid Search …).
+    /// visit:channel fasst Quelle und Medium zu Plausibles Kanal-Gruppierung
+    /// zusammen — dieselbe Einteilung wie "Acquisition Channel" im Dashboard.
+    ///
+    /// Metrik-Reihenfolge im Response: [0] visitors
+    func getChannels(
+        websiteId: String,
+        dateRange: DateRange,
+        filters: [PlausibleQueryFilter] = []
+    ) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(
+            websiteId: websiteId,
+            dateRange: dateRange,
+            dimension: "visit:channel",
+            filters: filters
+        )
+    }
+
+    /// Aufteilung nach Hostname — nützlich, wenn ein Site mehrere Domains
+    /// bzw. Subdomains mit demselben Tracking-Snippet bedient.
+    ///
+    /// Metrik-Reihenfolge im Response: [0] visitors
+    func getHostnames(
+        websiteId: String,
+        dateRange: DateRange,
+        filters: [PlausibleQueryFilter] = []
+    ) async throws -> [AnalyticsMetricItem] {
+        return try await getBreakdown(
+            websiteId: websiteId,
+            dateRange: dateRange,
+            dimension: "event:hostname",
+            filters: filters
+        )
+    }
+
+    // MARK: - Breakdown mit Anteil (percentage)
+
+    /// Breakdown inklusive prozentualem Anteil der Zeile am Gesamtwert.
+    /// Bewusst eine EIGENE Methode statt einer Erweiterung von getBreakdown:
+    /// das Metrik-Array wird positionsbasiert gelesen, eine zusätzliche Metrik
+    /// in den Bestandsmethoden würde dort alle Indizes verschieben.
+    ///
+    /// Metrik-Reihenfolge im Response: [0] visitors, [1] percentage
+    func getBreakdownWithPercentage(
+        websiteId: String,
+        dateRange: DateRange,
+        dimension: String,
+        filters: [PlausibleQueryFilter] = [],
+        limit: Int? = nil
+    ) async throws -> [PlausibleBreakdownShare] {
+        let body = buildQueryBody(
+            siteId: websiteId,
+            metrics: ["visitors", "percentage"],
+            dateRange: dateRange,
+            dimensions: [dimension],
+            filters: filters,
+            limit: limit
+        )
+
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        return response.results.map { apiResult in
+            PlausibleBreakdownShare(
+                name: apiResult.dimensions.first ?? "Unknown",
+                visitors: apiResult.intMetric(at: 0),
+                percentage: apiResult.metric(at: 1)
+            )
+        }
+    }
+
+    // MARK: - Breakdown mit Gesamtzeilenzahl (include.total_rows)
+
+    /// Breakdown mit Gesamtzahl der Zeilen — für Paginierung bzw. "und N weitere".
+    /// total_rows kommt NICHT auf oberster Ebene, sondern im meta-Objekt der
+    /// Response zurück (verifiziert gegen CE 3.2.1: {"results":[…],"meta":
+    /// {"total_rows":1},…}). Bestehendes Parsing bleibt unberührt, weil meta
+    /// optional dekodiert wird.
+    ///
+    /// Metrik-Reihenfolge im Response: [0] visitors
+    func getBreakdownPaged(
+        websiteId: String,
+        dateRange: DateRange,
+        dimension: String,
+        filters: [PlausibleQueryFilter] = [],
+        limit: Int? = nil,
+        offset: Int? = nil
+    ) async throws -> PlausiblePagedBreakdown {
+        var body = buildQueryBody(
+            siteId: websiteId,
+            metrics: ["visitors"],
+            dateRange: dateRange,
+            dimensions: [dimension],
+            filters: filters
+        )
+        body["include"] = ["total_rows": true]
+        // Paginierung gehört laut Schema in das verschachtelte pagination-Objekt;
+        // ein flacher "limit"-Key wird mit "Schema does not allow additional
+        // properties" abgelehnt.
+        var pagination: [String: Any] = [:]
+        if let limit = limit { pagination["limit"] = limit }
+        if let offset = offset { pagination["offset"] = offset }
+        if !pagination.isEmpty { body["pagination"] = pagination }
+
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        let items = response.results.map { apiResult in
+            let result = PlausibleBreakdownResult(from: apiResult)
+            return AnalyticsMetricItem(name: result.dimension, value: result.visitors)
+        }
+        return PlausiblePagedBreakdown(items: items, totalRows: response.meta?.totalRows)
+    }
+
+    // MARK: - Zeitreihe mit lückenloser Zeitachse (include.time_labels)
+
+    /// Zeitreihe samt vollständiger Zeitachse. Plausible liefert in results nur
+    /// Intervalle MIT Daten; time_labels enthält dagegen jedes Label des
+    /// Zeitraums. Fehlende Intervalle werden hier mit 0 aufgefüllt, damit
+    /// Diagramme keine Lücken zeigen.
+    /// time_labels steht wie total_rows im meta-Objekt der Response.
+    ///
+    /// Metrik-Reihenfolge im Response: [0] die übergebene Metrik
+    func getTimeseriesWithLabels(
+        websiteId: String,
+        dateRange: DateRange,
+        metric: String = "visitors",
+        filters: [PlausibleQueryFilter] = []
+    ) async throws -> [AnalyticsChartPoint] {
+        // Kurze Zeiträume stündlich, längere tageweise — wie in getTimeseriesData.
+        let isShortRange = dateRange.preset == .today || dateRange.preset == .yesterday
+        let timeDimension = isShortRange ? "time:hour" : "time:day"
+
+        var body = buildQueryBody(
+            siteId: websiteId,
+            metrics: [metric],
+            dateRange: dateRange,
+            dimensions: [timeDimension],
+            filters: filters
+        )
+        body["include"] = ["time_labels": true]
+
+        let data = try await postRequest(endpoint: "api/v2/query", body: body)
+        let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
+
+        // Werte je Label vorsortieren, danach entlang der Labels auffüllen.
+        var valuesByLabel: [String: Int] = [:]
+        for apiResult in response.results {
+            guard let label = apiResult.dimensions.first else { continue }
+            valuesByLabel[label] = apiResult.intMetric(at: 0)
+        }
+
+        // Ohne time_labels (z. B. älterer Server) auf die Ergebniszeilen zurückfallen.
+        let labels = response.meta?.timeLabels ?? response.results.compactMap { $0.dimensions.first }
+
+        let dayParser = DateFormatter()
+        dayParser.dateFormat = "yyyy-MM-dd"
+
+        let hourParser = DateFormatter()
+        hourParser.dateFormat = "yyyy-MM-dd HH:mm:ss"
+
+        return labels.compactMap { label in
+            guard let parsedDate = hourParser.date(from: label) ?? dayParser.date(from: label) else { return nil }
+            return AnalyticsChartPoint(date: parsedDate, value: valuesByLabel[label] ?? 0)
+        }
+    }
+
     private func getBreakdown(websiteId: String, dateRange: DateRange, dimension: String, filters: [PlausibleQueryFilter] = []) async throws -> [AnalyticsMetricItem] {
         let body = buildQueryBody(siteId: websiteId, metrics: ["visitors"], dateRange: dateRange, dimensions: [dimension], filters: filters)
 
@@ -856,8 +1027,21 @@ actor PlausibleAPI: AnalyticsProvider {
         return response.goals
     }
 
+    /// Goal-Auswertung inklusive Conversion-Rate.
+    /// conversion_rate und group_conversion_rate sind laut API nur zusammen mit
+    /// event:goal als Dimension ODER einem event:goal-Filter erlaubt — die
+    /// Dimension ist hier fest gesetzt, damit die Bedingung immer erfüllt ist.
+    ///
+    /// Metrik-Reihenfolge im Response:
+    /// [0] visitors, [1] events, [2] conversion_rate, [3] group_conversion_rate
     func getGoalConversions(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [GoalConversion] {
-        let body = buildQueryBody(siteId: websiteId, metrics: ["visitors", "events"], dateRange: dateRange, dimensions: ["event:goal"], filters: filters)
+        let body = buildQueryBody(
+            siteId: websiteId,
+            metrics: ["visitors", "events", "conversion_rate", "group_conversion_rate"],
+            dateRange: dateRange,
+            dimensions: ["event:goal"],
+            filters: filters
+        )
         let data = try await postRequest(endpoint: "api/v2/query", body: body)
         let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
 
@@ -865,7 +1049,13 @@ actor PlausibleAPI: AnalyticsProvider {
             let goalName = apiResult.dimensions.first ?? "Unknown"
             let visitors = apiResult.intMetric(at: 0)
             let events = apiResult.intMetric(at: 1)
-            return GoalConversion(goalName: goalName, visitors: visitors, events: events)
+            return GoalConversion(
+                goalName: goalName,
+                visitors: visitors,
+                events: events,
+                conversionRate: apiResult.metric(at: 2),
+                groupConversionRate: apiResult.metric(at: 3)
+            )
         }
     }
 
@@ -969,7 +1159,9 @@ actor PlausibleAPI: AnalyticsProvider {
         ]
         if !dimensions.isEmpty { body["dimensions"] = dimensions }
         if !filters.isEmpty { body["filters"] = filters.map { $0.toQueryParam() } }
-        if let limit = limit { body["limit"] = limit }
+        // Die Query-API kennt nur pagination.limit; ein flacher "limit"-Key wird
+        // mit "Schema does not allow additional properties" abgelehnt.
+        if let limit = limit { body["pagination"] = ["limit": limit] }
         return body
     }
 
@@ -991,7 +1183,7 @@ actor PlausibleAPI: AnalyticsProvider {
         ]
         if !dimensions.isEmpty { body["dimensions"] = dimensions }
         if !filters.isEmpty { body["filters"] = filters.map { $0.toQueryParam() } }
-        if let limit = limit { body["limit"] = limit }
+        if let limit = limit { body["pagination"] = ["limit": limit] }
         // include.trim_relative_date_range wirkt laut Schema nur bei day/month/year.
         if trimRelativeDateRange && shorthand.supportsTrimRelativeDateRange {
             body["include"] = ["trim_relative_date_range": true]
@@ -1119,6 +1311,31 @@ struct PlausibleSharedLink: Codable, Identifiable {
 
 struct PlausibleAPIResponse: Codable {
     let results: [PlausibleAPIResult]
+    /// Zusatzfelder aus include.* — nur befüllt, wenn angefordert.
+    /// Optional dekodiert, damit alle bestehenden Abfragen unverändert parsen.
+    let meta: PlausibleResponseMeta?
+
+    enum CodingKeys: String, CodingKey {
+        case results, meta
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        results = try container.decodeIfPresent([PlausibleAPIResult].self, forKey: .results) ?? []
+        meta = try container.decodeIfPresent(PlausibleResponseMeta.self, forKey: .meta)
+    }
+}
+
+/// meta-Objekt der v2-Query-Response. Plausible liefert es immer mit,
+/// bei Abfragen ohne include.* aber leer ({}).
+/// Verifiziert gegen CE 3.2.1:
+///   include.total_rows  → meta.total_rows (Int)
+///   include.time_labels → meta.time_labels ([String])
+struct PlausibleResponseMeta: Codable {
+    /// Gesamtzahl der Zeilen ohne Paginierung (include.total_rows).
+    let totalRows: Int?
+    /// Lückenlose Zeitachse des Zeitraums (include.time_labels).
+    let timeLabels: [String]?
 }
 
 /// Eine Ergebniszeile der v2-Query-API.
@@ -1262,6 +1479,32 @@ struct PlausibleBreakdownResult {
     init(from apiResult: PlausibleAPIResult) {
         dimension = apiResult.dimensions.first ?? "Unknown"
         visitors = apiResult.intMetric(at: 0)
+    }
+}
+
+// MARK: - Breakdown-Zusatzmodelle
+
+/// Breakdown-Zeile mit Anteil am Gesamtwert.
+/// Reihenfolge wie im Request: [0] visitors, [1] percentage
+struct PlausibleBreakdownShare: Identifiable, Sendable {
+    let id = UUID()
+    let name: String
+    let visitors: Int
+    /// Anteil in Prozent (0–100); nil, wenn Plausible keinen Wert liefert.
+    let percentage: Double?
+}
+
+/// Breakdown mit Gesamtzeilenzahl aus include.total_rows.
+/// totalRows ist nil, wenn der Server das meta-Feld nicht mitliefert.
+struct PlausiblePagedBreakdown: Sendable {
+    let items: [AnalyticsMetricItem]
+    let totalRows: Int?
+
+    /// Zeilen, die wegen der Paginierung nicht in items stecken
+    /// ("und N weitere"). 0, wenn nichts fehlt oder totalRows unbekannt ist.
+    var remainingRows: Int {
+        guard let totalRows else { return 0 }
+        return max(0, totalRows - items.count)
     }
 }
 

@@ -676,3 +676,130 @@ struct UmamiRevenueChartPoint: Codable, Sendable {
         }
     }
 }
+
+// MARK: - Ereignis-Kennzahlen (`api/websites/{id}/events/stats`)
+
+/// Umhüllung des Endpunkts — die Nutzdaten liegen hier unter `data`,
+/// anders als bei den meisten anderen Umami-Endpunkten.
+struct UmamiEventStatsResponse: Codable, Sendable {
+    let data: UmamiEventStats
+}
+
+/// Ereignis-Kennzahlen inklusive Vorperiodenvergleich.
+struct UmamiEventStats: Codable, Sendable, Equatable {
+    let events: Int
+    let visitors: Int
+    let visits: Int
+    let uniqueEvents: Int
+    let comparison: UmamiEventStatsComparison?
+
+    /// Differenz zur Vorperiode — nil, wenn der Server keinen Vergleich liefert.
+    var eventsChange: Int? { comparison.map { events - $0.events } }
+    var visitorsChange: Int? { comparison.map { visitors - $0.visitors } }
+    var visitsChange: Int? { comparison.map { visits - $0.visits } }
+    var uniqueEventsChange: Int? { comparison.map { uniqueEvents - $0.uniqueEvents } }
+}
+
+/// Werte des Vergleichszeitraums.
+struct UmamiEventStatsComparison: Codable, Sendable, Equatable {
+    let events: Int
+    let visitors: Int
+    let visits: Int
+    let uniqueEvents: Int
+}
+
+// MARK: - Ereignisse im Zeitverlauf (`api/websites/{id}/events/series`)
+
+/// Ein Punkt der Ereignis-Zeitreihe: x = Ereignisname, t = Zeitbucket,
+/// y = Anzahl. `t` kommt als "yyyy-MM-dd HH:mm:ss" (kein ISO-Z).
+struct UmamiEventSeriesPoint: Codable, Sendable, Identifiable {
+    let x: String?
+    let t: String?
+    let y: Double
+
+    var id: String { "\(x ?? "")-\(t ?? "")" }
+
+    /// Ereignisname für die Anzeige.
+    var eventName: String { x ?? "" }
+
+    /// Zeitbucket als Date — Umami liefert hier lokale Zeit ohne Zeitzone.
+    var date: Date? {
+        guard let t else { return nil }
+        return DateFormatters.yyyyMMddHHmmss.date(from: t)
+    }
+
+    /// Anzahl als Int für die Darstellung.
+    var count: Int { Int(y) }
+
+    enum CodingKeys: String, CodingKey {
+        case x, t, y
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        x = try? container.decodeIfPresent(String.self, forKey: .x)
+        t = try? container.decodeIfPresent(String.self, forKey: .t)
+        if let value = try? container.decodeIfPresent(Double.self, forKey: .y) {
+            y = value ?? 0
+        } else if let value = try? container.decodeIfPresent(String.self, forKey: .y) {
+            y = Double(value ?? "") ?? 0
+        } else {
+            y = 0
+        }
+    }
+}
+
+// MARK: - Werteliste je Feld (`api/websites/{id}/values`)
+
+/// Ein Wert eines Feldes mit seiner Häufigkeit — Grundlage für
+/// Filter-Vorschläge. `value` kann null sein (z. B. bei nie gesetzten Feldern).
+struct UmamiFieldValue: Codable, Sendable, Identifiable {
+    let value: String?
+    let count: Double
+
+    var id: String { value ?? "__null__" }
+
+    /// Häufigkeit als Int für die Darstellung.
+    var total: Int { Int(count) }
+
+    enum CodingKeys: String, CodingKey {
+        case value, count
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        value = try? container.decodeIfPresent(String.self, forKey: .value)
+        if let number = try? container.decodeIfPresent(Double.self, forKey: .count) {
+            count = number ?? 0
+        } else if let text = try? container.decodeIfPresent(String.self, forKey: .count) {
+            count = Double(text ?? "") ?? 0
+        } else {
+            count = 0
+        }
+    }
+}
+
+/// Felder, für die `api/websites/{id}/values` Werte liefert
+/// (entspricht `fieldsParam` im Umami-Schema).
+enum UmamiValueField: String, CaseIterable, Sendable {
+    case path
+    case referrer
+    case title
+    case query
+    case os
+    case browser
+    case device
+    case country
+    case region
+    case city
+    case tag
+    case hostname
+    case distinctId
+    case language
+    case event
+    case utmSource
+    case utmMedium
+    case utmCampaign
+    case utmContent
+    case utmTerm
+}

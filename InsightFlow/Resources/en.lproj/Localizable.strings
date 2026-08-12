@@ -490,6 +490,8 @@
 "reports.goals.subtitle" = "Goal tracking";
 "reports.attribution" = "Sources";
 "reports.attribution.subtitle" = "Referrers and traffic sources";
+"reports.unsupported" = "Available with Umami only";
+"reports.unsupported.description" = "Plausible does not offer funnels, UTM campaigns, goals and attribution in this form.";
 "reports.webvitals.subtitle" = "Page loading times";
 "reports.visittimes.subtitle" = "When your site is visited";
 "reports.revenue.subtitle" = "Revenue and paying users";

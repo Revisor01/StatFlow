@@ -33,13 +33,28 @@ ersten Store-Veröffentlichung.
 - **Verhaltensfilter** bei Plausible: Auswertungen lassen sich auf Besucher einschränken, die
   ein bestimmtes Ziel erreicht (oder nicht erreicht) haben.
 
+- **Akquisekanäle** bei Plausible: neue Aufschlüsselung, woher Besucher kommen
+  (Direkt, Suche, Soziale Netzwerke, Verweise).
+- **Conversion-Raten** bei Plausible-Zielen sowie Anteilswerte in Aufschlüsselungen.
+- **Ereignis-Kennzahlen und -Verlauf** bei Umami, dazu Werteliste für Filtervorschläge
+  und der Zeitraum, für den überhaupt Daten vorliegen.
+
 Die neuen Auswertungen setzen Umami ab Version 3 voraus und sind bei Plausible-Konten
 entsprechend nicht sichtbar.
+
+Abgeglichen wurde gegen **Umami 3.2.0** und **Plausible Community Edition 3.2.1**;
+alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
 
 ### Behoben
 
 - Filter mit „enthält nicht" wurden von Plausible abgelehnt, weil die App eine ungültige
   Schreibweise verwendet hat.
+- Bei Plausible blieben Listen mit begrenzter Länge leer — darunter die Top-Seiten und
+  Länder in der Echtzeit-Ansicht —, weil die Anfrage in einer Form gestellt wurde, die
+  aktuelle Plausible-Versionen zurückweisen.
+- Die Report-Übersicht zeigte bei Plausible-Konten Auswertungen an, die es dort nicht
+  gibt; sie erscheinen jetzt mit einem Hinweis statt mit Fehlern.
+- Kacheln in der Report-Übersicht waren unterschiedlich hoch.
 
 ## [1.0.7] – 2026-08-12
 

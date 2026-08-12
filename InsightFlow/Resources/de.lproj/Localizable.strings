@@ -491,6 +491,8 @@
 "reports.goals.subtitle" = "Ziel-Tracking";
 "reports.attribution" = "Herkunft";
 "reports.attribution.subtitle" = "Referrer und Verweise";
+"reports.unsupported" = "Nur mit Umami verfügbar";
+"reports.unsupported.description" = "Funnels, UTM-Kampagnen, Ziele und Herkunft bietet Plausible in dieser Form nicht an.";
 "reports.webvitals.subtitle" = "Ladezeiten deiner Seiten";
 "reports.visittimes.subtitle" = "Wann deine Website besucht wird";
 "reports.revenue.subtitle" = "Umsätze und zahlende Nutzer";

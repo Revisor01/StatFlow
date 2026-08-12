@@ -77,6 +77,34 @@ struct GoalConversion: Identifiable, Sendable {
     let goalName: String
     let visitors: Int
     let events: Int
+
+    /// Conversion-Rate in Prozent (0–100): Anteil der Besucher, die dieses Goal
+    /// ausgelöst haben, gemessen an allen Besuchern der Site im Zeitraum.
+    /// Nur zusammen mit event:goal als Dimension oder Filter abfragbar —
+    /// sonst antwortet die API mit "Metric `conversion_rate` can only be
+    /// queried with event:goal filters or dimensions.".
+    /// nil, wenn die Metrik nicht mitabgefragt wurde oder Plausible null liefert.
+    let conversionRate: Double?
+
+    /// Conversion-Rate innerhalb der Dimensionsgruppe (0–100). Ohne weitere
+    /// Gruppierungs-Dimension identisch zu conversionRate; mit zusätzlicher
+    /// Dimension (z. B. visit:source) der Anteil je Gruppe.
+    let groupConversionRate: Double?
+
+    /// Defaults halten bestehende Aufrufer ohne Conversion-Rate gültig.
+    init(
+        goalName: String,
+        visitors: Int,
+        events: Int,
+        conversionRate: Double? = nil,
+        groupConversionRate: Double? = nil
+    ) {
+        self.goalName = goalName
+        self.visitors = visitors
+        self.events = events
+        self.conversionRate = conversionRate
+        self.groupConversionRate = groupConversionRate
+    }
 }
 
 struct PlausibleQueryFilter: Sendable {
