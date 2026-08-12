@@ -507,6 +507,76 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode(EventStatsResponse.self, from: data)
     }
 
+    /// Ereignis-Kennzahlen mit Vorperiodenvergleich.
+    /// Achtung: Die Nutzdaten liegen bei diesem Endpunkt unter `data`.
+    func getEventMetricStats(websiteId: String, dateRange: DateRange) async throws -> UmamiEventStats {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/events/stats",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                timezoneQueryItem
+            ] + filterQueryItems
+        )
+        return try decoder.decode(UmamiEventStatsResponse.self, from: data).data
+    }
+
+    /// Ereignisse im Zeitverlauf. `timezone` ist hier Pflicht — ohne den
+    /// Parameter antwortet der Server mit 400. `unit` ist optional.
+    func getEventSeries(websiteId: String, dateRange: DateRange, unit: String? = nil) async throws -> [UmamiEventSeriesPoint] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        var queryItems = [
+            URLQueryItem(name: "startAt", value: String(startAt)),
+            URLQueryItem(name: "endAt", value: String(endAt)),
+            timezoneQueryItem
+        ]
+        // Ohne Angabe die zum Zeitraum passende Auflösung verwenden.
+        queryItems.append(URLQueryItem(name: "unit", value: unit ?? dateRange.unit))
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/events/series",
+            queryItems: queryItems + filterQueryItems
+        )
+        return try decoder.decode([UmamiEventSeriesPoint].self, from: data)
+    }
+
+    // MARK: - Werte je Feld
+
+    /// Werteliste eines Feldes mit Häufigkeit — für Filter-Vorschläge.
+    func getFieldValues(websiteId: String, dateRange: DateRange, field: UmamiValueField) async throws -> [UmamiFieldValue] {
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/values",
+            queryItems: [
+                URLQueryItem(name: "startAt", value: String(startAt)),
+                URLQueryItem(name: "endAt", value: String(endAt)),
+                URLQueryItem(name: "type", value: field.rawValue),
+                timezoneQueryItem
+            ] + filterQueryItems
+        )
+        return try decoder.decode([UmamiFieldValue].self, from: data)
+    }
+
+    // MARK: - Verfügbarer Datenzeitraum
+
+    /// Zeitraum, für den überhaupt Daten vorliegen. Kennt keine Zeitraum-
+    /// oder Filterparameter.
+    func getDataDateRange(websiteId: String) async throws -> UmamiDataDateRange {
+        let data = try await request(endpoint: "api/websites/\(websiteId)/daterange")
+        let response = try decoder.decode(DateRangeResponse.self, from: data)
+        return UmamiDataDateRange(from: response)
+    }
+
     // MARK: - Event Data
 
     func getEventDataFields(websiteId: String, dateRange: DateRange, eventName: String? = nil) async throws -> [EventDataField] {

@@ -38,16 +38,22 @@
 
 ### Server-Kompatibilität
 
-| Anbieter | Benötigte Version | Anmerkung |
-|----------|-------------------|-----------|
-| **Umami** | **ab 3.0** (self-hosted) | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. Segmente, Web Vitals, Besuchszeiten und Umsatz gibt es ebenfalls erst ab v3. |
-| **Plausible** | **ab CE 2.1** bzw. Cloud | Erst ab CE 2.1 gibt es die Query-API `POST /api/v2/query`. Zusätzlich wird `GET /api/v1/stats/realtime/visitors` für Echtzeitdaten genutzt. |
+| Anbieter | Benötigte Version | Getestet gegen | Anmerkung |
+|----------|-------------------|----------------|-----------|
+| **Umami** | **ab 3.0** (self-hosted) | **3.2.0** | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. Segmente, Web Vitals, Besuchszeiten und Umsatz gibt es ebenfalls erst ab v3. |
+| **Plausible** | **ab CE 2.1** bzw. Cloud | **CE 3.2.1** | Erst ab CE 2.1 gibt es die Query-API `POST /api/v2/query`. Zusätzlich wird `GET /api/v1/stats/realtime/visitors` für Echtzeitdaten genutzt. |
+
+Die Angaben in der Spalte „Getestet gegen" bezeichnen die Versionen, gegen deren
+laufende Instanzen sämtliche Abfragen der App zuletzt geprüft wurden (Stand: August 2026).
 
 **Wichtige Einschränkungen:**
 
 - **Umami Cloud wird derzeit nicht unterstützt.** Die App meldet sich über `POST /api/auth/login` an und nutzt ein Bearer-Token. Umami Cloud (`api.umami.is`) verlangt stattdessen einen `x-umami-api-key`-Header. Es funktionieren also nur selbst gehostete Instanzen.
 - **Plausibles Sites-API ist Cloud/Enterprise-only.** Websites anlegen und löschen, Ziele verwalten und Share-Links erzeugen laufen über `/api/v1/sites…`. Diese Routen gibt es in der Community Edition nicht — auf CE-Servern meldet die App das als nicht verfügbar. Dashboard, Diagramme und alle Statistiken funktionieren dort uneingeschränkt.
 - Die Plausible-Stats-API v1 ist zwar als „legacy" markiert, in CE 3.2 aber weiterhin verfügbar; ein Abschalttermin ist nicht angekündigt.
+- **Umsatzkennzahlen (`total_revenue`, `average_revenue`) gibt es bei Plausible nur in Cloud/Enterprise** — die Community Edition lehnt sie als unbekannte Metrik ab.
+- **Funnels und Segmente sind bei Plausible nicht über die API erreichbar**: sie laufen ausschließlich über interne Routen mit Cookie-Anmeldung, nicht über den API-Key.
+- Umami-Auswertungen wie Funnels, Ziele, Attribution, Sitzungen und Journeys existieren bei Plausible nicht und werden dort ausgeblendet.
 
 ## Architektur
 

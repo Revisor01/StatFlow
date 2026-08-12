@@ -311,3 +311,37 @@ struct UmamiPerformanceMetric: Codable, Sendable, Identifiable {
         count = number(.count)
     }
 }
+
+// MARK: - Verfügbarer Datenzeitraum (`api/websites/{id}/daterange`)
+
+/// Zeitraum, für den die Website überhaupt Daten hat. Damit lassen sich in der
+/// Datumsauswahl Zeiträume ohne Daten kennzeichnen.
+/// Der Server liefert ISO-Zeitstempel, z. B. "2025-11-01T01:57:01.000Z".
+struct UmamiDataDateRange: Sendable, Equatable {
+    let startDate: Date?
+    let endDate: Date?
+
+    init(from response: DateRangeResponse) {
+        self.startDate = DateFormatters.iso8601WithFractional.date(from: response.startDate)
+            ?? DateFormatters.iso8601.date(from: response.startDate)
+        self.endDate = DateFormatters.iso8601WithFractional.date(from: response.endDate)
+            ?? DateFormatters.iso8601.date(from: response.endDate)
+    }
+
+    init(startDate: Date?, endDate: Date?) {
+        self.startDate = startDate
+        self.endDate = endDate
+    }
+
+    /// Liegt das Datum im Bereich, für den Daten vorliegen?
+    func contains(_ date: Date) -> Bool {
+        guard let startDate, let endDate else { return false }
+        return date >= startDate && date <= endDate
+    }
+
+    /// Überschneidet sich der gewählte Zeitraum überhaupt mit vorhandenen Daten?
+    func overlaps(start: Date, end: Date) -> Bool {
+        guard let startDate, let endDate else { return false }
+        return start <= endDate && end >= startDate
+    }
+}
