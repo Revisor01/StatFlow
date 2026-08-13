@@ -422,18 +422,19 @@ class DashboardViewModel: ObservableObject {
         let now = Date()
         let isHourly = dateRange.unit == "hour"
 
-        // Build O(1) lookup by normalized date components (UTC to match API)
-        var utcCalendar = Calendar(identifier: .gregorian)
-        utcCalendar.timeZone = TimeZone(identifier: "UTC")!
+        // Die Anfragen senden die Geräte-Zeitzone mit, die Messwerte kommen also
+        // bereits lokal zurück. Durchgehend lokal schlüsseln — eine Umrechnung
+        // nach UTC verschiebt die Punkte und lässt Randstunden herausfallen.
+        let slotCalendar = calendar
 
         var dataByKey: [String: Int] = [:]
         for point in data {
             let date = point.date
             if isHourly {
-                let comps = utcCalendar.dateComponents([.year, .month, .day, .hour], from: date)
+                let comps = slotCalendar.dateComponents([.year, .month, .day, .hour], from: date)
                 dataByKey["\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"] = point.value
             } else {
-                let comps = utcCalendar.dateComponents([.year, .month, .day], from: date)
+                let comps = slotCalendar.dateComponents([.year, .month, .day], from: date)
                 dataByKey["\(comps.year!)-\(comps.month!)-\(comps.day!)"] = point.value
             }
         }
@@ -451,27 +452,27 @@ class DashboardViewModel: ObservableObject {
                 baseDate = dateRange.dates.start
             }
 
-            let startOfDay = utcCalendar.startOfDay(for: baseDate)
-            let currentHour = dateRange.preset == .today ? utcCalendar.component(.hour, from: now) : 23
+            let startOfDay = slotCalendar.startOfDay(for: baseDate)
+            let currentHour = dateRange.preset == .today ? slotCalendar.component(.hour, from: now) : 23
 
             for hour in 0...currentHour {
-                if let hourDate = utcCalendar.date(byAdding: .hour, value: hour, to: startOfDay) {
-                    let comps = utcCalendar.dateComponents([.year, .month, .day, .hour], from: hourDate)
+                if let hourDate = slotCalendar.date(byAdding: .hour, value: hour, to: startOfDay) {
+                    let comps = slotCalendar.dateComponents([.year, .month, .day, .hour], from: hourDate)
                     let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"
                     result.append(TimeSeriesPoint(x: DateFormatters.iso8601.string(from: hourDate), y: dataByKey[key] ?? 0))
                 }
             }
         } else {
             let dates = dateRange.dates
-            var currentDate = utcCalendar.startOfDay(for: dates.start)
-            let endDate = utcCalendar.startOfDay(for: dates.end)
+            var currentDate = slotCalendar.startOfDay(for: dates.start)
+            let endDate = slotCalendar.startOfDay(for: dates.end)
 
             while currentDate <= endDate {
-                let comps = utcCalendar.dateComponents([.year, .month, .day], from: currentDate)
+                let comps = slotCalendar.dateComponents([.year, .month, .day], from: currentDate)
                 let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)"
                 result.append(TimeSeriesPoint(x: DateFormatters.iso8601.string(from: currentDate), y: dataByKey[key] ?? 0))
 
-                if let nextDay = utcCalendar.date(byAdding: .day, value: 1, to: currentDate) {
+                if let nextDay = slotCalendar.date(byAdding: .day, value: 1, to: currentDate) {
                     currentDate = nextDay
                 } else {
                     break

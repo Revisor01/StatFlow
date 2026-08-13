@@ -263,51 +263,33 @@ class WebsiteDetailViewModel: ObservableObject {
         let now = Date()
         let isHourly = dateRange.unit == "hour"
 
-        // Build lookup by normalized date components to avoid timezone mismatch
+        // Die Anfragen senden die Geräte-Zeitzone mit, die Messwerte kommen also
+        // bereits lokal zurück. Deshalb wird durchgehend im lokalen Kalender
+        // geschlüsselt — eine Umrechnung nach UTC würde die Punkte um den
+        // Zeitzonen-Versatz verschieben und Randstunden ganz herausfallen lassen.
         var dataByComponent: [String: Int] = [:]
         for point in data {
             let date = point.date
-            if isHourly {
-                // Key by day+hour in UTC to match API data
-                let utcCalendar = {
-                    var c = Calendar(identifier: .gregorian)
-                    c.timeZone = TimeZone(identifier: "UTC")!
-                    return c
-                }()
-                let comps = utcCalendar.dateComponents([.year, .month, .day, .hour], from: date)
-                let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"
-                dataByComponent[key] = point.value
-            } else {
-                // Key by day in UTC
-                let utcCalendar = {
-                    var c = Calendar(identifier: .gregorian)
-                    c.timeZone = TimeZone(identifier: "UTC")!
-                    return c
-                }()
-                let comps = utcCalendar.dateComponents([.year, .month, .day], from: date)
-                let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)"
-                dataByComponent[key] = point.value
-            }
+            let comps = isHourly
+                ? calendar.dateComponents([.year, .month, .day, .hour], from: date)
+                : calendar.dateComponents([.year, .month, .day], from: date)
+            let key = isHourly
+                ? "\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"
+                : "\(comps.year!)-\(comps.month!)-\(comps.day!)"
+            dataByComponent[key] = point.value
         }
 
         var result: [TimeSeriesPoint] = []
 
-        // Use UTC calendar for generating slots to match API timezone
-        var utcCalendar = Calendar(identifier: .gregorian)
-        utcCalendar.timeZone = TimeZone(identifier: "UTC")!
+        // Slots im selben (lokalen) Kalender erzeugen, in dem auch geschlüsselt wird.
+        let slotCalendar = calendar
 
-        // Frühestes / spätestes Datum in den API-Daten ermitteln. Nur im `today`-Zweig
-        // verwendet, um UTC-vs-lokal-Skew abzufangen ohne andere Presets zu verändern.
-        var earliestDataDate: Date? = nil
-        var latestDataDate: Date? = nil
-        for point in data {
-            let pointDate = point.date
-            if earliestDataDate == nil || pointDate < earliestDataDate! { earliestDataDate = pointDate }
-            if latestDataDate == nil || pointDate > latestDataDate! { latestDataDate = pointDate }
-        }
+        // Spätester Datenpunkt — im `today`-Zweig als Untergrenze für das
+        // Auffüllen, damit kein bereits gemeldeter Wert abgeschnitten wird.
+        let latestDataDate = data.map(\.date).max()
 
         if isHourly {
-            let nowStartOfDay = utcCalendar.startOfDay(for: now)
+            let nowStartOfDay = slotCalendar.startOfDay(for: now)
 
             // Slot-Anfang und -Ende abhängig vom Preset bestimmen.
             let startOfDay: Date
@@ -315,27 +297,14 @@ class WebsiteDetailViewModel: ObservableObject {
 
             switch dateRange.preset {
             case .today:
-                // Die frühere von (heutiger UTC-startOfDay) und (UTC-startOfDay des frühesten
-                // Datenpunkts) verwenden — fängt den Fall ab, dass lokales "heute" UTC-mäßig
-                // bereits gestern Abend begonnen hat (z.B. CEST 01:30 → UTC 23:30 vom Vortag).
-                let earliestUtcStart: Date
-                if let earliest = earliestDataDate {
-                    earliestUtcStart = utcCalendar.startOfDay(for: earliest)
-                } else {
-                    earliestUtcStart = nowStartOfDay
-                }
-                startOfDay = min(nowStartOfDay, earliestUtcStart)
-
-                // Aktuelle Stunde relativ zu startOfDay (kann >23 sein wenn startOfDay
-                // auf dem vorherigen UTC-Tag liegt).
-                let currentHourOffset = Int(
-                    (now.timeIntervalSince(startOfDay) / 3600.0).rounded(.down)
-                )
-                // Stunden-Offset des spätesten Datenpunkts. Kann currentHourOffset
-                // überschreiten, wenn die API-Daten in einer UTC-Stunde *vor* der
-                // aktuellen UTC-Uhrzeit des Geräts liegen.
+                startOfDay = nowStartOfDay
+                // Nur bis zur aktuellen Stunde auffüllen — künftige Stunden des
+                // Tages sollen nicht als Nullwerte im Graphen erscheinen.
+                let currentHourOffset = slotCalendar.component(.hour, from: now)
+                // Sollte ein Datenpunkt später liegen (z.B. Uhr des Geräts geht nach),
+                // bis dorthin auffüllen, damit kein Wert verloren geht.
                 let latestDataHourOffset: Int
-                if let latest = latestDataDate {
+                if let latest = latestDataDate, latest >= startOfDay {
                     latestDataHourOffset = Int(
                         (latest.timeIntervalSince(startOfDay) / 3600.0).rounded(.down)
                     )
@@ -346,11 +315,11 @@ class WebsiteDetailViewModel: ObservableObject {
 
             case .yesterday:
                 let yesterday = calendar.date(byAdding: .day, value: -1, to: now) ?? now
-                startOfDay = utcCalendar.startOfDay(for: yesterday)
+                startOfDay = slotCalendar.startOfDay(for: yesterday)
                 lastHourOffset = 23
 
             default:
-                startOfDay = utcCalendar.startOfDay(for: dateRange.dates.start)
+                startOfDay = slotCalendar.startOfDay(for: dateRange.dates.start)
                 lastHourOffset = 23
             }
 
@@ -358,8 +327,8 @@ class WebsiteDetailViewModel: ObservableObject {
             let upperBound = max(0, lastHourOffset)
 
             for hourOffset in 0...upperBound {
-                if let hourDate = utcCalendar.date(byAdding: .hour, value: hourOffset, to: startOfDay) {
-                    let comps = utcCalendar.dateComponents([.year, .month, .day, .hour], from: hourDate)
+                if let hourDate = slotCalendar.date(byAdding: .hour, value: hourOffset, to: startOfDay) {
+                    let comps = slotCalendar.dateComponents([.year, .month, .day, .hour], from: hourDate)
                     let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)-\(comps.hour!)"
                     let value = dataByComponent[key] ?? 0
                     result.append(TimeSeriesPoint(x: DateFormatters.iso8601.string(from: hourDate), y: value))
@@ -367,16 +336,16 @@ class WebsiteDetailViewModel: ObservableObject {
             }
         } else {
             let dates = dateRange.dates
-            var currentDate = utcCalendar.startOfDay(for: dates.start)
-            let endDate = utcCalendar.startOfDay(for: dates.end)
+            var currentDate = slotCalendar.startOfDay(for: dates.start)
+            let endDate = slotCalendar.startOfDay(for: dates.end)
 
             while currentDate <= endDate {
-                let comps = utcCalendar.dateComponents([.year, .month, .day], from: currentDate)
+                let comps = slotCalendar.dateComponents([.year, .month, .day], from: currentDate)
                 let key = "\(comps.year!)-\(comps.month!)-\(comps.day!)"
                 let value = dataByComponent[key] ?? 0
                 result.append(TimeSeriesPoint(x: DateFormatters.iso8601.string(from: currentDate), y: value))
 
-                if let nextDay = utcCalendar.date(byAdding: .day, value: 1, to: currentDate) {
+                if let nextDay = slotCalendar.date(byAdding: .day, value: 1, to: currentDate) {
                     currentDate = nextDay
                 } else {
                     break

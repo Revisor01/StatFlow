@@ -189,6 +189,35 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(parts.day, 6)
     }
 
+    /// Die Diagramm-Auffüllung ordnet die Messwerte über Kalender-Komponenten
+    /// ihren Stunden-Slots zu. Da die Anfragen die Geräte-Zeitzone mitsenden,
+    /// kommen die Werte bereits lokal zurück und müssen auch lokal geschlüsselt
+    /// werden. Wurde stattdessen nach UTC umgerechnet, verschoben sich alle
+    /// Punkte um den Zeitzonen-Versatz und Randstunden fielen ganz heraus —
+    /// bei „Gestern" zog der Graph deshalb erst am Ende hoch.
+    func testHourlyPointsKeepTheirLocalHour() throws {
+        let json = """
+        {
+            "pageviews": [
+                {"x": "2026-08-13 01:00:00", "y": 2},
+                {"x": "2026-08-13 21:00:00", "y": 1}
+            ],
+            "sessions": []
+        }
+        """.data(using: .utf8)!
+
+        let data = try JSONDecoder().decode(PageviewsData.self, from: json)
+        let calendar = Calendar.current
+
+        let first = calendar.dateComponents([.day, .hour], from: data.pageviews[0].date)
+        XCTAssertEqual(first.day, 13)
+        XCTAssertEqual(first.hour, 1, "01:00 muss auf Stunde 1 liegen, nicht verschoben werden")
+
+        let last = calendar.dateComponents([.day, .hour], from: data.pageviews[1].date)
+        XCTAssertEqual(last.day, 13, "21:00 darf nicht auf den Folgetag rutschen")
+        XCTAssertEqual(last.hour, 21)
+    }
+
     /// Reines Tagesformat (u. a. Plausible) muss ebenfalls geparst werden.
     func testTimeSeriesPointParsesPlainDate() throws {
         let json = """
