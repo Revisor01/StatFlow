@@ -59,6 +59,9 @@ alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
   vom gewählten Zeitraum eine flache Linie mit einem Anstieg am Ende, weil das
   Datumsformat der Messwerte nicht gelesen werden konnte und alle Punkte auf den
   aktuellen Zeitpunkt fielen.
+- Für „Heute" und „Gestern" saßen die Stundenwerte um den Zeitzonen-Abstand versetzt
+  im Diagramm, einzelne Randstunden fehlten ganz. App und Widget zeigen jetzt
+  dieselbe Kurve.
 
 ## [1.0.7] – 2026-08-12
 
