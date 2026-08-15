@@ -90,16 +90,19 @@ struct LoginView: View {
     @State private var password = ""
     @State private var apiKey = ""
     @State private var accountName = ""
+    @State private var twoFactorCode = ""
+    @State private var useBackupCode = false
 
     @FocusState private var focusedField: Field?
 
     enum LoginStep {
         case provider
         case credentials
+        case twoFactor
     }
 
     enum Field {
-        case serverURL, username, password, apiKey, accountName
+        case serverURL, username, password, apiKey, accountName, twoFactorCode
     }
 
     var body: some View {
@@ -113,6 +116,8 @@ struct LoginView: View {
                         providerSelectionSection
                     case .credentials:
                         credentialsSection
+                    case .twoFactor:
+                        twoFactorSection
                     }
 
                     if let error = viewModel.errorMessage {
@@ -124,11 +129,20 @@ struct LoginView: View {
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                if step == .credentials {
+                if step != .provider {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button {
                             withAnimation {
-                                step = .provider
+                                if step == .twoFactor {
+                                    // Zurück zur Anmeldemaske: Der partialToken wird
+                                    // verworfen, der Login startet neu.
+                                    viewModel.cancelTwoFactor()
+                                    twoFactorCode = ""
+                                    useBackupCode = false
+                                    step = .credentials
+                                } else {
+                                    step = .provider
+                                }
                             }
                         } label: {
                             HStack(spacing: 4) {
@@ -137,6 +151,14 @@ struct LoginView: View {
                             }
                         }
                     }
+                }
+            }
+            .onChange(of: viewModel.requiresTwoFactor) { _, required in
+                withAnimation {
+                    step = required ? .twoFactor : .credentials
+                }
+                if required {
+                    focusedField = .twoFactorCode
                 }
             }
         }
@@ -272,6 +294,79 @@ struct LoginView: View {
             // Login Button
             loginButton
         }
+    }
+
+    private var twoFactorSection: some View {
+        VStack(spacing: 16) {
+            VStack(spacing: 8) {
+                Image(systemName: "lock.shield")
+                    .font(.largeTitle)
+                    .foregroundStyle(selectedProvider.color)
+
+                Text("login.twoFactor.title")
+                    .font(.headline)
+
+                Text(useBackupCode ? "login.twoFactor.backupHint" : "login.twoFactor.hint")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+
+            GlassTextField(
+                icon: useBackupCode ? "key.horizontal.fill" : "number",
+                placeholder: String(localized: useBackupCode
+                    ? "login.twoFactor.backupPlaceholder"
+                    : "login.twoFactor.placeholder"),
+                text: $twoFactorCode
+            )
+            .focused($focusedField, equals: .twoFactorCode)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .keyboardType(useBackupCode ? .default : .numberPad)
+
+            Button {
+                useBackupCode.toggle()
+                twoFactorCode = ""
+            } label: {
+                Text(useBackupCode ? "login.twoFactor.useCode" : "login.twoFactor.useBackup")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Button {
+                Task {
+                    await viewModel.submitTwoFactorCode(twoFactorCode, isBackupCode: useBackupCode)
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("login.twoFactor.confirm")
+                            .fontWeight(.semibold)
+                        Image(systemName: "checkmark.circle.fill")
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(selectedProvider.color)
+                .foregroundColor(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+            }
+            .disabled(viewModel.isLoading || !isTwoFactorCodeValid)
+            .opacity(isTwoFactorCodeValid ? 1 : 0.6)
+        }
+    }
+
+    /// Umami erwartet exakt sechs Zeichen für TOTP-Codes; Backup-Codes sind länger.
+    private var isTwoFactorCodeValid: Bool {
+        let trimmed = twoFactorCode.trimmingCharacters(in: .whitespaces)
+        return useBackupCode ? !trimmed.isEmpty : trimmed.count == 6
     }
 
     private var umamiCredentialsFields: some View {
