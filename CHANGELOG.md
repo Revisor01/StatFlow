@@ -53,6 +53,9 @@ alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
 - Das Dashboard lädt die Verlaufskurven aller Websites jetzt gebündelt statt einzeln.
   Bei vielen Websites baut sich die Übersicht dadurch spürbar schneller auf. Setzt
   Umami 3.3 voraus; auf älteren Servern lädt die App wie bisher.
+- Das gebündelte Laden gilt jetzt auch für „Heute" und „Gestern", sofern der Server
+  die stündliche Auflösung liefert. Tut er das nicht, lädt die App die Kurven wie
+  bisher einzeln — die angezeigten Werte bleiben in beiden Fällen dieselben.
 
 ### Behoben
 
