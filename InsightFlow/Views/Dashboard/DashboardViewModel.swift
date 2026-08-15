@@ -183,9 +183,22 @@ class DashboardViewModel: ObservableObject {
                 }
 
                 guard !Task.isCancelled else { return }
+
+                // Ab Umami 3.3 lassen sich die Verlaufsdaten aller Websites in
+                // einer Anfrage holen. Das spart bei vielen Websites je einen
+                // Request pro Kachel. Nur für Tagesauflösung — siehe
+                // `loadSparklinesBatched`.
+                let usedBatch = await loadSparklinesBatched(dateRange: dateRange)
+
                 await withTaskGroup(of: Void.self) { group in
                     for website in websites {
-                        group.addTask { await self.loadWebsiteData(website, dateRange: dateRange) }
+                        group.addTask {
+                            await self.loadWebsiteData(
+                                website,
+                                dateRange: dateRange,
+                                skipSparkline: usedBatch
+                            )
+                        }
                     }
                 }
             } catch {
@@ -320,11 +333,65 @@ class DashboardViewModel: ObservableObject {
         sparklineData.removeValue(forKey: websiteId)
     }
 
-    private func loadWebsiteData(_ website: Website, dateRange: DateRange) async {
+    private func loadWebsiteData(_ website: Website, dateRange: DateRange, skipSparkline: Bool = false) async {
         await withTaskGroup(of: Void.self) { group in
             group.addTask { await self.loadStats(for: website.id, dateRange: dateRange) }
             group.addTask { await self.loadActiveVisitors(for: website.id) }
-            group.addTask { await self.loadSparkline(for: website.id, dateRange: dateRange) }
+            if !skipSparkline {
+                group.addTask { await self.loadSparkline(for: website.id, dateRange: dateRange) }
+            }
+        }
+    }
+
+    /// Holt die Sparkline-Daten aller Websites in einer einzigen Anfrage
+    /// (`api/websites/charts`, ab Umami 3.3) und gibt zurück, ob das geklappt hat.
+    ///
+    /// Nur für Zeiträume mit Tagesauflösung: Der Endpunkt liefert feste
+    /// 12-Stunden-Buckets, für „Heute"/„Gestern" wären das statt 24 Stundenwerten
+    /// nur zwei Punkte. Dort bleibt es beim Einzelabruf je Website.
+    ///
+    /// Scheitert der Aufruf — etwa auf einem Server vor 3.3, der die Route mit 404
+    /// beantwortet —, wird auf den Einzelabruf zurückgefallen.
+    private func loadSparklinesBatched(dateRange: DateRange) async -> Bool {
+        guard !isPlausible, dateRange.unit == "day", !websites.isEmpty else { return false }
+
+        do {
+            let charts = try await umamiAPI.getWebsiteListCharts(
+                websiteIds: websites.map { $0.id },
+                dateRange: dateRange
+            )
+            guard !Task.isCancelled else { return false }
+            guard !charts.isEmpty else { return false }
+
+            let dateRangeId = dateRange.preset.rawValue
+
+            for (websiteId, points) in charts {
+                // Die 12-Stunden-Buckets auf Tageswerte summieren, damit die
+                // Kurve dieselbe Auflösung hat wie beim Einzelabruf.
+                let daily = Dictionary(grouping: points) { point in
+                    Calendar.current.startOfDay(for: point.date)
+                }
+                .map { day, values in
+                    AnalyticsChartPoint(date: day, value: values.reduce(0) { $0 + $1.value })
+                }
+                .sorted { $0.date < $1.date }
+
+                let rawData = daily.map { point in
+                    TimeSeriesPoint(x: DateFormatters.iso8601.string(from: point.date), y: point.value)
+                }
+                let filled = fillMissingTimeSlots(data: rawData, dateRange: dateRange)
+                if sparklineData[websiteId] != filled {
+                    sparklineData[websiteId] = filled
+                }
+
+                cache.saveSparkline(daily.toCached(), websiteId: websiteId, dateRangeId: dateRangeId)
+            }
+            return true
+        } catch {
+            if !Task.isCancelled {
+                Logger.ui.error("Batch-Charts fehlgeschlagen, Einzelabruf wird verwendet: \(error.localizedDescription)")
+            }
+            return false
         }
     }
 
