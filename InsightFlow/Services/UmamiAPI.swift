@@ -563,6 +563,68 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode(RealtimeData.self, from: data)
     }
 
+    /// Maximale Anzahl Websites pro Batch-Charts-Anfrage (Server-Limit).
+    static let batchChartsLimit = 20
+
+    /// Holt die Verlaufsdaten mehrerer Websites in einer einzigen Anfrage.
+    /// `GET api/websites/charts` (ab Umami 3.3).
+    ///
+    /// Der Server bucketiert fest in 12-Stunden-Schritten und zählt Sitzungen,
+    /// nicht Seitenaufrufe. Für stündliche Auflösung ist der Endpunkt damit
+    /// ungeeignet — dort weiterhin `getPageviews` je Website verwenden.
+    ///
+    /// Liefert je Website die Werte in zeitlicher Reihenfolge; der Startzeitpunkt
+    /// eines Buckets ergibt sich aus `startAt` plus zwölf Stunden je Position.
+    func getWebsiteListCharts(
+        websiteIds: [String],
+        dateRange: DateRange
+    ) async throws -> [String: [AnalyticsChartPoint]] {
+        guard !websiteIds.isEmpty else { return [:] }
+
+        let dates = dateRange.dates
+        let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
+        let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+
+        var result: [String: [AnalyticsChartPoint]] = [:]
+
+        // Der Server nimmt höchstens 20 IDs entgegen; größere Listen werden
+        // in Blöcken abgefragt.
+        for chunk in stride(from: 0, to: websiteIds.count, by: Self.batchChartsLimit).map({
+            Array(websiteIds[$0..<min($0 + Self.batchChartsLimit, websiteIds.count)])
+        }) {
+            let data = try await request(
+                endpoint: "api/websites/charts",
+                queryItems: [
+                    URLQueryItem(name: "ids", value: chunk.joined(separator: ",")),
+                    URLQueryItem(name: "startAt", value: String(startAt)),
+                    URLQueryItem(name: "endAt", value: String(endAt)),
+                    timezoneQueryItem
+                ]
+            )
+
+            struct ChartsResponse: Codable {
+                struct Entry: Codable {
+                    let values: [Int]
+                    let total: Int
+                }
+                let data: [String: Entry]
+            }
+
+            let response = try decoder.decode(ChartsResponse.self, from: data)
+
+            for (websiteId, entry) in response.data {
+                result[websiteId] = entry.values.enumerated().map { index, value in
+                    AnalyticsChartPoint(
+                        date: dates.start.addingTimeInterval(Double(index) * 12 * 3600),
+                        value: value
+                    )
+                }
+            }
+        }
+
+        return result
+    }
+
     // MARK: - Events
 
     func getEventsDetail(websiteId: String, dateRange: DateRange, page: Int = 1, pageSize: Int = 20) async throws -> EventsResponse {
