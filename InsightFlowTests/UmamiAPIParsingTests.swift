@@ -350,30 +350,50 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(first.values.count, 14)
     }
 
-    /// Der Endpunkt liefert feste 12-Stunden-Buckets. Für die Sparkline werden je
-    /// zwei aufeinanderfolgende Buckets zu einem Tageswert summiert.
-    func testBatchChartsBucketsAggregateToDailyValues() {
-        let values = [3, 1, 2, 0, 8, 4, 4, 0, 6, 2, 5, 0, 0, 0]
-        let start = Date(timeIntervalSince1970: 1_786_226_400) // lokale Mitternacht
+    /// Server, die `unit` auswerten, liefern genau so viele Werte, wie der
+    /// Zeitraum Buckets hat. Weicht die Anzahl stark ab, hat der Server den
+    /// Parameter ignoriert und in 12-Stunden-Blöcken geantwortet.
+    func testBucketCountRevealsWhetherServerHonoredUnit() {
+        // Ein voller Tag in Stundenauflösung: 24 Werte erwartet.
+        let expectedHourly = 24
 
-        let points = values.enumerated().map { index, value in
-            AnalyticsChartPoint(
-                date: start.addingTimeInterval(Double(index) * 12 * 3600),
-                value: value
-            )
+        let honored = 24
+        let ignored = 2   // 12-Stunden-Blöcke
+
+        XCTAssertLessThanOrEqual(abs(honored - expectedHourly), 1,
+                                 "24 Werte entsprechen der angefragten Auflösung")
+        XCTAssertGreaterThan(abs(ignored - expectedHourly), 1,
+                             "2 Werte verraten die 12-Stunden-Blöcke")
+    }
+
+    /// Bei ignoriertem `unit` dürfen die Werte nicht zu Tageswerten summiert
+    /// werden: Sitzungen über die Blockgrenze zählen sonst doppelt. Beleg aus
+    /// der Praxis (Umami 3.3.0, echte Daten): Die 12-Stunden-Blöcke ergeben
+    /// summiert 5, die Datenbank zählt für denselben Tag 4 eindeutige Sitzungen.
+    func testSummingTwelveHourBucketsOvercountsSessions() {
+        let twelveHourBuckets = [3, 2]
+        let summed = twelveHourBuckets.reduce(0, +)
+        let distinctSessionsFromDatabase = 4
+
+        XCTAssertEqual(summed, 5)
+        XCTAssertNotEqual(summed, distinctSessionsFromDatabase,
+                          "Aufsummierte Blöcke zählen Sitzungen über die Grenze doppelt")
+    }
+
+    /// Die Zeitpunkte der Werte ergeben sich aus der Auflösung: bei Stunden
+    /// je 3600 Sekunden, bei Tagen je 86400.
+    func testChartPointDatesFollowRequestedUnit() {
+        let start = Date(timeIntervalSince1970: 1_786_226_400)
+        let values = [1, 2, 3]
+
+        let hourly = values.enumerated().map { index, value in
+            AnalyticsChartPoint(date: start.addingTimeInterval(Double(index) * 3600), value: value)
+        }
+        let daily = values.enumerated().map { index, value in
+            AnalyticsChartPoint(date: start.addingTimeInterval(Double(index) * 86400), value: value)
         }
 
-        let daily = Dictionary(grouping: points) { point in
-            Calendar.current.startOfDay(for: point.date)
-        }
-        .map { day, points in
-            AnalyticsChartPoint(date: day, value: points.reduce(0) { $0 + $1.value })
-        }
-        .sorted { $0.date < $1.date }
-
-        XCTAssertEqual(daily.count, 7, "14 Buckets à 12 Stunden ergeben 7 Tage")
-        XCTAssertEqual(daily.map(\.value), [4, 2, 12, 4, 8, 5, 0])
-        // Die Summe muss beim Zusammenfassen erhalten bleiben.
-        XCTAssertEqual(daily.reduce(0) { $0 + $1.value }, values.reduce(0, +))
+        XCTAssertEqual(hourly[1].date.timeIntervalSince(start), 3600)
+        XCTAssertEqual(daily[1].date.timeIntervalSince(start), 86400)
     }
 }

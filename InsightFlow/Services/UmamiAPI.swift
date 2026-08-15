@@ -566,26 +566,46 @@ actor UmamiAPI: AnalyticsProvider {
     /// Maximale Anzahl Websites pro Batch-Charts-Anfrage (Server-Limit).
     static let batchChartsLimit = 20
 
+    /// Ergebnis einer Batch-Charts-Abfrage.
+    struct BatchCharts: Sendable {
+        /// Verlaufsdaten je Website-ID.
+        let charts: [String: [AnalyticsChartPoint]]
+        /// `true`, wenn der Server die angefragte Auflösung geliefert hat.
+        /// Server ohne `unit`-Unterstützung antworten weiterhin mit
+        /// 12-Stunden-Blöcken; dann sind die Werte für Stunden- oder
+        /// Tagesauflösung nicht verwendbar.
+        let honoredUnit: Bool
+    }
+
     /// Holt die Verlaufsdaten mehrerer Websites in einer einzigen Anfrage.
     /// `GET api/websites/charts` (ab Umami 3.3).
     ///
-    /// Der Server bucketiert fest in 12-Stunden-Schritten und zählt Sitzungen,
-    /// nicht Seitenaufrufe. Für stündliche Auflösung ist der Endpunkt damit
-    /// ungeeignet — dort weiterhin `getPageviews` je Website verwenden.
+    /// Ohne `unit` bucketiert der Server fest in 12-Stunden-Blöcken. Umami
+    /// wertet `unit` an dieser Route bislang nicht aus; Server, die den
+    /// Parameter kennen, liefern die angefragte Auflösung. Ob das der Fall ist,
+    /// lässt sich nur an der Anzahl der Werte erkennen — deshalb `honoredUnit`.
     ///
-    /// Liefert je Website die Werte in zeitlicher Reihenfolge; der Startzeitpunkt
-    /// eines Buckets ergibt sich aus `startAt` plus zwölf Stunden je Position.
+    /// Gezählt werden Sitzungen, nicht Seitenaufrufe.
     func getWebsiteListCharts(
         websiteIds: [String],
         dateRange: DateRange
-    ) async throws -> [String: [AnalyticsChartPoint]] {
-        guard !websiteIds.isEmpty else { return [:] }
+    ) async throws -> BatchCharts {
+        guard !websiteIds.isEmpty else { return BatchCharts(charts: [:], honoredUnit: false) }
 
         let dates = dateRange.dates
         let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
         let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
+        let unit = dateRange.unit
+
+        // Sekunden je Bucket der angefragten Auflösung. Monate sind ungleich
+        // lang; dort wird der Startzeitpunkt kalendarisch bestimmt.
+        let stepSeconds: Double = unit == "hour" ? 3600 : 86400
+
+        // So viele Werte müssen zurückkommen, damit die Auflösung stimmt.
+        let expected = Self.expectedBucketCount(dateRange: dateRange)
 
         var result: [String: [AnalyticsChartPoint]] = [:]
+        var honored = true
 
         // Der Server nimmt höchstens 20 IDs entgegen; größere Listen werden
         // in Blöcken abgefragt.
@@ -598,6 +618,7 @@ actor UmamiAPI: AnalyticsProvider {
                     URLQueryItem(name: "ids", value: chunk.joined(separator: ",")),
                     URLQueryItem(name: "startAt", value: String(startAt)),
                     URLQueryItem(name: "endAt", value: String(endAt)),
+                    URLQueryItem(name: "unit", value: unit),
                     timezoneQueryItem
                 ]
             )
@@ -613,16 +634,43 @@ actor UmamiAPI: AnalyticsProvider {
             let response = try decoder.decode(ChartsResponse.self, from: data)
 
             for (websiteId, entry) in response.data {
+                // Weicht die Anzahl deutlich ab, hat der Server `unit` ignoriert
+                // und in 12-Stunden-Blöcken geantwortet.
+                if let expected, abs(entry.values.count - expected) > 1 {
+                    honored = false
+                }
+
                 result[websiteId] = entry.values.enumerated().map { index, value in
-                    AnalyticsChartPoint(
-                        date: dates.start.addingTimeInterval(Double(index) * 12 * 3600),
-                        value: value
-                    )
+                    let date: Date
+                    if unit == "month" {
+                        date = Calendar.current.date(
+                            byAdding: .month, value: index, to: dates.start
+                        ) ?? dates.start
+                    } else {
+                        date = dates.start.addingTimeInterval(Double(index) * stepSeconds)
+                    }
+                    return AnalyticsChartPoint(date: date, value: value)
                 }
             }
         }
 
-        return result
+        return BatchCharts(charts: result, honoredUnit: honored)
+    }
+
+    /// Erwartete Anzahl Buckets für die Auflösung des Zeitraums, oder `nil`,
+    /// wenn sie sich nicht sinnvoll vorhersagen lässt (Monatsauflösung).
+    static func expectedBucketCount(dateRange: DateRange) -> Int? {
+        let dates = dateRange.dates
+        let span = dates.end.timeIntervalSince(dates.start)
+
+        switch dateRange.unit {
+        case "hour":
+            return max(1, Int(ceil(span / 3600)))
+        case "day":
+            return max(1, Int(ceil(span / 86400)))
+        default:
+            return nil
+        }
     }
 
     // MARK: - Events
