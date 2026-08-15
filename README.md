@@ -40,7 +40,7 @@
 
 | Anbieter | Benötigte Version | Getestet gegen | Anmerkung |
 |----------|-------------------|----------------|-----------|
-| **Umami** | **ab 3.0** (self-hosted) | **3.2.0** | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. Segmente, Web Vitals, Besuchszeiten und Umsatz gibt es ebenfalls erst ab v3. |
+| **Umami** | **ab 3.0** (self-hosted) | **3.3.0** | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. Segmente, Web Vitals, Besuchszeiten und Umsatz gibt es ebenfalls erst ab v3. Die Anmeldung mit Bestätigung in zwei Schritten setzt Umami 3.3 voraus. |
 | **Plausible** | **ab CE 2.1** bzw. Cloud | **CE 3.2.1** | Erst ab CE 2.1 gibt es die Query-API `POST /api/v2/query`. Zusätzlich wird `GET /api/v1/stats/realtime/visitors` für Echtzeitdaten genutzt. |
 
 Die Angaben in der Spalte „Getestet gegen" bezeichnen die Versionen, gegen deren

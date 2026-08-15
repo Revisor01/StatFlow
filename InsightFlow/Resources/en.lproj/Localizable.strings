@@ -402,6 +402,14 @@
 "login.apiKey.placeholder" = "API Key";
 "login.apiKey.help" = "Where do I find my API key?";
 "login.accountName.placeholder" = "Account name (optional)";
+"login.twoFactor.title" = "Two-step verification";
+"login.twoFactor.hint" = "Enter the six-digit code from your authenticator app.";
+"login.twoFactor.backupHint" = "Enter one of your backup codes. Each code can only be used once.";
+"login.twoFactor.placeholder" = "6-digit code";
+"login.twoFactor.backupPlaceholder" = "Backup code";
+"login.twoFactor.useBackup" = "Use a backup code instead";
+"login.twoFactor.useCode" = "Use the code from your app instead";
+"login.twoFactor.confirm" = "Confirm";
 
 // MARK: - Errors
 "error.title" = "Error";

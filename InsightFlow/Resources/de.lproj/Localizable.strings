@@ -403,6 +403,14 @@
 "login.apiKey.placeholder" = "API-Schlüssel";
 "login.apiKey.help" = "Wo finde ich meinen API-Schlüssel?";
 "login.accountName.placeholder" = "Account-Name (optional)";
+"login.twoFactor.title" = "Bestätigung in zwei Schritten";
+"login.twoFactor.hint" = "Gib den sechsstelligen Code aus deiner Authenticator-App ein.";
+"login.twoFactor.backupHint" = "Gib einen deiner Backup-Codes ein. Jeder Code lässt sich nur einmal verwenden.";
+"login.twoFactor.placeholder" = "6-stelliger Code";
+"login.twoFactor.backupPlaceholder" = "Backup-Code";
+"login.twoFactor.useBackup" = "Stattdessen Backup-Code verwenden";
+"login.twoFactor.useCode" = "Stattdessen Code aus der App verwenden";
+"login.twoFactor.confirm" = "Bestätigen";
 
 // MARK: - Errors
 "error.title" = "Fehler";
