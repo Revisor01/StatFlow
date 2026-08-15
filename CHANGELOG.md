@@ -48,6 +48,12 @@ entsprechend nicht sichtbar.
 Abgeglichen wurde gegen **Umami 3.3.0** und **Plausible Community Edition 3.2.1**;
 alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
 
+### Geändert
+
+- Das Dashboard lädt die Verlaufskurven aller Websites jetzt gebündelt statt einzeln.
+  Bei vielen Websites baut sich die Übersicht dadurch spürbar schneller auf. Setzt
+  Umami 3.3 voraus; auf älteren Servern lädt die App wie bisher.
+
 ### Behoben
 
 - Filter mit „enthält nicht" wurden von Plausible abgelehnt, weil die App eine ungültige
