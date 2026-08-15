@@ -38,11 +38,14 @@ ersten Store-Veröffentlichung.
 - **Conversion-Raten** bei Plausible-Zielen sowie Anteilswerte in Aufschlüsselungen.
 - **Ereignis-Kennzahlen und -Verlauf** bei Umami, dazu Werteliste für Filtervorschläge
   und der Zeitraum, für den überhaupt Daten vorliegen.
+- **Anmeldung mit Bestätigung in zwei Schritten** bei Umami: Ist für das Konto ein zweiter
+  Faktor eingerichtet, fragt die App nach dem Code aus der Authenticator-App. Alternativ
+  lässt sich ein Backup-Code verwenden.
 
 Die neuen Auswertungen setzen Umami ab Version 3 voraus und sind bei Plausible-Konten
 entsprechend nicht sichtbar.
 
-Abgeglichen wurde gegen **Umami 3.2.0** und **Plausible Community Edition 3.2.1**;
+Abgeglichen wurde gegen **Umami 3.3.0** und **Plausible Community Edition 3.2.1**;
 alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
 
 ### Behoben

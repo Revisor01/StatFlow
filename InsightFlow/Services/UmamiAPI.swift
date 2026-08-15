@@ -218,7 +218,15 @@ actor UmamiAPI: AnalyticsProvider {
             throw APIError.invalidURL
         }
 
-        let token = try await login(baseURL: url, username: username, password: password)
+        // Dieser Weg kennt keine Rückfrage beim Nutzer. Verlangt der Server einen
+        // zweiten Faktor, muss die Anmeldung über die Login-Ansicht laufen.
+        guard case .token(let token) = try await login(
+            baseURL: url,
+            username: username,
+            password: password
+        ) else {
+            throw APIError.twoFactorRequired
+        }
 
         // Save credentials
         try KeychainService.save(serverURL, for: .serverURL)
@@ -376,7 +384,17 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Authentication
 
-    nonisolated func login(baseURL: URL, username: String, password: String) async throws -> String {
+    /// Ergebnis eines Login-Versuchs. Ab Umami 3.3 kann `api/auth/login` mit
+    /// Status 200 antworten, ohne ein Token zu liefern: Ist für den Benutzer
+    /// Zwei-Faktor-Authentifizierung aktiv, kommt stattdessen ein kurzlebiger
+    /// `partialToken`, der über `api/2fa/verify` gegen das echte Token
+    /// eingetauscht wird.
+    enum LoginResult: Sendable {
+        case token(String)
+        case twoFactorRequired(partialToken: String)
+    }
+
+    nonisolated func login(baseURL: URL, username: String, password: String) async throws -> LoginResult {
         let loginURL = baseURL.appendingPathComponent("api/auth/login")
 
         var request = URLRequest(url: loginURL)
@@ -400,7 +418,9 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         struct LoginResponse: Codable {
-            let token: String
+            let token: String?
+            let requiresTwoFactor: Bool?
+            let partialToken: String?
             let user: User?
 
             struct User: Codable {
@@ -410,7 +430,77 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         let loginResponse = try JSONDecoder().decode(LoginResponse.self, from: data)
-        return loginResponse.token
+
+        if let token = loginResponse.token {
+            return .token(token)
+        }
+
+        if loginResponse.requiresTwoFactor == true, let partialToken = loginResponse.partialToken {
+            return .twoFactorRequired(partialToken: partialToken)
+        }
+
+        throw APIError.invalidResponse
+    }
+
+    /// Schließt einen Login ab, für den Umami Zwei-Faktor-Authentifizierung
+    /// verlangt hat. Erwartet entweder einen sechsstelligen TOTP-Code oder
+    /// einen Backup-Code. `POST api/2fa/verify` (ab Umami 3.3).
+    nonisolated func verifyTwoFactor(
+        baseURL: URL,
+        partialToken: String,
+        code: String,
+        isBackupCode: Bool = false
+    ) async throws -> String {
+        let verifyURL = baseURL.appendingPathComponent("api/2fa/verify")
+
+        var request = URLRequest(url: verifyURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(partialToken)", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 15
+
+        // Das Schema akzeptiert exakt eines der beiden Felder, keine Kombination.
+        let body = isBackupCode ? ["backupCode": code] : ["token": code]
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        // Umami meldet einen falschen Code mit 400 und eine Sperre nach zu
+        // vielen Fehlversuchen mit 429 — beide mit eigenem Fehlercode.
+        guard httpResponse.statusCode == 200 else {
+            struct ErrorResponse: Codable {
+                struct Body: Codable {
+                    let code: String?
+                    let lockedUntil: Double?
+                }
+                let error: Body?
+            }
+
+            let parsed = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+
+            if httpResponse.statusCode == 429 {
+                throw APIError.twoFactorLocked(until: parsed?.error?.lockedUntil)
+            }
+
+            switch parsed?.error?.code {
+            case "two-factor-error-invalid-code",
+                 "two-factor-error-invalid-backup-code",
+                 "two-factor-error-code-used":
+                throw APIError.twoFactorInvalidCode
+            default:
+                throw APIError.authenticationFailed
+            }
+        }
+
+        struct VerifyResponse: Codable {
+            let token: String
+        }
+
+        return try JSONDecoder().decode(VerifyResponse.self, from: data).token
     }
 
     // MARK: - Websites
@@ -1290,6 +1380,9 @@ enum APIError: LocalizedError, Sendable {
     case authenticationFailed
     case unauthorized
     case serverError(Int)
+    case twoFactorInvalidCode
+    case twoFactorLocked(until: Double?)
+    case twoFactorRequired
 
     var errorDescription: String? {
         switch self {
@@ -1305,6 +1398,12 @@ enum APIError: LocalizedError, Sendable {
             return "Nicht autorisiert"
         case .serverError(let code):
             return "Server-Fehler (\(code))"
+        case .twoFactorInvalidCode:
+            return "Der Bestätigungscode ist ungültig"
+        case .twoFactorLocked:
+            return "Zu viele Fehlversuche. Bitte später erneut versuchen."
+        case .twoFactorRequired:
+            return "Für dieses Konto ist eine Bestätigung in zwei Schritten aktiv. Bitte über die Anmeldemaske anmelden."
         }
     }
 }
