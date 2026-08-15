@@ -312,4 +312,68 @@ final class UmamiAPIParsingTests: XCTestCase {
         let stat = StatValue(value: 10, change: 10)
         XCTAssertEqual(stat.changePercentage, 0.0, accuracy: 0.001)
     }
+
+    // MARK: - Batch-Charts (Umami 3.3, api/websites/charts)
+
+    /// Spiegelt das Antwortformat von `api/websites/charts`: ein Objekt, das je
+    /// Website-ID `values` (12-Stunden-Buckets) und `total` enthält.
+    private struct BatchChartsResponse: Codable {
+        struct Entry: Codable {
+            let values: [Int]
+            let total: Int
+        }
+        let data: [String: Entry]
+    }
+
+    func testBatchChartsResponseDecoding() throws {
+        let json = """
+        {
+            "data": {
+                "96efd249-a5e3-486a-8d7e-6da7d8c1ed17": {
+                    "values": [3, 0, 2, 0, 8, 0, 4, 0, 6, 0, 5, 0, 0, 0],
+                    "total": 28
+                },
+                "a66f993c-86cc-4c1a-a19d-8c536a4c102a": {
+                    "values": [5, 0, 2, 0, 3, 0, 6, 0, 1, 0, 4, 0, 2, 0],
+                    "total": 22
+                }
+            }
+        }
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(BatchChartsResponse.self, from: json)
+
+        XCTAssertEqual(response.data.count, 2)
+        let first = try XCTUnwrap(response.data["96efd249-a5e3-486a-8d7e-6da7d8c1ed17"])
+        XCTAssertEqual(first.total, 28)
+        // 7 Tage à 2 Buckets (12 Stunden)
+        XCTAssertEqual(first.values.count, 14)
+    }
+
+    /// Der Endpunkt liefert feste 12-Stunden-Buckets. Für die Sparkline werden je
+    /// zwei aufeinanderfolgende Buckets zu einem Tageswert summiert.
+    func testBatchChartsBucketsAggregateToDailyValues() {
+        let values = [3, 1, 2, 0, 8, 4, 4, 0, 6, 2, 5, 0, 0, 0]
+        let start = Date(timeIntervalSince1970: 1_786_226_400) // lokale Mitternacht
+
+        let points = values.enumerated().map { index, value in
+            AnalyticsChartPoint(
+                date: start.addingTimeInterval(Double(index) * 12 * 3600),
+                value: value
+            )
+        }
+
+        let daily = Dictionary(grouping: points) { point in
+            Calendar.current.startOfDay(for: point.date)
+        }
+        .map { day, points in
+            AnalyticsChartPoint(date: day, value: points.reduce(0) { $0 + $1.value })
+        }
+        .sorted { $0.date < $1.date }
+
+        XCTAssertEqual(daily.count, 7, "14 Buckets à 12 Stunden ergeben 7 Tage")
+        XCTAssertEqual(daily.map(\.value), [4, 2, 12, 4, 8, 5, 0])
+        // Die Summe muss beim Zusammenfassen erhalten bleiben.
+        XCTAssertEqual(daily.reduce(0) { $0 + $1.value }, values.reduce(0, +))
+    }
 }
