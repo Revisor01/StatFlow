@@ -183,11 +183,67 @@ struct WebsiteQuery: EntityQuery {
                 widgetLog("WebsiteQuery: failed to decode Umami response for '\(account.displayName)'")
                 return []
             }
-            return websites.map { WebsiteEntity(id: $0.id, name: $0.name, accountId: account.id, providerType: "umami") }
+
+            // Websites aus Teams ergänzen, damit das Widget dieselbe Auswahl
+            // anbietet wie die App.
+            let teamWebsites = await fetchTeamWebsites(account: account, baseURL: url)
+
+            var seen = Set(websites.map(\.id))
+            var combined = websites.map {
+                WebsiteEntity(id: $0.id, name: $0.name, accountId: account.id, providerType: "umami")
+            }
+
+            for site in teamWebsites where !seen.contains(site.id) {
+                seen.insert(site.id)
+                combined.append(site)
+            }
+
+            return combined
         } catch {
             widgetLog("WebsiteQuery: Umami API error for '\(account.displayName)': \(error)")
             return []
         }
+    }
+
+    /// Websites aus allen Teams des Kontos. Fehler bleiben hier folgenlos: Das
+    /// Widget zeigt dann eben nur die persönlichen Websites an.
+    private func fetchTeamWebsites(account: WidgetAccount, baseURL: URL) async -> [WebsiteEntity] {
+        struct TeamItem: Decodable { let id: String; let name: String }
+        struct TeamsWrapper: Decodable { let data: [TeamItem] }
+        struct WS: Decodable { let id: String; let name: String }
+        struct Wrapper: Decodable { let data: [WS] }
+
+        func get(_ path: String) async -> Data? {
+            guard var components = URLComponents(
+                url: baseURL.appendingPathComponent(path),
+                resolvingAgainstBaseURL: false
+            ) else { return nil }
+            components.queryItems = [URLQueryItem(name: "pageSize", value: "100")]
+            guard let url = components.url else { return nil }
+
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(account.token)", forHTTPHeaderField: "Authorization")
+            request.timeoutInterval = 10
+            return try? await URLSession.shared.data(for: request).0
+        }
+
+        guard let teamsData = await get("api/me/teams"),
+              let teams = try? JSONDecoder().decode(TeamsWrapper.self, from: teamsData).data,
+              !teams.isEmpty
+        else { return [] }
+
+        var result: [WebsiteEntity] = []
+        for team in teams {
+            guard let data = await get("api/teams/\(team.id)/websites"),
+                  let sites = try? JSONDecoder().decode(Wrapper.self, from: data).data
+            else { continue }
+
+            result.append(contentsOf: sites.map {
+                WebsiteEntity(id: $0.id, name: $0.name, accountId: account.id, providerType: "umami")
+            })
+        }
+
+        return result
     }
 
     private func fetchWebsitesFromCredentials(_ creds: WidgetCredentials.Credentials) async -> [WebsiteEntity] {

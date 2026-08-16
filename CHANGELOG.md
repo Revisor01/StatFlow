@@ -14,10 +14,14 @@ Die Versionen 1.0 bis 1.0.6 sind die im App Store ausgelieferten Releases. Die V
 0.1.0 bis 1.3.0 stammen aus der Vorgeschichte als InsightFlow bzw. PrivacyFlow, vor der
 ersten Store-Veröffentlichung.
 
-## [1.1.0] – 2026-08-16
+## [Unreleased] - 2.0.0
 
 ### Hinzugefügt
 
+- **Teams**: Websites aus Umami-Teams erscheinen jetzt in der Übersicht — bisher zeigte
+  die App nur die eigenen. Sie sind mit dem Teamnamen gekennzeichnet und lassen sich
+  wie eigene Websites auswerten. Auch im Widget stehen sie zur Auswahl. Es genügt eine
+  Mitgliedschaft im Team; die Rolle „nur lesen" reicht aus.
 - **Ladezeiten (Web Vitals)**: Neue Auswertung zeigt, wie schnell die eigenen Seiten laden —
   mit farblicher Bewertung nach den offiziellen Schwellenwerten und den langsamsten Seiten.
 - **Besuchszeiten**: Wochen-Übersicht, die auf einen Blick zeigt, an welchen Tagen und zu
