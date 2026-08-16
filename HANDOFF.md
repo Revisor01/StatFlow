@@ -1,140 +1,114 @@
-# Handoff — Stand 16. August 2026
+# Handoff — Stand 16. August 2026, abends
 
-Arbeitsstand nach einer langen Sitzung zu Umami 3.3.0. Vier Stränge: App,
-Server, Homepages, Upstream-PR.
+**StatsFlow 2.0.0 ist bei Apple in der Review** (abgesendet 20:50 Uhr, Build 17).
+Veröffentlichung erfolgt automatisch nach der Freigabe.
 
 ---
 
 ## 1. Was als Nächstes ansteht
 
-**Simon testet Build 13 in TestFlight.** 2FA ist eingerichtet und der Login
-damit erfolgreich durchgespielt — der Punkt ist erledigt.
+**Auf die Freigabe warten.** Danach:
 
-Danach: **StatsFlow 1.1.0 in den App Store einreichen.** Alle Texte sind
-fertig, Screenshots werden bewusst nicht erneuert.
+1. GitHub-Release zu `v2.0.0` anlegen (Tag ist gesetzt, Release fehlt noch).
+2. Prüfen, ob die Veröffentlichung durchgelaufen ist.
 
-### Zuerst: Build 14 bauen
+Wird die Version **abgelehnt**, sind die wahrscheinlichsten Gründe:
 
-Nach Build 13 kam noch ein Fix am Abmelden (`e94d263`), der **in keinem
-TestFlight-Build enthalten ist**. Vor dem Einreichen also:
-
-1. `CURRENT_PROJECT_VERSION` in `InsightFlow.xcodeproj/project.pbxproj`
-   auf `14` setzen (4 Stellen).
-2. Archivieren, exportieren, hochladen. **Wichtig:** Der Export scheitert
-   sonst an Homebrews rsync — deshalb mit Apples Variante bauen:
-   ```bash
-   PATH="/usr/bin:/bin:/usr/sbin:/sbin" xcodebuild -exportArchive …
-   ```
-   Vollständiger Ablauf siehe Abschnitt 6.
-3. Abmelden einmal am Gerät prüfen: abmelden → App beenden → neu starten.
-   Es darf **kein** Konto mehr da sein.
-
-### Dann einreichen
-
-1. `CHANGELOG.md`: `## [Unreleased] - 1.1.0` → `## [1.1.0] - <Datum>`.
-2. Tag `v1.1.0` setzen.
-3. Version 1.1.0 in App Store Connect anlegen, Texte setzen, Build 14
-   zuordnen, absenden. Ablauf siehe Skill `mobile-store-apis`.
-4. **7 Commits im StatFlow-Repo sind noch nicht gepusht**
-   (`git log origin/main..HEAD`).
-
-### Release-Texte
-
-Fertig auf Deutsch und Englisch, je ~1750 Zeichen:
-`/private/tmp/claude-501/-Users-simonluthe-Documents-statflow/27eb3d5c-1374-4938-849a-072b051fd685/scratchpad/release-notes-1.1.0.md`
-
-Liegt im Scratchpad und ist damit vergänglich — bei Bedarf neu schreiben, die
-Inhalte stehen alle im CHANGELOG unter 1.1.0.
-
-Einreichen heißt: Version 1.1.0 in App Store Connect anlegen, Texte setzen,
-Build 13 zuordnen, absenden. Ablauf siehe Skill `mobile-store-apis`.
+- Das Demokonto funktioniert nicht (siehe Abschnitt 4) — dann Zugang prüfen.
+- Leere Diagramme werden als Fehler gewertet. In den Review-Hinweisen steht
+  bereits, dass die Demo-Website noch keine Messdaten hat.
 
 ---
 
-## 2. StatsFlow (dieses Repo)
-
-**Build 13 liegt in TestFlight, Status VALID.** Version 1.1.0, gebaut aus
-`fbdfc72`. In App Store Connect ist aktuell 1.0.6 live; eine 1.1.0 existiert
-dort noch nicht.
-
-Vier Änderungen dieser Sitzung:
+## 2. Was in dieser Sitzung entstanden ist
 
 | Commit | Inhalt |
 |---|---|
-| `3155699` | Umami-3.3-Login mit Bestätigung in zwei Schritten |
-| `79a263e` | Verlaufsdaten aller Websites in einer Anfrage |
-| `fbdfc72` | Batch auch für Heute/Gestern, Rechenfehler entfernt |
-| `452db93` | Build-Nummer 13 |
-| `e94d263` | Abmelden entfernt die Konten jetzt tatsächlich (**noch in keinem Build**) |
+| `8755019` | Zweiter Faktor auch beim Hinzufügen weiterer Konten |
+| `c7747db` | Websites aus Umami-Teams (die Hauptneuerung) |
+| `486a313` | Fünf Fehler aus einer unabhängigen Prüfung |
+| `6ec9ff0` | Build-Nummer 17 |
 
-### Warum der 2FA-Teil nötig war
+### Teams — warum es nötig war
 
-Umami 3.3 antwortet bei aktivem 2FA weiterhin mit **HTTP 200**, liefert aber
-`{requiresTwoFactor, partialToken}` statt `{token, user}`. Der alte Client
-dekodierte stur auf `token` und meldete fälschlich „Anmeldung fehlgeschlagen".
-Einlösung über `POST /api/2fa/verify`.
+Die App las nur `api/websites`, also die persönlichen Websites. Wer seine
+Websites in Umami-Teams organisiert, sah in der App nichts davon, obwohl
+Umamis Oberfläche sie zeigt.
 
-### Wie der Batch-Abruf funktioniert
+**Die Falle dabei:** `api/me/websites?includeTeams=1` sieht nach dem richtigen
+Weg aus, filtert Team-Websites aber auf Eigentümer und Verwalter. Mitglieder
+und Nur-Lesen sehen dort nichts. Richtig ist der Weg über `api/me/teams` und
+`api/teams/{teamId}/websites` — genau den nimmt auch Umamis Oberfläche.
 
-Die App schickt `unit` immer mit und erkennt **an der Anzahl der zurückkommenden
-Werte**, ob der Server ihn auswertet:
+Für Zugriff genügt **jede** Team-Mitgliedschaft, auch „nur lesen": Sowohl die
+Website-Liste als auch alle Zahlen (`stats`, `pageviews`, `charts`) prüfen nur,
+ob eine Mitgliedschaft existiert.
 
-- Server ohne Patch → 2 Werte für „Heute" → App fällt auf Einzelabrufe zurück
-- Server mit Patch → 24 Werte → App nutzt den Batch
+### Die Prüfung hat fünf Fehler gefunden
 
-Damit läuft die App gegen jede 3.3.0-Instanz, und sobald der Upstream-PR
-angenommen ist, greift die schnellere Variante **automatisch** — ohne
-App-Update.
+Am wichtigsten: **`api/websites` lieferte ohne `pageSize` nur 20 Einträge.**
+Team-Listen wurden vollständig geladen, die eigenen gekappt — ausgerechnet die
+Fehlerklasse, die der Teams-Commit beheben sollte. Betraf App und Widget.
 
-Gemessen: 18 Websites, einzeln 5,58 s → gebündelt 0,59 s.
-
-### Verifiziert gegen beide Servervarianten
-
-Unverändertes 3.3.0 und gepatchte Instanz parallel auf derselben Datenbank,
-identische Zahlen: Heute liefern beide Wege 4 Sitzungen.
-
-### Widget und Vergleichsansicht
-
-Bewusst **nicht** geändert. Beide laden nur *eine* Website; der Batch bündelt
-Websites, nicht Zeiträume. Beide nutzen bereits `/pageviews` mit korrektem
-`unit` und waren vom Rechenfehler nie betroffen.
+Außerdem: fehlendes `orderBy` beim Blättern (Team-Listen haben serverseitig
+keine Standardsortierung, Einträge konnten doppelt oder gar nicht ankommen),
+stumm verschluckte Fehler samt Cache-Überschreiben, doppelte Kennungen im
+Alle-Konten-Modus, und sequentielle Team-Abrufe im Widget.
 
 ---
 
-## 3. Server (t.godsapp.de)
+## 3. Offener Punkt für 2.1
 
-**Achtung: Dort läuft aktuell ein selbstgebautes Image**, nicht das offizielle.
+**Reentrancy am geteilten Actor.** `UmamiAPI` ist ein Singleton-Actor, der pro
+Konto umkonfiguriert wird (`configureProviderForAccount` → Keychain →
+`reconfigureFromKeychain`). Laufen Dashboard und Benachrichtigungen gleichzeitig,
+kann ein Abruf mitten im Ladevorgang die Zugangsdaten eines anderen Kontos
+erwischen.
 
-```
-umami: umami-patched:charts-unit    (statt ghcr.io/umami-software/umami:3.3.0)
-```
+Das Muster wurde experimentell bestätigt (Swift-Nachbau: der Effekt tritt
+reproduzierbar auf). **Aber:** Es müssen vier Bedingungen zusammentreffen —
+mindestens zwei Umami-Konten, aktive Benachrichtigungen (sonst bricht
+`scheduleAllNotifications` vorher ab), ein gleichzeitiger Ladevorgang und eine
+zeitliche Überschneidung im Millisekundenbereich. Der Alle-Konten-Modus ist
+zudem `@State` ohne Persistenz und beim Start immer aus.
 
-Das ist gewollt, damit die Stundenwerte in StatsFlow getestet werden können.
+Folge wäre eine Website-Liste mit Einträgen des falschen Kontos, unter falscher
+Kennung zwischengespeichert. Kein Datenverlust, heilt sich beim nächsten Laden.
 
-**Zurück auf offiziell:** Im Portainer-Stack `umami` (ID 237, Environment 1)
-das Image auf `ghcr.io/umami-software/umami:3.3.0` ändern und neu deployen. Die
-Datenbank bleibt unberührt; eine Backup-Config liegt als
-`/opt/stacks/umami/docker-compose.yml.bak-3.3.0`.
+**Saubere Lösung:** Zugangsdaten pro Anfrage mitgeben statt im Actor halten.
+Berührt jede Methode des API-Dienstes — eigene Version, ordentlicher Test.
 
-Der gepatchte Quellcode liegt auf dem Server unter `/opt/stacks/umami-patch/src`,
-das Image heißt `umami-patched:charts-unit` (953 MB).
+---
 
-**Zugangsdaten** stehen in `~/.claude/secrets.env` (`UMAMI_URL`, `UMAMI_USER`,
-`UMAMI_PASS`). Self-hosted Umami kennt keine API-Token — es sind dieselben
-Zugangsdaten wie im Browser.
+## 4. Server (t.godsapp.de)
+
+**Achtung: Dort läuft ein selbstgebautes Image**, nicht das offizielle:
+`umami-patched:charts-unit` statt `ghcr.io/umami-software/umami:3.3.0`.
+Gewollt, damit die Stundenwerte getestet werden können.
+
+**Zurück auf offiziell:** Im Portainer-Stack `umami` (ID 237, Environment 1) das
+Image ändern und neu deployen. Datenbank bleibt unberührt, Backup-Config liegt
+als `/opt/stacks/umami/docker-compose.yml.bak-3.3.0`.
+
+### Für die App-Review angelegt — nicht löschen
+
+- **Team „App Review"** (`1b0f1224-1cbf-4a0c-bf64-e6022fec2930`)
+- **Website „App Review Demo"** (`demo.statsflow.app`) in diesem Team
+- **Konto `appreview`** / `ReviewVgwEMLE7NL`, Rolle `team-view-only`, **ohne 2FA**
+
+Das ist das Demokonto in den Review-Hinweisen. Es hat bewusst keine eigenen
+Websites — seine einzige Website kommt über das Team. Nach der Freigabe kann
+alles bleiben (für künftige Reviews) oder weg.
 
 ### 2FA-Schlüssel — nicht verlieren
 
 Umami 3.3 braucht `TWO_FACTOR_ENCRYPTION_KEY` (64 Hex-Zeichen), sonst schlägt
-das Einrichten von 2FA mit „error" fehl, ohne QR-Code. Der Schlüssel steht in
-der Stack-Config und als `UMAMI_TWO_FACTOR_KEY` in `~/.claude/secrets.env`.
+das Einrichten von 2FA fehl. Der Schlüssel steht in der Stack-Config und als
+`UMAMI_TWO_FACTOR_KEY` in `~/.claude/secrets.env`. **Geht er verloren, sind alle
+eingerichteten zweiten Faktoren unbrauchbar** — auch Simons eigener.
 
-**Geht er verloren, sind alle eingerichteten zweiten Faktoren unbrauchbar** —
-auch Simons eigener. Bei einem Serverumzug unbedingt mitnehmen.
-
-Nebenbefund: 2FA ist auf der Instanz **global erzwungen**
-(`isRequired: true, requiredReason: "global"`). Das betrifft auch das
-ungeklärte Konto `fnxnxnc`.
+Das Konto `admin` hat 2FA aktiv (seit 16.08.). Für API-Zugriffe braucht es also
+einen TOTP-Code; `appreview` kommt ohne aus.
 
 ### Offener Sicherheitspunkt
 
@@ -144,68 +118,29 @@ selbst angelegt: prüfen und ggf. löschen.
 
 ---
 
-## 4. Homepages — erledigt
-
-Heatmap-Messung aktiv auf **simonluthe.de** und **juliansengelmann.de**.
-Beide Repos gepusht, deployed, Tags gesetzt (`v1.3.1` bzw. `v1.1.0`).
-
-Serverseitig: nur `heatmapEnabled`, **Session-Replay bewusst aus**,
-`maskLevel: strict`. Es werden ausschließlich Klick- und Scroll-Positionen
-erfasst, keine Sitzungsvideos. 2 von 18 Websites betroffen; Konfi-Quest wurde
-bewusst ausgelassen (Nutzer sind Jugendliche).
-
-Daten entstehen erst ab Einbau — rückwirkend gibt es nichts. Nach ein paar
-Tagen sollte auf simonluthe.de etwas zu sehen sein.
-
----
-
 ## 5. Upstream-PR bei Umami
 
-**https://github.com/umami-software/umami/pull/4455** — offen, kein Entwurf,
-`MERGEABLE`, Ziel-Branch `dev`.
-
-Fügt `/api/websites/charts` einen `unit`-Parameter hinzu und behebt drei Bugs,
-die beim Bauen aufgefallen sind. Ohne `unit` bleibt das Verhalten unverändert.
-
-Fork: `github.com/Revisor01/umami`, Branch `feat/website-charts-unit`,
-Commit `9b2e1f6`. Lokal unter
-`…/27eb3d5c-…/scratchpad/umami-fork` (Scratchpad, vergänglich — bei Bedarf neu
-klonen).
+**https://github.com/umami-software/umami/pull/4455** — offen, `MERGEABLE`,
+Ziel-Branch `dev`. Fügt `/api/websites/charts` einen `unit`-Parameter hinzu.
 
 **Wichtig: Der Commit läuft auf `Revisor01 <mail@simonluthe.de>` und enthält
-bewusst keinerlei Hinweise auf KI-Unterstützung.** Das bitte bei künftigen
-Änderungen beibehalten.
+bewusst keinerlei Hinweise auf KI-Unterstützung.** Bei künftigen Änderungen
+beibehalten.
 
-### Bisherige Reaktionen
-
-Ein Review-Bot (Greptile) hat mit **4/5** bewertet und einen berechtigten
-Punkt gefunden: Bei zu großen Zeiträumen wurde still gekappt, wodurch `values`
-und `total` sich widersprachen. Behoben — die Route lehnt jetzt mit 400 ab,
-statt zu kappen. Antwort ist im PR gepostet.
-
-Von menschlichen Maintainern noch keine Reaktion.
-
-### Falls Änderungen verlangt werden
-
-Wahrscheinlichste Rückfrage: **den PR aufteilen** (ein Feature + drei Bugfixes
-in einem PR). Das Angebot dazu steht bereits im PR-Text.
-
-Zweiter Diskussionspunkt: der interne `'default'`-Sentinel. Ein Reviewer könnte
-einen expliziten `bucketHours`-Parameter bevorzugen — dagegen spricht nichts.
-
-19 Tests, jeder mit Gegenprobe abgesichert (Fix zurückdrehen → Test wird rot).
+Review-Bot Greptile: 4/5, ein berechtigter Punkt (stilles Kappen bei zu großen
+Zeiträumen) wurde behoben. Von menschlichen Maintainern noch keine Reaktion.
+Wahrscheinlichste Rückfrage: den PR aufteilen (ein Feature + drei Bugfixes).
 
 ---
 
 ## 6. Erkenntnisse, die Zeit sparen
 
 **Export nach TestFlight scheitert an Homebrews rsync.** Xcode ruft rsync mit
-`-E` auf, das die Homebrew-Version 3.5.0 nicht kennt. Fehlermeldung ist nur
-„Copy failed", was in die Irre führt. Der vollständige Ablauf, der
-funktioniert hat:
+`-E` auf, das die Homebrew-Version nicht kennt. Fehlermeldung ist nur
+„Copy failed". Deshalb mit Apples Variante bauen:
 
 ```bash
-source ~/.claude/secrets.env
+set -a && source ~/.claude/secrets.env && set +a
 xcodebuild -project InsightFlow.xcodeproj -scheme InsightFlow \
   -configuration Release -destination 'generic/platform=iOS' \
   -archivePath /tmp/statflow.xcarchive archive
@@ -226,25 +161,36 @@ PATH="/usr/bin:/bin:/usr/sbin:/sbin" xcrun altool --upload-app \
   --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
 ```
 
-Der `sort`-Parameter der ASC-API liefert bei `/v1/apps/{id}/builds` still eine
-leere Liste — ohne `sort` abfragen und in Python sortieren.
+**`secrets.env` exportiert nicht.** Die Variablen stehen ohne `export`, sind
+also nur Shell-Variablen und erreichen Python nicht. Immer
+`set -a && source ~/.claude/secrets.env && set +a` nutzen.
 
-**Die Nullen-Falle bei `/api/websites/charts`** (im unveränderten Umami 3.3.0):
-Der Endpunkt liefert HTTP 200 und lauter Nullen in `values`, während `total`
-korrekt bleibt — wenn `timezone` oder `unit` fehlt oder `startAt` nicht auf
-einer Bucket-Grenze liegt. Kein Fehlercode, nichts im Log.
+**Die ASC-API schluckt Parameter still.** `sort` bei `/v1/apps/{id}/builds`
+liefert eine leere Liste, `fields[builds]=…` ebenfalls, und `include=` bei
+Builds auch. Ohne diese Parameter abfragen und in Python filtern.
 
-**Umami schließt `event_type` 2 und 5 aus** (customEvent und performance),
-nicht 2 und 3. Bei SQL-Gegenproben beachten, sonst zählt man falsch.
+**Neue Builds brauchen 1–2 Minuten**, bis sie in der API auftauchen. Vorher
+liefert die Abfrage schlicht nichts — kein Fehler, keine Meldung.
+
+**Version umbenennen statt neu anlegen:** Solange eine Version in ASC noch
+`PREPARE_FOR_SUBMISSION` ist, lässt sich `versionString` per PATCH ändern. So
+bleiben die eingetragenen Texte erhalten (1.1.0 → 2.0.0 lief so).
+
+**Die Nullen-Falle bei `/api/websites/charts`** (unverändertes Umami 3.3.0):
+HTTP 200 und lauter Nullen in `values`, während `total` korrekt bleibt — wenn
+`timezone` oder `unit` fehlt oder `startAt` nicht auf einer Bucket-Grenze liegt.
+
+**Umami schließt `event_type` 2 und 5 aus** (customEvent und performance), nicht
+2 und 3. Bei SQL-Gegenproben beachten.
 
 **Metrik-Typen heißen in Umami 3 anders:** `path` statt `url`, `hostname` statt
-`host`. UTM-Typen sind camelCase (`utmSource`), obwohl die Rohfelder
-snake_case heißen.
+`host`. UTM-Typen sind camelCase (`utmSource`), Rohfelder snake_case.
 
 **`docker compose` gibt es auf dem Server nicht** — nur das eigenständige
-`docker-compose`, und das kollidiert teilweise mit der neuen Docker-Version
-(`KeyError: 'ContainerConfig'`). Im Zweifel `docker run` direkt nutzen oder
-über Portainer gehen.
+`docker-compose`, das teilweise mit der neuen Docker-Version kollidiert
+(`KeyError: 'ContainerConfig'`). Im Zweifel `docker run` oder Portainer.
 
-Eine ausführliche API-Übersicht (40+ Endpunkte, live geprüft) liegt als
-Artefakt vor: https://claude.ai/code/artifact/0f43fd85-3278-49fb-a06c-5957e32203dc
+**Bot-Traffic:** Plausible zählt Besucher, die Umami herausfiltert (Chrome auf
+Desktop-Linux, nur Startseite, keine Folgeklicks). Beide zählen korrekt, sie
+beantworten nur leicht unterschiedliche Fragen. Bei kleinen Zahlen fällt der
+Unterschied stark auf.
