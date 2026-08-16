@@ -110,11 +110,11 @@ eingerichteten zweiten Faktoren unbrauchbar** — auch Simons eigener.
 Das Konto `admin` hat 2FA aktiv (seit 16.08.). Für API-Zugriffe braucht es also
 einen TOTP-Code; `appreview` kommt ohne aus.
 
-### Offener Sicherheitspunkt
+### Konten auf der Instanz
 
-Auf der Instanz existiert ein **zweites Admin-Konto `fnxnxnc`** (angelegt
-13.12.2025, keine eigene Website, kein 2FA). Herkunft ungeklärt. Falls nicht
-selbst angelegt: prüfen und ggf. löschen.
+Es gibt nur noch `admin` (mit 2FA) und `appreview` (ohne, für die App-Review).
+Das zweite Admin-Konto `fnxnxnc` war selbst angelegt und wurde am 16.08.2026
+gelöscht — es hatte keine Websites und keine Team-Mitgliedschaften.
 
 ---
 
