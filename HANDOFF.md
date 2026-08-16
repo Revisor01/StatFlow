@@ -1,4 +1,4 @@
-# Handoff — Stand 15. August 2026
+# Handoff — Stand 16. August 2026
 
 Arbeitsstand nach einer langen Sitzung zu Umami 3.3.0. Vier Stränge: App,
 Server, Homepages, Upstream-PR.
@@ -7,24 +7,36 @@ Server, Homepages, Upstream-PR.
 
 ## 1. Was als Nächstes ansteht
 
-**Simon testet drei Tage lang Build 13 in TestFlight** und richtet dabei
-einmal 2FA für sein Umami-Konto ein.
+**Simon testet Build 13 in TestFlight.** 2FA ist eingerichtet und der Login
+damit erfolgreich durchgespielt — der Punkt ist erledigt.
 
 Danach: **StatsFlow 1.1.0 in den App Store einreichen.** Alle Texte sind
 fertig, Screenshots werden bewusst nicht erneuert.
 
-### Offene Punkte vor dem Einreichen
+### Zuerst: Build 14 bauen
 
-1. **2FA einmal echt durchspielen.** Der einzige Teil, der nie end-to-end
-   getestet wurde — die Formate sind am Umami-Quelltext verifiziert und die
-   Endpunkte antworten korrekt, aber eine tatsächliche Anmeldung mit zweitem
-   Faktor hat nie stattgefunden. In Umami für ein Konto 2FA aktivieren, in der
-   App anmelden. Klappt das, ist die Version bereit.
-2. **Stundenkurven bei „Heute"/„Gestern" im Alltag prüfen** — die Änderung mit
-   dem größten Risiko.
-3. `CHANGELOG.md`: `## [Unreleased] - 1.1.0` → `## [1.1.0] - <Datum>`.
-4. Tag `v1.1.0` setzen.
-5. **5 Commits im StatFlow-Repo sind noch nicht gepusht** (`git log origin/main..HEAD`).
+Nach Build 13 kam noch ein Fix am Abmelden (`e94d263`), der **in keinem
+TestFlight-Build enthalten ist**. Vor dem Einreichen also:
+
+1. `CURRENT_PROJECT_VERSION` in `InsightFlow.xcodeproj/project.pbxproj`
+   auf `14` setzen (4 Stellen).
+2. Archivieren, exportieren, hochladen. **Wichtig:** Der Export scheitert
+   sonst an Homebrews rsync — deshalb mit Apples Variante bauen:
+   ```bash
+   PATH="/usr/bin:/bin:/usr/sbin:/sbin" xcodebuild -exportArchive …
+   ```
+   Vollständiger Ablauf siehe Abschnitt 6.
+3. Abmelden einmal am Gerät prüfen: abmelden → App beenden → neu starten.
+   Es darf **kein** Konto mehr da sein.
+
+### Dann einreichen
+
+1. `CHANGELOG.md`: `## [Unreleased] - 1.1.0` → `## [1.1.0] - <Datum>`.
+2. Tag `v1.1.0` setzen.
+3. Version 1.1.0 in App Store Connect anlegen, Texte setzen, Build 14
+   zuordnen, absenden. Ablauf siehe Skill `mobile-store-apis`.
+4. **7 Commits im StatFlow-Repo sind noch nicht gepusht**
+   (`git log origin/main..HEAD`).
 
 ### Release-Texte
 
@@ -53,6 +65,7 @@ Vier Änderungen dieser Sitzung:
 | `79a263e` | Verlaufsdaten aller Websites in einer Anfrage |
 | `fbdfc72` | Batch auch für Heute/Gestern, Rechenfehler entfernt |
 | `452db93` | Build-Nummer 13 |
+| `e94d263` | Abmelden entfernt die Konten jetzt tatsächlich (**noch in keinem Build**) |
 
 ### Warum der 2FA-Teil nötig war
 
@@ -109,6 +122,19 @@ das Image heißt `umami-patched:charts-unit` (953 MB).
 **Zugangsdaten** stehen in `~/.claude/secrets.env` (`UMAMI_URL`, `UMAMI_USER`,
 `UMAMI_PASS`). Self-hosted Umami kennt keine API-Token — es sind dieselben
 Zugangsdaten wie im Browser.
+
+### 2FA-Schlüssel — nicht verlieren
+
+Umami 3.3 braucht `TWO_FACTOR_ENCRYPTION_KEY` (64 Hex-Zeichen), sonst schlägt
+das Einrichten von 2FA mit „error" fehl, ohne QR-Code. Der Schlüssel steht in
+der Stack-Config und als `UMAMI_TWO_FACTOR_KEY` in `~/.claude/secrets.env`.
+
+**Geht er verloren, sind alle eingerichteten zweiten Faktoren unbrauchbar** —
+auch Simons eigener. Bei einem Serverumzug unbedingt mitnehmen.
+
+Nebenbefund: 2FA ist auf der Instanz **global erzwungen**
+(`isRequired: true, requiredReason: "global"`). Das betrifft auch das
+ungeklärte Konto `fnxnxnc`.
 
 ### Offener Sicherheitspunkt
 
@@ -175,11 +201,33 @@ einen expliziten `bucketHours`-Parameter bevorzugen — dagegen spricht nichts.
 
 **Export nach TestFlight scheitert an Homebrews rsync.** Xcode ruft rsync mit
 `-E` auf, das die Homebrew-Version 3.5.0 nicht kennt. Fehlermeldung ist nur
-„Copy failed", was in die Irre führt. Lösung:
+„Copy failed", was in die Irre führt. Der vollständige Ablauf, der
+funktioniert hat:
 
 ```bash
-PATH="/usr/bin:/bin:/usr/sbin:/sbin" xcodebuild -exportArchive …
+source ~/.claude/secrets.env
+xcodebuild -project InsightFlow.xcodeproj -scheme InsightFlow \
+  -configuration Release -destination 'generic/platform=iOS' \
+  -archivePath /tmp/statflow.xcarchive archive
+
+# ExportOptions.plist: method=app-store-connect, uploadSymbols=true,
+# manageAppVersionAndBuildNumber=false
+PATH="/usr/bin:/bin:/usr/sbin:/sbin" xcodebuild -exportArchive \
+  -archivePath /tmp/statflow.xcarchive \
+  -exportOptionsPlist /tmp/ExportOptions.plist \
+  -exportPath /tmp/statflow-export \
+  -authenticationKeyPath "$APP_STORE_CONNECT_KEY_PATH" \
+  -authenticationKeyID "$APP_STORE_CONNECT_KEY_ID" \
+  -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+
+PATH="/usr/bin:/bin:/usr/sbin:/sbin" xcrun altool --upload-app \
+  -f /tmp/statflow-export/InsightFlow.ipa -t ios \
+  --apiKey "$APP_STORE_CONNECT_KEY_ID" \
+  --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
 ```
+
+Der `sort`-Parameter der ASC-API liefert bei `/v1/apps/{id}/builds` still eine
+leere Liste — ohne `sort` abfragen und in Python sortieren.
 
 **Die Nullen-Falle bei `/api/websites/charts`** (im unveränderten Umami 3.3.0):
 Der Endpunkt liefert HTTP 200 und lauter Nullen in `values`, während `total`
