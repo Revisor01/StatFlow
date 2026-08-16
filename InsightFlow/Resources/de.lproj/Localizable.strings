@@ -232,8 +232,8 @@
 "settings.support.subtitle" = "Hilf uns, StatsFlow zu verbessern";
 "settings.branding.subtitle" = "Ein Pastorenprojekt";
 
-"settings.logout" = "Abmelden";
-"settings.logout.confirm" = "Möchtest du dich wirklich abmelden?";
+"settings.logout" = "Von allen Konten abmelden";
+"settings.logout.confirm" = "Alle Konten werden aus der App entfernt. Zum Weiterarbeiten musst du dich neu anmelden.";
 
 // MARK: - Notifications
 "notifications.setting.disabled" = "Aus";

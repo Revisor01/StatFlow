@@ -107,6 +107,41 @@ class AccountManagerTests: XCTestCase {
         XCTAssertNil(manager.activeAccount)
     }
 
+    /// Regression: Abmelden loeschte nur die globalen Zugangsdaten, nicht die
+    /// Kontenliste. Nach einem Neustart waren deshalb alle Konten wieder da,
+    /// und die App sprang auf ein noch vorhandenes Konto eines anderen Anbieters.
+    func testLogoutAllRemovesAccountsAndSurvivesReload() async throws {
+        let manager = AccountManager.shared
+        let account = makeTestAccount()
+
+        manager.addAccount(account)
+        await manager.setActiveAccount(account)
+        manager.logoutAll()
+
+        XCTAssertNil(manager.activeAccount)
+        XCTAssertTrue(manager.accounts.isEmpty, "Konten muessen entfernt sein")
+
+        // Das ist der Kern: der gespeicherte Stand darf keine Konten mehr enthalten,
+        // sonst kehren sie beim naechsten Start zurueck.
+        let stored = UserDefaults.standard.data(forKey: "analytics_accounts")
+        let decoded = stored.flatMap { try? JSONDecoder().decode([AnalyticsAccount].self, from: $0) }
+        XCTAssertEqual(decoded?.count ?? 0, 0, "Gespeicherte Konten muessen geloescht sein")
+    }
+
+    /// Die Sitzung zu beenden darf die Konten NICHT entfernen — das ist der
+    /// Unterschied zwischen `clearActiveAccount` und `logoutAll`.
+    func testClearActiveAccountKeepsAccounts() async throws {
+        let manager = AccountManager.shared
+        let account = makeTestAccount()
+
+        manager.addAccount(account)
+        await manager.setActiveAccount(account)
+        manager.clearActiveAccount()
+
+        XCTAssertNil(manager.activeAccount)
+        XCTAssertFalse(manager.accounts.isEmpty, "Konten bleiben erhalten")
+    }
+
     func testAccountsPersistInUserDefaults() async throws {
         let manager = AccountManager.shared
         let account = makeTestAccount()
