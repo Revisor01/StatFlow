@@ -186,7 +186,7 @@ class NotificationManager: ObservableObject {
             // Filter clearen, damit in der Detail-View gesetzte activeFilters nicht
             // den Notification-Refresh kontaminieren und Stats fälschlich auf 0 reduzieren.
             await api.setFilters([])
-            let umamiWebsites = (try? await api.getWebsites()) ?? []
+            let umamiWebsites = (try? await api.getAllAccessibleWebsites()) ?? []
             websites = umamiWebsites.map { WebsiteInfo(id: $0.id, name: $0.name) }
 
         case .plausible:
@@ -322,7 +322,7 @@ class NotificationManager: ObservableObject {
 
             let api = UmamiAPI.shared
             await api.configure(baseURL: url, token: token)
-            let umamiWebsites = (try? await api.getWebsites()) ?? []
+            let umamiWebsites = (try? await api.getAllAccessibleWebsites()) ?? []
             websites = umamiWebsites.map { WebsiteInfo(id: $0.id, name: $0.name) }
 
         case .plausible:

@@ -343,6 +343,9 @@ struct CachedWebsite: Codable {
     let domain: String
     let shareId: String?
     let provider: String // AnalyticsProviderType.rawValue
+    /// Optional, damit zwischengespeicherte Listen aus älteren App-Versionen
+    /// weiterhin gelesen werden können.
+    let teamName: String?
 
     init(from website: AnalyticsWebsite) {
         self.id = website.id
@@ -350,6 +353,7 @@ struct CachedWebsite: Codable {
         self.domain = website.domain
         self.shareId = website.shareId
         self.provider = website.provider.rawValue
+        self.teamName = website.teamName
     }
 
     func toAnalyticsWebsite() -> AnalyticsWebsite {
@@ -358,7 +362,8 @@ struct CachedWebsite: Codable {
             name: name,
             domain: domain,
             shareId: shareId,
-            provider: AnalyticsProviderType(rawValue: provider) ?? .umami
+            provider: AnalyticsProviderType(rawValue: provider) ?? .umami,
+            teamName: teamName
         )
     }
 }

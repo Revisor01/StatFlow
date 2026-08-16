@@ -240,14 +240,15 @@ actor UmamiAPI: AnalyticsProvider {
     // MARK: - AnalyticsProvider - Websites
 
     func getAnalyticsWebsites() async throws -> [AnalyticsWebsite] {
-        let websites = try await getWebsites()
+        let websites = try await getAllAccessibleWebsites()
         return websites.map { website in
             AnalyticsWebsite(
                 id: website.id,
                 name: website.name,
                 domain: website.domain ?? website.name,
                 shareId: website.shareId,
-                provider: .umami
+                provider: .umami,
+                teamName: website.teamName
             )
         }
     }
@@ -511,9 +512,120 @@ actor UmamiAPI: AnalyticsProvider {
         return response.websites
     }
 
+    /// Alle Websites, auf die das Konto Zugriff hat: eigene und solche aus
+    /// Teams, in denen es Mitglied ist.
+    ///
+    /// Teams sind erst ab Umami 3.0 abrufbar. Schlägt der Team-Abruf fehl —
+    /// ältere Instanz, fehlende Berechtigung, Netzwerkfehler —, liefert die
+    /// Methode die persönlichen Websites zurück, statt die Übersicht ganz
+    /// leer zu lassen.
+    func getAllAccessibleWebsites() async throws -> [Website] {
+        let personal = try await getWebsites()
+
+        let teams: [Team]
+        do {
+            teams = try await getMyTeams()
+        } catch {
+            return personal
+        }
+
+        guard !teams.isEmpty else { return personal }
+
+        // Websites der Teams parallel laden; ein einzelnes fehlschlagendes Team
+        // darf die übrigen nicht mitreißen.
+        var teamWebsites: [Website] = []
+        await withTaskGroup(of: [Website].self) { group in
+            for team in teams {
+                group.addTask {
+                    guard let sites = try? await self.getTeamWebsites(teamId: team.id) else {
+                        return []
+                    }
+                    return sites.map { site in
+                        var tagged = site
+                        tagged.teamName = team.name
+                        return tagged
+                    }
+                }
+            }
+
+            for await sites in group {
+                teamWebsites.append(contentsOf: sites)
+            }
+        }
+
+        return Self.merge(personal: personal, teamWebsites: teamWebsites)
+    }
+
+    /// Führt persönliche und Team-Websites zusammen. Eigene haben Vorrang:
+    /// Taucht dieselbe ID doppelt auf, bleibt die persönliche Fassung ohne
+    /// Team-Kennzeichnung stehen. Auch innerhalb der Team-Liste kann eine
+    /// Website mehrfach vorkommen, wenn man in mehreren Teams ist.
+    static func merge(personal: [Website], teamWebsites: [Website]) -> [Website] {
+        var seen = Set(personal.map(\.id))
+        var combined = personal
+
+        for site in teamWebsites where !seen.contains(site.id) {
+            seen.insert(site.id)
+            combined.append(site)
+        }
+
+        return combined
+    }
+
     func getWebsite(websiteId: String) async throws -> Website {
         let data = try await request(endpoint: "api/websites/\(websiteId)")
         return try decoder.decode(Website.self, from: data)
+    }
+
+    // MARK: - Teams
+
+    /// Teams, in denen das angemeldete Konto Mitglied ist. `api/admin/teams`
+    /// bleibt Administratoren vorbehalten; für gewöhnliche Konten ist
+    /// `api/me/teams` der richtige Weg (ab Umami 3.0).
+    func getMyTeams() async throws -> [Team] {
+        try await fetchAllPages(endpoint: "api/me/teams") { data in
+            try self.decoder.decode(TeamsResponse.self, from: data).data
+        }
+    }
+
+    /// Websites eines Teams. Anders als `api/me/websites?includeTeams=1` — das
+    /// nur Websites von Teams liefert, in denen man Eigentümer oder Verwalter
+    /// ist — genügt hier jede Mitgliedschaft, auch „nur lesen".
+    func getTeamWebsites(teamId: String) async throws -> [Website] {
+        try await fetchAllPages(endpoint: "api/teams/\(teamId)/websites") { data in
+            try self.decoder.decode(WebsiteResponse.self, from: data).websites
+        }
+    }
+
+    /// Holt alle Seiten einer paginierten Liste. Ohne `pageSize` liefert Umami
+    /// nur 20 Einträge — bei größeren Teams fehlten sonst Websites.
+    private func fetchAllPages<T>(
+        endpoint: String,
+        pageSize: Int = 100,
+        decode: @escaping (Data) throws -> [T]
+    ) async throws -> [T] {
+        var all: [T] = []
+        var page = 1
+
+        // Obergrenze als Reißleine: Ein Server, der immer volle Seiten liefert,
+        // darf die App nicht endlos beschäftigen.
+        while page <= 50 {
+            let data = try await request(
+                endpoint: endpoint,
+                queryItems: [
+                    URLQueryItem(name: "page", value: String(page)),
+                    URLQueryItem(name: "pageSize", value: String(pageSize)),
+                ]
+            )
+
+            let items = try decode(data)
+            all.append(contentsOf: items)
+
+            if items.count < pageSize { break }
+            page += 1
+        }
+
+        return all
     }
 
     // MARK: - Stats
