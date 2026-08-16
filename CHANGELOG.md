@@ -14,7 +14,7 @@ Die Versionen 1.0 bis 1.0.6 sind die im App Store ausgelieferten Releases. Die V
 0.1.0 bis 1.3.0 stammen aus der Vorgeschichte als InsightFlow bzw. PrivacyFlow, vor der
 ersten Store-Veröffentlichung.
 
-## [Unreleased] - 2.0.0
+## [2.0.0] – 2026-08-16
 
 ### Hinzugefügt
 
@@ -64,6 +64,8 @@ alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
 
 ### Behoben
 
+- Bei Umami wurden nur die ersten zwanzig Websites angezeigt. Wer mehr hat, sah den Rest
+  weder in der Übersicht noch in der Widget-Auswahl.
 - Filter mit „enthält nicht" wurden von Plausible abgelehnt, weil die App eine ungültige
   Schreibweise verwendet hat.
 - Bei Plausible blieben Listen mit begrenzter Länge leer — darunter die Top-Seiten und
