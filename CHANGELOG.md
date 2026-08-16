@@ -40,7 +40,8 @@ ersten Store-Veröffentlichung.
   und der Zeitraum, für den überhaupt Daten vorliegen.
 - **Anmeldung mit Bestätigung in zwei Schritten** bei Umami: Ist für das Konto ein zweiter
   Faktor eingerichtet, fragt die App nach dem Code aus der Authenticator-App. Alternativ
-  lässt sich ein Backup-Code verwenden.
+  lässt sich ein Backup-Code verwenden. Das gilt beim ersten Anmelden ebenso wie beim
+  Hinzufügen weiterer Konten.
 
 Die neuen Auswertungen setzen Umami ab Version 3 voraus und sind bei Plausible-Konten
 entsprechend nicht sichtbar.
