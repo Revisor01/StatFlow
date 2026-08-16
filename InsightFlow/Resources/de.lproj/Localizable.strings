@@ -466,6 +466,7 @@
 "accessibility.chartStyle.toggle" = "Diagrammstil wechseln";
 "accessibility.chartStyle.hint" = "Wechsel zwischen Linien- und Balkendiagramm";
 "accessibility.addWebsite" = "Website hinzufügen";
+"website.team.accessibility %@" = "Website des Teams %@";
 "accessibility.liveVisitors %lld" = "%lld aktive Besucher";
 "accessibility.statCard %@ %lld %@" = "%@: %lld, %@ im Vergleich zum Vorzeitraum";
 "accessibility.chart.pageviews" = "Seitenaufrufe im Zeitverlauf";

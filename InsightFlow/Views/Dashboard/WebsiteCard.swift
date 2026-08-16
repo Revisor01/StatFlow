@@ -176,6 +176,8 @@ struct WebsiteCard: View {
                 }
 
                 providerBadge
+
+                teamBadge
             }
 
             Spacer()
@@ -196,6 +198,28 @@ struct WebsiteCard: View {
                 .background(color.opacity(0.15))
                 .foregroundStyle(color)
                 .clipShape(Capsule())
+        } else {
+            EmptyView()
+        }
+    }
+
+    /// Kennzeichnet Websites, auf die der Zugriff über ein Team läuft.
+    @ViewBuilder
+    private var teamBadge: some View {
+        if let team = website.teamName {
+            HStack(spacing: 3) {
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 8))
+                Text(team)
+                    .font(.caption2)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Color.secondary.opacity(0.15))
+            .foregroundStyle(.secondary)
+            .clipShape(Capsule())
+            .accessibilityLabel(String(localized: "website.team.accessibility \(team)"))
         } else {
             EmptyView()
         }

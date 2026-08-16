@@ -64,6 +64,9 @@ struct AnalyticsWebsite: Identifiable, Codable {
     let domain: String
     let shareId: String?
     let provider: AnalyticsProviderType
+    /// Name des Teams, dem die Website gehört — nil bei persönlichen Websites.
+    /// Dient nur der Kennzeichnung in der Übersicht.
+    var teamName: String?
 
     var displayDomain: String {
         domain.replacingOccurrences(of: "https://", with: "")

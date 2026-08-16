@@ -30,7 +30,7 @@ class SettingsViewModel: ObservableObject {
                         guard let token = account.credentials.token,
                               let url = URL(string: account.serverURL) else { continue }
                         await umamiAPI.configure(baseURL: url, token: token)
-                        accountWebsites = try await umamiAPI.getWebsites()
+                        accountWebsites = try await umamiAPI.getAllAccessibleWebsites()
                         guard !Task.isCancelled else { return }
 
                     case .plausible:

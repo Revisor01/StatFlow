@@ -465,6 +465,7 @@
 "accessibility.chartStyle.toggle" = "Toggle Chart Style";
 "accessibility.chartStyle.hint" = "Switch between line and bar chart";
 "accessibility.addWebsite" = "Add Website";
+"website.team.accessibility %@" = "Website of team %@";
 "accessibility.liveVisitors %lld" = "%lld active visitors";
 "accessibility.statCard %@ %lld %@" = "%@: %lld, %@ compared to previous period";
 "accessibility.chart.pageviews" = "Pageviews over time";

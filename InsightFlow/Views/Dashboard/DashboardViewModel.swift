@@ -99,7 +99,7 @@ class DashboardViewModel: ObservableObject {
                         Website(id: site.id, name: site.name, domain: site.domain, shareId: nil, teamId: nil, resetAt: nil, createdAt: nil)
                     }
                 } else {
-                    accountWebsites = try await umamiAPI.getWebsites()
+                    accountWebsites = try await umamiAPI.getAllAccessibleWebsites()
                 }
 
                 for website in accountWebsites {
@@ -172,12 +172,12 @@ class DashboardViewModel: ObservableObject {
                     // Cache die Websites
                     cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
                 } else {
-                    let freshWebsites = try await umamiAPI.getWebsites()
+                    let freshWebsites = try await umamiAPI.getAllAccessibleWebsites()
                     guard !Task.isCancelled else { return }
                     websites = freshWebsites
                     // Cache die Websites
                     let analyticsWebsites = freshWebsites.map { site in
-                        AnalyticsWebsite(id: site.id, name: site.name, domain: site.domain ?? site.name, shareId: site.shareId, provider: .umami)
+                        AnalyticsWebsite(id: site.id, name: site.name, domain: site.domain ?? site.name, shareId: site.shareId, provider: .umami, teamName: site.teamName)
                     }
                     cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
                 }
@@ -227,7 +227,7 @@ class DashboardViewModel: ObservableObject {
 
         let analyticsWebsites = result.data.toAnalyticsWebsites()
         websites = analyticsWebsites.map { site in
-            Website(id: site.id, name: site.name, domain: site.domain, shareId: site.shareId, teamId: nil, resetAt: nil, createdAt: nil)
+            Website(id: site.id, name: site.name, domain: site.domain, shareId: site.shareId, teamId: nil, resetAt: nil, createdAt: nil, teamName: site.teamName)
         }
         offlineCacheDate = result.cachedAt
 

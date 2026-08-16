@@ -396,4 +396,160 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(hourly[1].date.timeIntervalSince(start), 3600)
         XCTAssertEqual(daily[1].date.timeIntervalSince(start), 86400)
     }
+
+    // MARK: - Teams
+
+    /// Antwort von `api/me/teams`, gekürzt auf die Felder, die die App liest.
+    func testTeamsResponseDecoding() throws {
+        let json = """
+        {
+            "data": [
+                {
+                    "id": "1b0f1224-1cbf-4a0c-bf64-e6022fec2930",
+                    "name": "App Review",
+                    "accessCode": "team_mG9olfjLT99H1NKk",
+                    "logoUrl": null,
+                    "twoFactorRequired": false,
+                    "createdAt": "2026-08-16T13:24:32.580Z",
+                    "members": []
+                }
+            ],
+            "count": 1,
+            "page": 1,
+            "pageSize": 100
+        }
+        """.data(using: .utf8)!
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let response = try decoder.decode(TeamsResponse.self, from: json)
+
+        XCTAssertEqual(response.count, 1)
+        XCTAssertEqual(response.data.first?.name, "App Review")
+        XCTAssertEqual(response.data.first?.id, "1b0f1224-1cbf-4a0c-bf64-e6022fec2930")
+    }
+
+    /// Team-Websites tragen `userId: null` und stattdessen eine `teamId`.
+    func testTeamWebsiteResponseDecoding() throws {
+        let json = """
+        {
+            "data": [
+                {
+                    "id": "28840232-70cb-4331-9ce2-5ba0f91a4e5b",
+                    "name": "App Review Demo",
+                    "domain": "demo.statsflow.app",
+                    "shareId": null,
+                    "userId": null,
+                    "teamId": "1b0f1224-1cbf-4a0c-bf64-e6022fec2930",
+                    "resetAt": null,
+                    "createdAt": "2026-08-16T14:32:00.000Z"
+                }
+            ],
+            "count": 1
+        }
+        """.data(using: .utf8)!
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let response = try decoder.decode(WebsiteResponse.self, from: json)
+
+        XCTAssertEqual(response.websites.count, 1)
+        XCTAssertEqual(response.websites.first?.teamId, "1b0f1224-1cbf-4a0c-bf64-e6022fec2930")
+        // teamName kommt nicht vom Server, sondern wird beim Laden ergänzt.
+        XCTAssertNil(response.websites.first?.teamName)
+    }
+
+    /// Der Teamname wird nachträglich gesetzt und muss die Kodierung überstehen
+    /// — sonst ginge die Kennzeichnung im Cache verloren.
+    func testTeamNameSurvivesEncoding() throws {
+        var website = Website(
+            id: "abc",
+            name: "Beispiel",
+            domain: "example.com",
+            shareId: nil,
+            teamId: "team-1",
+            resetAt: nil,
+            createdAt: nil
+        )
+        website.teamName = "App Review"
+
+        let data = try JSONEncoder().encode(website)
+        let restored = try JSONDecoder().decode(Website.self, from: data)
+
+        XCTAssertEqual(restored.teamName, "App Review")
+        XCTAssertEqual(restored.teamId, "team-1")
+    }
+
+    // MARK: - Zusammenführung persönlicher und Team-Websites
+
+    private func makeWebsite(_ id: String, team: String? = nil) -> Website {
+        Website(
+            id: id,
+            name: "Website \(id)",
+            domain: "\(id).example.com",
+            shareId: nil,
+            teamId: team == nil ? nil : "team-\(id)",
+            resetAt: nil,
+            createdAt: nil,
+            teamName: team
+        )
+    }
+
+    func testMergeKeepsBothPersonalAndTeamWebsites() {
+        let merged = UmamiAPI.merge(
+            personal: [makeWebsite("a")],
+            teamWebsites: [makeWebsite("b", team: "Redaktion")]
+        )
+
+        XCTAssertEqual(merged.map(\.id), ["a", "b"])
+        XCTAssertNil(merged[0].teamName)
+        XCTAssertEqual(merged[1].teamName, "Redaktion")
+    }
+
+    /// Wer eine Website besitzt und zugleich im Team ist, sieht sie einmal —
+    /// und zwar als eigene, ohne Team-Kennzeichnung.
+    func testMergePrefersPersonalOverTeamOnDuplicateId() {
+        let merged = UmamiAPI.merge(
+            personal: [makeWebsite("a")],
+            teamWebsites: [makeWebsite("a", team: "Redaktion")]
+        )
+
+        XCTAssertEqual(merged.count, 1)
+        XCTAssertNil(merged[0].teamName, "Eigene Website darf nicht als Team-Website erscheinen")
+    }
+
+    /// Dieselbe Website in zwei Teams darf nicht doppelt auftauchen.
+    func testMergeDeduplicatesAcrossTeams() {
+        let merged = UmamiAPI.merge(
+            personal: [],
+            teamWebsites: [
+                makeWebsite("a", team: "Redaktion"),
+                makeWebsite("a", team: "Vertrieb"),
+            ]
+        )
+
+        XCTAssertEqual(merged.count, 1)
+        XCTAssertEqual(merged[0].teamName, "Redaktion", "Das erste Team gewinnt")
+    }
+
+    func testMergeWithoutTeamsReturnsPersonalUnchanged() {
+        let personal = [makeWebsite("a"), makeWebsite("b")]
+        let merged = UmamiAPI.merge(personal: personal, teamWebsites: [])
+
+        XCTAssertEqual(merged.map(\.id), ["a", "b"])
+    }
+
+    /// Ältere Cache-Einträge kennen `teamName` nicht — sie müssen weiterhin
+    /// lesbar bleiben.
+    func testWebsiteDecodesWithoutTeamName() throws {
+        let json = """
+        { "id": "abc", "name": "Beispiel", "domain": "example.com",
+          "shareId": null, "teamId": null, "resetAt": null, "createdAt": null }
+        """.data(using: .utf8)!
+
+        let website = try JSONDecoder().decode(Website.self, from: json)
+
+        XCTAssertEqual(website.id, "abc")
+        XCTAssertNil(website.teamName)
+    }
 }
