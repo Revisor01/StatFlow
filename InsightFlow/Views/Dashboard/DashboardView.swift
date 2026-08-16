@@ -551,157 +551,24 @@ struct AddAccountView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
+    // Zweiter Faktor: Verlangt Umami einen Code, klappt statt der Zugangsdaten
+    // die Code-Eingabe auf. Der `partialToken` ist nur wenige Minuten gültig,
+    // die übrigen Werte brauchen wir erst beim Anlegen des Kontos.
+    @State private var requiresTwoFactor = false
+    @State private var twoFactorCode = ""
+    @State private var useBackupCode = false
+    @State private var pendingTwoFactor: (partialToken: String, url: URL, serverURL: String)?
+
     var onAccountAdded: (() -> Void)?
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // Provider Selection
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("account.add.provider")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-
-                    HStack(spacing: 12) {
-                        ForEach(AnalyticsProviderType.allCases, id: \.self) { provider in
-                            ProviderSelectionButton(
-                                provider: provider,
-                                isSelected: selectedProvider == provider
-                            ) {
-                                withAnimation(.spring(duration: 0.3)) {
-                                    selectedProvider = provider
-                                }
-                            }
-                        }
-                    }
+                if requiresTwoFactor {
+                    twoFactorSection
+                } else {
+                    credentialsSections
                 }
-
-                // Server Type Selection
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("login.serverType")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 4)
-
-                    HStack(spacing: 12) {
-                        ForEach(ServerType.allCases, id: \.self) { type in
-                            ServerTypeButton(
-                                type: type,
-                                isSelected: serverType == type,
-                                providerColor: selectedProvider == .umami ? Color.orange : Color.blue
-                            ) {
-                                withAnimation(.spring(duration: 0.3)) {
-                                    serverType = type
-                                    if type == .cloud {
-                                        serverURL = selectedProvider == .umami
-                                            ? "https://cloud.umami.is"
-                                            : "https://plausible.io"
-                                    } else {
-                                        serverURL = ""
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Details Section
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("account.add.details")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-
-                    VStack(spacing: 12) {
-                        TextField("account.add.name", text: $accountName)
-                            .textContentType(.organizationName)
-                            .padding()
-                            .background(Color(.secondarySystemGroupedBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                        if serverType == .selfHosted {
-                            TextField("account.add.serverURL", text: $serverURL)
-                                .textContentType(.URL)
-                                .textInputAutocapitalization(.never)
-                                .keyboardType(.URL)
-                                .padding()
-                                .background(Color(.secondarySystemGroupedBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                    }
-                }
-
-                // Credentials Section
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("account.add.credentials")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-
-                    if selectedProvider == .umami {
-                        VStack(spacing: 12) {
-                            TextField("account.add.username", text: $username)
-                                .textContentType(.username)
-                                .textInputAutocapitalization(.never)
-                                .padding()
-                                .background(Color(.secondarySystemGroupedBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                            SecureField("account.add.password", text: $password)
-                                .textContentType(.password)
-                                .padding()
-                                .background(Color(.secondarySystemGroupedBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                    } else {
-                        VStack(alignment: .leading, spacing: 8) {
-                            SecureField("account.add.apiKey", text: $apiKey)
-                                .textContentType(.password)
-                                .padding()
-                                .background(Color(.secondarySystemGroupedBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-
-                            Text("account.add.apiKey.hint")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-
-                // Error Message
-                if let error = errorMessage {
-                    Text(error)
-                        .foregroundStyle(.red)
-                        .font(.subheadline)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(Color.red.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-
-                // Add Button
-                Button {
-                    Task { await addAccount() }
-                } label: {
-                    HStack {
-                        Spacer()
-                        if isLoading {
-                            ProgressView()
-                                .tint(.white)
-                        } else {
-                            Text("account.add.button")
-                                .fontWeight(.semibold)
-                        }
-                        Spacer()
-                    }
-                    .padding()
-                    .background(isFormValid ? (selectedProvider == .umami ? Color.orange : Color.blue) : Color.gray)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                .disabled(!isFormValid || isLoading)
             }
             .padding()
         }
@@ -711,12 +578,245 @@ struct AddAccountView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button {
-                    dismiss()
+                    if requiresTwoFactor {
+                        cancelTwoFactor()
+                    } else {
+                        dismiss()
+                    }
                 } label: {
-                    Image(systemName: "xmark")
+                    Image(systemName: requiresTwoFactor ? "chevron.left" : "xmark")
                 }
             }
         }
+    }
+
+    private var credentialsSections: some View {
+        VStack(spacing: 24) {
+            // Provider Selection
+            VStack(alignment: .leading, spacing: 12) {
+                Text("account.add.provider")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 12) {
+                    ForEach(AnalyticsProviderType.allCases, id: \.self) { provider in
+                        ProviderSelectionButton(
+                            provider: provider,
+                            isSelected: selectedProvider == provider
+                        ) {
+                            withAnimation(.spring(duration: 0.3)) {
+                                selectedProvider = provider
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Server Type Selection
+            VStack(alignment: .leading, spacing: 12) {
+                Text("login.serverType")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
+
+                HStack(spacing: 12) {
+                    ForEach(ServerType.allCases, id: \.self) { type in
+                        ServerTypeButton(
+                            type: type,
+                            isSelected: serverType == type,
+                            providerColor: selectedProvider == .umami ? Color.orange : Color.blue
+                        ) {
+                            withAnimation(.spring(duration: 0.3)) {
+                                serverType = type
+                                if type == .cloud {
+                                    serverURL = selectedProvider == .umami
+                                        ? "https://cloud.umami.is"
+                                        : "https://plausible.io"
+                                } else {
+                                    serverURL = ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Details Section
+            VStack(alignment: .leading, spacing: 16) {
+                Text("account.add.details")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+
+                VStack(spacing: 12) {
+                    TextField("account.add.name", text: $accountName)
+                        .textContentType(.organizationName)
+                        .padding()
+                        .background(Color(.secondarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                    if serverType == .selfHosted {
+                        TextField("account.add.serverURL", text: $serverURL)
+                            .textContentType(.URL)
+                            .textInputAutocapitalization(.never)
+                            .keyboardType(.URL)
+                            .padding()
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+            }
+
+            // Credentials Section
+            VStack(alignment: .leading, spacing: 16) {
+                Text("account.add.credentials")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+
+                if selectedProvider == .umami {
+                    VStack(spacing: 12) {
+                        TextField("account.add.username", text: $username)
+                            .textContentType(.username)
+                            .textInputAutocapitalization(.never)
+                            .padding()
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        SecureField("account.add.password", text: $password)
+                            .textContentType(.password)
+                            .padding()
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                } else {
+                    VStack(alignment: .leading, spacing: 8) {
+                        SecureField("account.add.apiKey", text: $apiKey)
+                            .textContentType(.password)
+                            .padding()
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        Text("account.add.apiKey.hint")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            // Error Message
+            if let error = errorMessage {
+                Text(error)
+                    .foregroundStyle(.red)
+                    .font(.subheadline)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.red.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+
+            // Add Button
+            Button {
+                Task { await addAccount() }
+            } label: {
+                HStack {
+                    Spacer()
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("account.add.button")
+                            .fontWeight(.semibold)
+                    }
+                    Spacer()
+                }
+                .padding()
+                .background(isFormValid ? (selectedProvider == .umami ? Color.orange : Color.blue) : Color.gray)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .disabled(!isFormValid || isLoading)
+        }
+    }
+
+    private var twoFactorSection: some View {
+        VStack(spacing: 16) {
+            VStack(spacing: 8) {
+                Image(systemName: "lock.shield")
+                    .font(.largeTitle)
+                    .foregroundStyle(Color.orange)
+
+                Text("login.twoFactor.title")
+                    .font(.headline)
+
+                Text(useBackupCode ? "login.twoFactor.backupHint" : "login.twoFactor.hint")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+
+            TextField(String(localized: useBackupCode
+                ? "login.twoFactor.backupPlaceholder"
+                : "login.twoFactor.placeholder"), text: $twoFactorCode)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(useBackupCode ? .default : .numberPad)
+                .padding()
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+
+            Button {
+                useBackupCode.toggle()
+                twoFactorCode = ""
+            } label: {
+                Text(useBackupCode ? "login.twoFactor.useCode" : "login.twoFactor.useBackup")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if let error = errorMessage {
+                Text(error)
+                    .foregroundStyle(.red)
+                    .font(.subheadline)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.red.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+
+            Button {
+                Task { await submitTwoFactorCode() }
+            } label: {
+                HStack {
+                    Spacer()
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("login.twoFactor.confirm")
+                            .fontWeight(.semibold)
+                    }
+                    Spacer()
+                }
+                .padding()
+                .background(isTwoFactorCodeValid ? Color.orange : Color.gray)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .disabled(!isTwoFactorCodeValid || isLoading)
+        }
+    }
+
+    /// Umami erwartet exakt sechs Zeichen für TOTP-Codes; Backup-Codes sind länger.
+    private var isTwoFactorCodeValid: Bool {
+        let trimmed = twoFactorCode.trimmingCharacters(in: .whitespaces)
+        return useBackupCode ? !trimmed.isEmpty : trimmed.count == 6
     }
 
     private var isFormValid: Bool {
@@ -742,18 +842,24 @@ struct AddAccountView: View {
             }
 
             if selectedProvider == .umami {
-                // Authenticate with Umami
-                try await UmamiAPI.shared.authenticate(serverURL: normalizedURL, credentials: .umami(username: username, password: password))
-                let token = KeychainService.load(for: .token) ?? ""
+                guard let url = URL(string: normalizedURL) else {
+                    throw APIError.invalidURL
+                }
 
-                let account = AnalyticsAccount(
-                    name: accountName,
-                    serverURL: normalizedURL,
-                    providerType: .umami,
-                    credentials: AccountCredentials(token: token, apiKey: nil)
-                )
-                accountManager.addAccount(account)
-                await accountManager.setActiveAccount(account)
+                // Verlangt der Server einen zweiten Faktor, antwortet Umami mit
+                // einem `partialToken` statt einem Token — dann übernimmt die
+                // Code-Eingabe, statt den Vorgang mit einem Fehler abzubrechen.
+                switch try await UmamiAPI.shared.login(baseURL: url, username: username, password: password) {
+                case .token(let token):
+                    await createUmamiAccount(token: token, serverURL: normalizedURL)
+                case .twoFactorRequired(let partialToken):
+                    await MainActor.run {
+                        pendingTwoFactor = (partialToken, url, normalizedURL)
+                        requiresTwoFactor = true
+                        isLoading = false
+                    }
+                    return
+                }
             } else {
                 // Authenticate with Plausible
                 try await PlausibleAPI.shared.authenticate(serverURL: normalizedURL, credentials: .plausible(apiKey: apiKey))
@@ -775,10 +881,59 @@ struct AddAccountView: View {
             }
         } catch {
             await MainActor.run {
-                errorMessage = error.localizedDescription
+                errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
                 isLoading = false
             }
         }
+    }
+
+    /// Zweiter Schritt des Logins: TOTP- oder Backup-Code einlösen.
+    private func submitTwoFactorCode() async {
+        guard let pending = pendingTwoFactor else { return }
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let token = try await UmamiAPI.shared.verifyTwoFactor(
+                baseURL: pending.url,
+                partialToken: pending.partialToken,
+                code: twoFactorCode.trimmingCharacters(in: .whitespaces),
+                isBackupCode: useBackupCode
+            )
+
+            await createUmamiAccount(token: token, serverURL: pending.serverURL)
+
+            await MainActor.run {
+                onAccountAdded?()
+                dismiss()
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = (error as? APIError)?.errorDescription ?? error.localizedDescription
+                isLoading = false
+            }
+        }
+    }
+
+    /// Bricht die Code-Eingabe ab und kehrt zur Anmeldemaske zurück.
+    private func cancelTwoFactor() {
+        pendingTwoFactor = nil
+        requiresTwoFactor = false
+        twoFactorCode = ""
+        useBackupCode = false
+        errorMessage = nil
+    }
+
+    private func createUmamiAccount(token: String, serverURL: String) async {
+        let account = AnalyticsAccount(
+            name: accountName,
+            serverURL: serverURL,
+            providerType: .umami,
+            credentials: AccountCredentials(token: token, apiKey: nil)
+        )
+        accountManager.addAccount(account)
+        await accountManager.setActiveAccount(account)
     }
 }
 
