@@ -163,23 +163,44 @@ class AccountManager: ObservableObject {
         await applyAccountCredentials(account)
     }
 
+    /// Meldet von allen Konten ab und entfernt sie samt Zugangsdaten.
+    ///
+    /// Die Zugangsdaten liegen zweifach in der Keychain: einmal global für die
+    /// aktive Sitzung und einmal je Konto. Nur die globalen zu löschen ließ die
+    /// Kontenliste bestehen — nach einem Neustart waren alle Konten wieder da.
+    func logoutAll() {
+        for account in accounts {
+            KeychainService.deleteCredentials(for: account.id.uuidString)
+        }
+        accounts = []
+        saveAccounts()
+
+        clearSession()
+
+        NotificationCenter.default.post(name: .allAccountsRemoved, object: nil)
+    }
+
+    /// Beendet die aktive Sitzung, ohne Konten zu entfernen.
     func clearActiveAccount() {
+        clearSession()
+
+        NotificationCenter.default.post(name: .allAccountsRemoved, object: nil)
+    }
+
+    /// Räumt alles ab, was zur laufenden Sitzung gehört — ohne die Kontenliste
+    /// anzutasten.
+    private func clearSession() {
         activeAccount = nil
         UserDefaults.standard.removeObject(forKey: activeAccountKey)
 
-        // Clear system credentials
         KeychainService.deleteAll()
         SharedCredentials.delete()
         AnalyticsManager.shared.logout()
 
-        // API-Services aufraumen (aus AuthManager.logout)
         Task {
             await UmamiAPI.shared.clearConfiguration()
         }
         PlausibleSitesManager.shared.clearAll()
-
-        // Notify that user should be logged out (no accounts left)
-        NotificationCenter.default.post(name: .allAccountsRemoved, object: nil)
     }
 
     // MARK: - Persistence
