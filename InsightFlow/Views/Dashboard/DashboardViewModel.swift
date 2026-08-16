@@ -102,10 +102,14 @@ class DashboardViewModel: ObservableObject {
                     accountWebsites = try await umamiAPI.getAllAccessibleWebsites()
                 }
 
-                for website in accountWebsites {
+                // Dieselbe Website kann über mehrere Konten desselben Servers
+                // hereinkommen — etwa einmal als eigene und einmal über ein
+                // Team. Doppelte IDs würde die Liste nicht verkraften, also
+                // gewinnt das zuerst geladene Konto.
+                for website in accountWebsites where accountMap[website.id] == nil {
                     accountMap[website.id] = account
+                    allWebsites.append(website)
                 }
-                allWebsites.append(contentsOf: accountWebsites)
             } catch {
                 Logger.ui.error("loadAllAccountsData: failed for account \(account.displayName): \(error.localizedDescription)")
                 // Continue loading other accounts
@@ -172,14 +176,18 @@ class DashboardViewModel: ObservableObject {
                     // Cache die Websites
                     cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
                 } else {
-                    let freshWebsites = try await umamiAPI.getAllAccessibleWebsites()
+                    let result = try await umamiAPI.getAllAccessibleWebsitesResult()
                     guard !Task.isCancelled else { return }
-                    websites = freshWebsites
-                    // Cache die Websites
-                    let analyticsWebsites = freshWebsites.map { site in
-                        AnalyticsWebsite(id: site.id, name: site.name, domain: site.domain ?? site.name, shareId: site.shareId, provider: .umami, teamName: site.teamName)
+                    websites = result.websites
+                    // Nur einen vollständigen Stand zwischenspeichern: Fehlen
+                    // Team-Websites wegen eines Fehlers, würde der Cache sie
+                    // sonst dauerhaft verlieren und offline zu wenig anzeigen.
+                    if result.teamsComplete {
+                        let analyticsWebsites = result.websites.map { site in
+                            AnalyticsWebsite(id: site.id, name: site.name, domain: site.domain ?? site.name, shareId: site.shareId, provider: .umami, teamName: site.teamName)
+                        }
+                        cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
                     }
-                    cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
                 }
 
                 guard !Task.isCancelled else { return }

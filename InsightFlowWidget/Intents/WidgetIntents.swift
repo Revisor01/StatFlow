@@ -163,7 +163,21 @@ struct WebsiteQuery: EntityQuery {
             return []
         }
 
-        let websitesURL = url.appendingPathComponent("api/websites")
+        // Ohne pageSize liefert Umami nur 20 Websites.
+        var websitesComponents = URLComponents(
+            url: url.appendingPathComponent("api/websites"),
+            resolvingAgainstBaseURL: false
+        )
+        websitesComponents?.queryItems = [
+            URLQueryItem(name: "pageSize", value: "100"),
+            URLQueryItem(name: "orderBy", value: "name"),
+            URLQueryItem(name: "sortDescending", value: "false"),
+        ]
+        guard let websitesURL = websitesComponents?.url else {
+            widgetLog("WebsiteQuery: could not build websites URL for '\(account.displayName)'")
+            return []
+        }
+
         var request = URLRequest(url: websitesURL)
         request.setValue("Bearer \(account.token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 10
@@ -213,12 +227,19 @@ struct WebsiteQuery: EntityQuery {
         struct WS: Decodable { let id: String; let name: String }
         struct Wrapper: Decodable { let data: [WS] }
 
+        // Das Widget hat ein knappes Zeitbudget, deshalb hier nur die erste
+        // Seite je Liste — anders als in der App, die vollständig blättert.
+        // `orderBy` sorgt dafür, dass es immer dieselbe Seite ist.
         func get(_ path: String) async -> Data? {
             guard var components = URLComponents(
                 url: baseURL.appendingPathComponent(path),
                 resolvingAgainstBaseURL: false
             ) else { return nil }
-            components.queryItems = [URLQueryItem(name: "pageSize", value: "100")]
+            components.queryItems = [
+                URLQueryItem(name: "pageSize", value: "100"),
+                URLQueryItem(name: "orderBy", value: "name"),
+                URLQueryItem(name: "sortDescending", value: "false"),
+            ]
             guard let url = components.url else { return nil }
 
             var request = URLRequest(url: url)
@@ -232,15 +253,25 @@ struct WebsiteQuery: EntityQuery {
               !teams.isEmpty
         else { return [] }
 
+        // Teams parallel abfragen: Nacheinander summieren sich bei mehreren
+        // Teams die Zeitüberschreitungen und das Widget bekäme gar keine Liste.
         var result: [WebsiteEntity] = []
-        for team in teams {
-            guard let data = await get("api/teams/\(team.id)/websites"),
-                  let sites = try? JSONDecoder().decode(Wrapper.self, from: data).data
-            else { continue }
+        await withTaskGroup(of: [WebsiteEntity].self) { group in
+            for team in teams {
+                group.addTask {
+                    guard let data = await get("api/teams/\(team.id)/websites"),
+                          let sites = try? JSONDecoder().decode(Wrapper.self, from: data).data
+                    else { return [] }
 
-            result.append(contentsOf: sites.map {
-                WebsiteEntity(id: $0.id, name: $0.name, accountId: account.id, providerType: "umami")
-            })
+                    return sites.map {
+                        WebsiteEntity(id: $0.id, name: $0.name, accountId: account.id, providerType: "umami")
+                    }
+                }
+            }
+
+            for await sites in group {
+                result.append(contentsOf: sites)
+            }
         }
 
         return result

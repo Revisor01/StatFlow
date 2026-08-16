@@ -532,6 +532,22 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(merged[0].teamName, "Redaktion", "Das erste Team gewinnt")
     }
 
+    /// Die Zusammenführung darf keine doppelten IDs liefern — SwiftUI-Listen
+    /// verlangen eindeutige Kennungen.
+    func testMergeProducesUniqueIds() {
+        let merged = UmamiAPI.merge(
+            personal: [makeWebsite("a"), makeWebsite("b")],
+            teamWebsites: [
+                makeWebsite("b", team: "Redaktion"),
+                makeWebsite("c", team: "Redaktion"),
+                makeWebsite("c", team: "Vertrieb"),
+            ]
+        )
+
+        XCTAssertEqual(merged.count, Set(merged.map(\.id)).count, "IDs müssen eindeutig sein")
+        XCTAssertEqual(merged.map(\.id), ["a", "b", "c"])
+    }
+
     func testMergeWithoutTeamsReturnsPersonalUnchanged() {
         let personal = [makeWebsite("a"), makeWebsite("b")]
         let merged = UmamiAPI.merge(personal: personal, teamWebsites: [])

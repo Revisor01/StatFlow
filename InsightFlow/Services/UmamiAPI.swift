@@ -506,10 +506,13 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Websites
 
+    /// Die eigenen Websites des Kontos. Ebenfalls paginiert: Ohne `pageSize`
+    /// antwortet Umami mit 20 Einträgen, und wer mehr Websites hat, sah bisher
+    /// nur die ersten zwanzig.
     func getWebsites() async throws -> [Website] {
-        let data = try await request(endpoint: "api/websites")
-        let response = try decoder.decode(WebsiteResponse.self, from: data)
-        return response.websites
+        try await fetchAllPages(endpoint: "api/websites") { data in
+            try self.decoder.decode(WebsiteResponse.self, from: data).websites
+        }
     }
 
     /// Alle Websites, auf die das Konto Zugriff hat: eigene und solche aus
@@ -520,40 +523,67 @@ actor UmamiAPI: AnalyticsProvider {
     /// Methode die persönlichen Websites zurück, statt die Übersicht ganz
     /// leer zu lassen.
     func getAllAccessibleWebsites() async throws -> [Website] {
+        try await getAllAccessibleWebsitesResult().websites
+    }
+
+    /// Ergebnis von `getAllAccessibleWebsitesResult`. `teamsComplete` ist
+    /// `false`, wenn Team-Websites fehlen könnten — dann sollte die Liste
+    /// nicht als vollständiger Stand zwischengespeichert werden.
+    struct AccessibleWebsites: Sendable {
+        let websites: [Website]
+        let teamsComplete: Bool
+    }
+
+    func getAllAccessibleWebsitesResult() async throws -> AccessibleWebsites {
         let personal = try await getWebsites()
 
         let teams: [Team]
         do {
             teams = try await getMyTeams()
         } catch {
-            return personal
+            // Bei Umami 2.x gibt es die Route nicht — das ist der Normalfall
+            // und kein Fehler. Andere Ursachen (Netzwerk, Rechte) bleiben so
+            // aber wenigstens im Protokoll sichtbar.
+            Logger.api.debug("Teams nicht abrufbar, nutze nur eigene Websites: \(String(describing: error))")
+            return AccessibleWebsites(websites: personal, teamsComplete: false)
         }
 
-        guard !teams.isEmpty else { return personal }
+        guard !teams.isEmpty else {
+            return AccessibleWebsites(websites: personal, teamsComplete: true)
+        }
 
         // Websites der Teams parallel laden; ein einzelnes fehlschlagendes Team
         // darf die übrigen nicht mitreißen.
         var teamWebsites: [Website] = []
-        await withTaskGroup(of: [Website].self) { group in
+        var complete = true
+
+        await withTaskGroup(of: (sites: [Website], ok: Bool).self) { group in
             for team in teams {
                 group.addTask {
-                    guard let sites = try? await self.getTeamWebsites(teamId: team.id) else {
-                        return []
-                    }
-                    return sites.map { site in
-                        var tagged = site
-                        tagged.teamName = team.name
-                        return tagged
+                    do {
+                        let sites = try await self.getTeamWebsites(teamId: team.id)
+                        return (sites.map { site in
+                            var tagged = site
+                            tagged.teamName = team.name
+                            return tagged
+                        }, true)
+                    } catch {
+                        Logger.api.error("Websites des Teams \(team.name) nicht abrufbar: \(String(describing: error))")
+                        return ([], false)
                     }
                 }
             }
 
-            for await sites in group {
-                teamWebsites.append(contentsOf: sites)
+            for await result in group {
+                teamWebsites.append(contentsOf: result.sites)
+                if !result.ok { complete = false }
             }
         }
 
-        return Self.merge(personal: personal, teamWebsites: teamWebsites)
+        return AccessibleWebsites(
+            websites: Self.merge(personal: personal, teamWebsites: teamWebsites),
+            teamsComplete: complete
+        )
     }
 
     /// Führt persönliche und Team-Websites zusammen. Eigene haben Vorrang:
@@ -599,9 +629,15 @@ actor UmamiAPI: AnalyticsProvider {
 
     /// Holt alle Seiten einer paginierten Liste. Ohne `pageSize` liefert Umami
     /// nur 20 Einträge — bei größeren Teams fehlten sonst Websites.
+    ///
+    /// `orderBy` wird immer mitgeschickt: Bei Team-Listen setzt der Server
+    /// keine Standardsortierung, und ohne feste Reihenfolge kann sich die
+    /// Aufteilung zwischen zwei Seitenabrufen verschieben — einzelne Einträge
+    /// kämen dann doppelt oder gar nicht.
     private func fetchAllPages<T>(
         endpoint: String,
         pageSize: Int = 100,
+        orderBy: String = "name",
         decode: @escaping (Data) throws -> [T]
     ) async throws -> [T] {
         var all: [T] = []
@@ -615,6 +651,8 @@ actor UmamiAPI: AnalyticsProvider {
                 queryItems: [
                     URLQueryItem(name: "page", value: String(page)),
                     URLQueryItem(name: "pageSize", value: String(pageSize)),
+                    URLQueryItem(name: "orderBy", value: orderBy),
+                    URLQueryItem(name: "sortDescending", value: "false"),
                 ]
             )
 
