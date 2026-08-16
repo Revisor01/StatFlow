@@ -34,7 +34,7 @@ struct SettingsView: View {
             .alert("settings.logout", isPresented: $showLogoutConfirmation) {
                 Button("button.cancel", role: .cancel) { }
                 Button("settings.logout", role: .destructive) {
-                    accountManager.clearActiveAccount()
+                    accountManager.logoutAll()
                 }
             } message: {
                 Text("settings.logout.confirm")

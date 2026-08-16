@@ -231,8 +231,8 @@
 "settings.support.title" = "Support Development";
 "settings.support.subtitle" = "Help us improve StatsFlow";
 "settings.branding.subtitle" = "A pastor's project";
-"settings.logout" = "Log Out";
-"settings.logout.confirm" = "Are you sure you want to log out?";
+"settings.logout" = "Sign out of all accounts";
+"settings.logout.confirm" = "All accounts will be removed from the app. You will need to sign in again to continue.";
 
 // MARK: - Notifications
 "notifications.setting.disabled" = "Off";

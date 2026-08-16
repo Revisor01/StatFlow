@@ -74,6 +74,9 @@ alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
 - Für „Heute" und „Gestern" saßen die Stundenwerte um den Zeitzonen-Abstand versetzt
   im Diagramm, einzelne Randstunden fehlten ganz. App und Widget zeigen jetzt
   dieselbe Kurve.
+- Abmelden entfernte die Konten nicht wirklich: Nach einem Neustart waren alle
+  wieder da, und die App sprang zwischenzeitlich auf ein Konto eines anderen
+  Anbieters. Der Knopf heißt jetzt „Von allen Konten abmelden" und tut das auch.
 
 ## [1.0.7] – 2026-08-12
 
