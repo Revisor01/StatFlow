@@ -66,6 +66,9 @@ alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
 
 - Bei Umami wurden nur die ersten zwanzig Websites angezeigt. Wer mehr hat, sah den Rest
   weder in der Übersicht noch in der Widget-Auswahl.
+- Das Widget stand nur auf sehr neuen iOS-Versionen zur Verfügung, obwohl die App selbst
+  ab iOS 18 läuft. Es lässt sich jetzt auf allen von der App unterstützten Geräten
+  einrichten.
 - Filter mit „enthält nicht" wurden von Plausible abgelehnt, weil die App eine ungültige
   Schreibweise verwendet hat.
 - Bei Plausible blieben Listen mit begrenzter Länge leer — darunter die Top-Seiten und
