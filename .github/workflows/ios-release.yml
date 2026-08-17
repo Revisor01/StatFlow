@@ -1,0 +1,126 @@
+name: iOS Release Build
+
+# Baut das iOS-Release auf einem GitHub-Runner mit RELEASE-macOS und laedt es
+# zu App Store Connect hoch. Hintergrund: Builds von Beta-macOS-Maschinen werden
+# von Apple mit ITMS-90111 abgelehnt (Beta-Host-Stempel als BuildMachineOSBuild
+# im Binary) — der lokale Entwickler-Mac laeuft auf macOS-Beta, daher baut die CI.
+# Die lokale Validierung (altool --validate-app) prueft diesen Stempel NICHT,
+# der Fehler faellt erst bei der serverseitigen Verarbeitung auf.
+#
+# Version und Build-Nummer kommen aus InsightFlow.xcodeproj (MARKETING_VERSION
+# und CURRENT_PROJECT_VERSION). Vor dem Dispatch dort bumpen und committen.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-upload:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Neuestes stabiles Xcode waehlen
+        run: |
+          # Beta-Installationen ausschliessen — genau deren Stempel verursachen ITMS-90111.
+          XCODE=$(ls -d /Applications/Xcode_*.app 2>/dev/null | grep -iv beta | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then XCODE=/Applications/Xcode.app; fi
+          echo "Verwende: $XCODE"
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+          echo "Host-macOS (muss ein Release-Build sein, kein Beta-Seed):"
+          sw_vers
+
+      - name: Signing-Keychain einrichten
+        env:
+          P12_BASE64: ${{ secrets.IOS_DIST_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+        run: |
+          echo "$P12_BASE64" | base64 --decode > dist.p12
+          security create-keychain -p ci-build build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p ci-build build.keychain
+          security set-keychain-settings -t 3600 build.keychain
+          security import dist.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ci-build build.keychain >/dev/null
+          rm dist.p12
+
+      - name: ASC-API-Key ablegen
+        env:
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+      - name: Archiv bauen
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          xcodebuild -project InsightFlow.xcodeproj -scheme InsightFlow \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath build/StatFlow.xcarchive archive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" | tail -40
+
+      - name: SDK- und Host-Stempel pruefen
+        run: |
+          APP=build/StatFlow.xcarchive/Products/Applications/InsightFlow.app
+          echo "=== App ==="
+          plutil -p "$APP/Info.plist" | grep -iE "DTSDKName|DTXcodeBuild|BuildMachineOSBuild|MinimumOSVersion|CFBundleVersion|CFBundleShortVersion"
+          echo "=== Widget-Extension ==="
+          plutil -p "$APP/PlugIns/InsightFlowWidgetExtension.appex/Info.plist" \
+            | grep -iE "DTSDKName|DTXcodeBuild|BuildMachineOSBuild|MinimumOSVersion"
+          # Beta-Seeds tragen einen Kleinbuchstaben am Ende der Build-Version
+          # (z.B. 26A5388g). Ein Release-Stempel endet auf eine Ziffer.
+          STAMP=$(plutil -extract BuildMachineOSBuild raw "$APP/Info.plist")
+          echo "BuildMachineOSBuild: $STAMP"
+          if echo "$STAMP" | grep -qE '[a-z]$'; then
+            echo "FEHLER: Build stammt von einem macOS-Beta-Host ($STAMP) — Apple lehnt das mit ITMS-90111 ab."
+            exit 1
+          fi
+
+      - name: IPA exportieren
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          cat > ExportOptions-ci.plist <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>destination</key><string>export</string>
+            <key>method</key><string>app-store-connect</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>stripSwiftSymbols</key><true/>
+            <key>teamID</key><string>J459G9CJT5</string>
+            <key>uploadSymbols</key><true/>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive -archivePath build/StatFlow.xcarchive \
+            -exportPath build/export -exportOptionsPlist ExportOptions-ci.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" | tail -10
+
+      - name: Zu App Store Connect hochladen
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcrun altool --upload-app -f build/export/InsightFlow.ipa -t ios \
+            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
