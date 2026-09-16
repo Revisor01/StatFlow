@@ -34,9 +34,12 @@ enum LoginProvider: CaseIterable {
         }
     }
 
+    /// Adresse, die beim Wechsel auf „Cloud“ eingetragen wird. Für Umami ist
+    /// das die API-Basis, nicht die Weboberfläche `cloud.umami.is` — dort gibt
+    /// es keine API-Anmeldung.
     var cloudURL: String {
         switch self {
-        case .umami: return "https://cloud.umami.is"
+        case .umami: return UmamiAPI.cloudBaseURL
         case .plausible: return "https://plausible.io"
         }
     }
@@ -286,7 +289,14 @@ struct LoginView: View {
 
             // Credentials
             if selectedProvider == .umami {
-                umamiCredentialsFields
+                // Umami Cloud kennt keine Anmeldung mit Benutzername und
+                // Passwort, sondern nur den API-Schlüssel aus den
+                // Kontoeinstellungen.
+                if serverType == .cloud {
+                    umamiCloudCredentialsFields
+                } else {
+                    umamiCredentialsFields
+                }
             } else {
                 plausibleCredentialsFields
             }
@@ -393,6 +403,35 @@ struct LoginView: View {
         }
     }
 
+    /// Anmeldung an Umami Cloud: dort gibt es nur den API-Schlüssel.
+    private var umamiCloudCredentialsFields: some View {
+        VStack(spacing: 16) {
+            GlassTextField(
+                icon: "key.fill",
+                placeholder: String(localized: "login.apiKey.placeholder"),
+                text: $apiKey,
+                isSecure: true
+            )
+            .focused($focusedField, equals: .apiKey)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+
+            if let settingsURL = URL(string: "https://cloud.umami.is/settings/api-keys") {
+                Link(destination: settingsURL) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "questionmark.circle")
+                        Text("login.umamiCloud.apiKey.help")
+                            .font(.caption)
+                            .multilineTextAlignment(.leading)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            }
+
+            accountNameField
+        }
+    }
+
     private var plausibleCredentialsFields: some View {
         VStack(spacing: 16) {
             GlassTextField(
@@ -433,12 +472,19 @@ struct LoginView: View {
         Button {
             Task {
                 if selectedProvider == .umami {
-                    await viewModel.login(
-                        serverURL: serverURL,
-                        username: username,
-                        password: password,
-                        accountName: accountName
-                    )
+                    if serverType == .cloud {
+                        await viewModel.loginWithUmamiCloud(
+                            apiKey: apiKey,
+                            accountName: accountName
+                        )
+                    } else {
+                        await viewModel.login(
+                            serverURL: serverURL,
+                            username: username,
+                            password: password,
+                            accountName: accountName
+                        )
+                    }
                 } else {
                     await viewModel.loginWithPlausible(
                         serverURL: serverURL,

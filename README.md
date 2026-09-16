@@ -48,7 +48,8 @@ laufende Instanzen sämtliche Abfragen der App zuletzt geprüft wurden (Stand: A
 
 **Wichtige Einschränkungen:**
 
-- **Umami Cloud wird derzeit nicht unterstützt.** Die App meldet sich über `POST /api/auth/login` an und nutzt ein Bearer-Token. Umami Cloud (`api.umami.is`) verlangt stattdessen einen `x-umami-api-key`-Header. Es funktionieren also nur selbst gehostete Instanzen.
+- **Umami Cloud wird über einen API-Schlüssel angebunden.** Selbst gehostete Instanzen melden sich über `POST /api/auth/login` an und erhalten ein Bearer-Token. Umami Cloud bietet diesen Endpunkt nicht an (er antwortet dort mit `404`); stattdessen wird der Schlüssel aus den Kontoeinstellungen (Einstellungen → API keys) ebenfalls als `Authorization: Bearer …` gesendet, gegen die Basisadresse `https://api.umami.is/v1`. Jeder Schlüssel ist auf 50 Aufrufe je 15 Sekunden begrenzt.
+- **Bei Umami Cloud schlägt die Sammelabfrage `GET /websites/charts` derzeit serverseitig fehl** (`500`, „ReadableStream is disturbed"). Die Verläufe der Übersicht werden dort deshalb einzeln über `/websites/{id}/pageviews` geladen; gezählt werden wie sonst Sitzungen.
 - **Plausibles Sites-API ist Cloud/Enterprise-only.** Websites anlegen und löschen, Ziele verwalten und Share-Links erzeugen laufen über `/api/v1/sites…`. Diese Routen gibt es in der Community Edition nicht — auf CE-Servern meldet die App das als nicht verfügbar. Dashboard, Diagramme und alle Statistiken funktionieren dort uneingeschränkt.
 - Die Plausible-Stats-API v1 ist zwar als „legacy" markiert, in CE 3.2 aber weiterhin verfügbar; ein Abschalttermin ist nicht angekündigt.
 - **Umsatzkennzahlen (`total_revenue`, `average_revenue`) gibt es bei Plausible nur in Cloud/Enterprise** — die Community Edition lehnt sie als unbekannte Metrik ab.

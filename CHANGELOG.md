@@ -14,6 +14,25 @@ Die Versionen 1.0 bis 1.0.6 sind die im App Store ausgelieferten Releases. Die V
 0.1.0 bis 1.3.0 stammen aus der Vorgeschichte als InsightFlow bzw. PrivacyFlow, vor der
 ersten Store-Veröffentlichung.
 
+## [Unreleased] - 2.1.0
+
+### Hinzugefügt
+
+- **Umami Cloud**: Konten bei Umami Cloud lassen sich jetzt verbinden. Dafür wird der
+  API-Schlüssel aus den Umami-Einstellungen eingetragen; eine Anmeldung mit Benutzername
+  und Passwort bietet Umami Cloud nicht an. Selbst gehostete Instanzen melden sich
+  unverändert mit Benutzername und Passwort an.
+
+### Behoben
+
+- Beim Verbinden eines Umami-Cloud-Kontos fragte die App nach Benutzername und Passwort
+  und meldete danach nur „Anmeldung fehlgeschlagen". Sie fragt jetzt nach dem
+  API-Schlüssel und sagt, wo er zu finden ist.
+- Wird die Adresse von Umami Cloud von Hand eingetragen, erklärt die Meldung jetzt den
+  Grund, statt einen Anmeldefehler anzuzeigen.
+- Die Website-Verläufe der Übersicht blieben bei Umami-Cloud-Konten leer, weil die dafür
+  genutzte Sammelabfrage dort derzeit fehlschlägt. Sie werden nun einzeln geladen.
+
 ## [2.0.0] – 2026-08-16
 
 ### Hinzugefügt

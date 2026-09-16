@@ -401,6 +401,7 @@
 "login.siteId.placeholder" = "Domain (e.g. example.com)";
 "login.apiKey.placeholder" = "API Key";
 "login.apiKey.help" = "Where do I find my API key?";
+"login.umamiCloud.apiKey.help" = "Umami Cloud: create a key under Settings → API keys";
 "login.accountName.placeholder" = "Account name (optional)";
 "login.twoFactor.title" = "Two-step verification";
 "login.twoFactor.hint" = "Enter the six-digit code from your authenticator app.";

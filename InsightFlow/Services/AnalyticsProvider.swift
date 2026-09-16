@@ -27,9 +27,11 @@ enum AnalyticsProviderType: String, Codable, CaseIterable {
         }
     }
 
+    /// Für Umami die API-Basis — `cloud.umami.is` ist die Weboberfläche und
+    /// beantwortet keine API-Anfragen.
     var cloudURL: String {
         switch self {
-        case .umami: return "https://cloud.umami.is"
+        case .umami: return UmamiAPI.cloudBaseURL
         case .plausible: return "https://plausible.io"
         }
     }
@@ -187,6 +189,9 @@ struct AnalyticsMetricItem: Identifiable {
 
 enum AnalyticsCredentials {
     case umami(username: String, password: String)
+    /// Umami Cloud kennt keine Anmeldung mit Benutzername und Passwort —
+    /// der API-Schlüssel aus den Kontoeinstellungen ist das Bearer-Token.
+    case umamiCloud(apiKey: String)
     case plausible(apiKey: String)
 }
 

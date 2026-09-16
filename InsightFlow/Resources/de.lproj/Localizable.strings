@@ -402,6 +402,7 @@
 "login.siteId.placeholder" = "Domain (z.B. example.com)";
 "login.apiKey.placeholder" = "API-Schlüssel";
 "login.apiKey.help" = "Wo finde ich meinen API-Schlüssel?";
+"login.umamiCloud.apiKey.help" = "Umami Cloud: Schlüssel unter Einstellungen → API keys erzeugen";
 "login.accountName.placeholder" = "Account-Name (optional)";
 "login.twoFactor.title" = "Bestätigung in zwei Schritten";
 "login.twoFactor.hint" = "Gib den sechsstelligen Code aus deiner Authenticator-App ein.";
