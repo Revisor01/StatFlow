@@ -632,7 +632,7 @@ struct AddAccountView: View {
                                 serverType = type
                                 if type == .cloud {
                                     serverURL = selectedProvider == .umami
-                                        ? "https://cloud.umami.is"
+                                        ? UmamiAPI.cloudBaseURL
                                         : "https://plausible.io"
                                 } else {
                                     serverURL = ""
@@ -676,7 +676,20 @@ struct AddAccountView: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
 
-                if selectedProvider == .umami {
+                if selectedProvider == .umami && serverType == .cloud {
+                    // Umami Cloud: nur der API-Schlüssel, keine Anmeldedaten.
+                    VStack(alignment: .leading, spacing: 8) {
+                        SecureField("account.add.apiKey", text: $apiKey)
+                            .textContentType(.password)
+                            .padding()
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        Text("login.umamiCloud.apiKey.help")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if selectedProvider == .umami {
                     VStack(spacing: 12) {
                         TextField("account.add.username", text: $username)
                             .textContentType(.username)
@@ -821,7 +834,9 @@ struct AddAccountView: View {
 
     private var isFormValid: Bool {
         let hasValidServer = serverType == .cloud || !serverURL.isEmpty
-        if selectedProvider == .umami {
+        if selectedProvider == .umami && serverType == .cloud {
+            return !apiKey.isEmpty
+        } else if selectedProvider == .umami {
             return hasValidServer && !username.isEmpty && !password.isEmpty
         } else {
             return hasValidServer && !apiKey.isEmpty
@@ -834,7 +849,7 @@ struct AddAccountView: View {
 
         do {
             var normalizedURL = serverType == .cloud
-                ? (selectedProvider == .umami ? "https://cloud.umami.is" : "https://plausible.io")
+                ? (selectedProvider == .umami ? UmamiAPI.cloudBaseURL : "https://plausible.io")
                 : serverURL.trimmingCharacters(in: .whitespacesAndNewlines)
             while normalizedURL.hasSuffix("/") { normalizedURL.removeLast() }
             if !normalizedURL.lowercased().hasPrefix("http") {
@@ -844,6 +859,21 @@ struct AddAccountView: View {
             if selectedProvider == .umami {
                 guard let url = URL(string: normalizedURL) else {
                     throw APIError.invalidURL
+                }
+
+                // Umami Cloud kennt keine Anmeldung mit Benutzername und
+                // Passwort; dort ist der API-Schlüssel das Bearer-Token.
+                if UmamiAPI.isCloudURL(normalizedURL) {
+                    try await UmamiAPI.shared.authenticate(
+                        serverURL: normalizedURL,
+                        credentials: .umamiCloud(apiKey: apiKey)
+                    )
+                    await createUmamiAccount(token: apiKey, serverURL: normalizedURL)
+                    await MainActor.run {
+                        onAccountAdded?()
+                        dismiss()
+                    }
+                    return
                 }
 
                 // Verlangt der Server einen zweiten Faktor, antwortet Umami mit
