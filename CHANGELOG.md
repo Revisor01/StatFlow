@@ -30,8 +30,6 @@ ersten Store-Veröffentlichung.
   API-Schlüssel und sagt, wo er zu finden ist.
 - Wird die Adresse von Umami Cloud von Hand eingetragen, erklärt die Meldung jetzt den
   Grund, statt einen Anmeldefehler anzuzeigen.
-- Die Website-Verläufe der Übersicht blieben bei Umami-Cloud-Konten leer, weil die dafür
-  genutzte Sammelabfrage dort derzeit fehlschlägt. Sie werden nun einzeln geladen.
 
 ## [2.0.0] – 2026-08-16
 

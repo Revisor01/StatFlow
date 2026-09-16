@@ -803,27 +803,6 @@ actor UmamiAPI: AnalyticsProvider {
         let honoredUnit: Bool
     }
 
-    /// Ersatz für die Sammelroute: holt die Verläufe je Website einzeln.
-    ///
-    /// Gezählt werden wie dort Sitzungen, damit beide Wege dieselben Werte
-    /// liefern. Die Auflösung stammt direkt aus der Anfrage, deshalb gilt sie
-    /// immer als eingehalten.
-    private func websiteListChartsIndividually(
-        websiteIds: [String],
-        dateRange: DateRange
-    ) async throws -> BatchCharts {
-        var result: [String: [AnalyticsChartPoint]] = [:]
-
-        for websiteId in websiteIds {
-            let data = try await getPageviews(websiteId: websiteId, dateRange: dateRange)
-            result[websiteId] = data.sessions.map {
-                AnalyticsChartPoint(date: $0.date, value: $0.value)
-            }
-        }
-
-        return BatchCharts(charts: result, honoredUnit: true)
-    }
-
     /// Holt die Verlaufsdaten mehrerer Websites in einer einzigen Anfrage.
     /// `GET api/websites/charts` (ab Umami 3.3).
     ///
@@ -838,16 +817,6 @@ actor UmamiAPI: AnalyticsProvider {
         dateRange: DateRange
     ) async throws -> BatchCharts {
         guard !websiteIds.isEmpty else { return BatchCharts(charts: [:], honoredUnit: false) }
-
-        // Umami Cloud beantwortet diese Sammelroute derzeit mit HTTP 500
-        // ("ReadableStream is disturbed"). Solange das so ist, werden die
-        // Verläufe dort einzeln geholt; `pageviews` liefert dieselben Werte.
-        if _isCloud {
-            return try await websiteListChartsIndividually(
-                websiteIds: websiteIds,
-                dateRange: dateRange
-            )
-        }
 
         let dates = dateRange.dates
         let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
