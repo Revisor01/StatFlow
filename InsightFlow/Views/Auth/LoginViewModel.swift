@@ -109,6 +109,37 @@ class LoginViewModel: ObservableObject {
 
     // MARK: - Plausible Login
 
+    /// Anmeldung an Umami Cloud mit dem API-Schlüssel aus den
+    /// Kontoeinstellungen. Der Schlüssel wird als Bearer-Token abgelegt —
+    /// dieselbe Ablage wie beim self-hosted-Token, damit Widget und
+    /// Kontowechsel unverändert funktionieren.
+    func loginWithUmamiCloud(apiKey: String, accountName: String = "") async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            try await umamiAPI.authenticate(
+                serverURL: UmamiAPI.cloudBaseURL,
+                credentials: .umamiCloud(apiKey: apiKey)
+            )
+
+            let account = AnalyticsAccount(
+                name: accountName.isEmpty ? "Umami Cloud" : accountName,
+                serverURL: UmamiAPI.cloudBaseURL,
+                providerType: .umami,
+                credentials: AccountCredentials(token: apiKey, apiKey: nil)
+            )
+            AccountManager.shared.addAccount(account)
+            await AccountManager.shared.setActiveAccount(account)
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
     func loginWithPlausible(serverURL: String, apiKey: String, accountName: String = "") async {
         isLoading = true
         errorMessage = nil

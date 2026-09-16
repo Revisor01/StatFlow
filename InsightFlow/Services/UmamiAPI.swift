@@ -7,6 +7,24 @@ actor UmamiAPI: AnalyticsProvider {
     private var _baseURL: URL?
     private var _token: String?
 
+    /// Umami Cloud wird über einen API-Key statt über Benutzername/Passwort
+    /// angesprochen. Die Cloud-Basis `https://api.umami.is/v1` enthält den
+    /// Pfadbestandteil `api` bereits, deshalb entfällt dort das `api/`-Präfix,
+    /// das die self-hosted-Routen tragen.
+    private var _isCloud: Bool = false
+
+    /// Basisadresse der Umami-Cloud-API (Region wird serverseitig aus dem
+    /// Konto des Schlüssels abgeleitet).
+    static let cloudBaseURL = "https://api.umami.is/v1"
+
+    /// Erkennt an der eingetragenen Adresse, ob es sich um Umami Cloud handelt.
+    /// `cloud.umami.is` ist die Weboberfläche und bietet keine API-Anmeldung an;
+    /// wer sie einträgt, meint ebenfalls die Cloud.
+    static func isCloudURL(_ urlString: String) -> Bool {
+        guard let host = URL(string: urlString)?.host?.lowercased() else { return false }
+        return host == "api.umami.is" || host == "cloud.umami.is"
+    }
+
     /// Active filters set by the ViewModel — applied to all data-fetching calls.
     var activeFilters: [PlausibleQueryFilter] = []
 
@@ -187,11 +205,13 @@ actor UmamiAPI: AnalyticsProvider {
     func configure(baseURL: URL, token: String) {
         self._baseURL = baseURL
         self._token = token
+        self._isCloud = Self.isCloudURL(baseURL.absoluteString)
     }
 
     func clearConfiguration() {
         self._baseURL = nil
         self._token = nil
+        self._isCloud = false
     }
 
     /// Reconfigure from Keychain - called when switching accounts
@@ -201,21 +221,50 @@ actor UmamiAPI: AnalyticsProvider {
            let token = KeychainService.load(for: .token) {
             self._baseURL = url
             self._token = token
+            self._isCloud = Self.isCloudURL(serverURL)
         } else {
             self._baseURL = nil
             self._token = nil
+            self._isCloud = false
         }
     }
 
     // MARK: - AnalyticsProvider - Authentication
 
     nonisolated func authenticate(serverURL: String, credentials: AnalyticsCredentials) async throws {
+        // Umami Cloud: Der API-Key ist bereits das Bearer-Token, es gibt keinen
+        // Anmelde-Endpunkt. `POST /api/auth/login` antwortet dort mit 404.
+        if case .umamiCloud(let apiKey) = credentials {
+            let cloudURL = Self.cloudBaseURL
+            guard let url = URL(string: cloudURL) else {
+                throw APIError.invalidURL
+            }
+
+            // Der Schlüssel wird gegen eine echte Route geprüft, damit ein
+            // ungültiger Key sofort auffällt und nicht erst im Dashboard.
+            try await verifyCloudKey(baseURL: url, apiKey: apiKey)
+
+            try KeychainService.save(cloudURL, for: .serverURL)
+            try KeychainService.save(apiKey, for: .token)
+            try KeychainService.save(AnalyticsProviderType.umami.rawValue, for: .providerType)
+
+            await configure(baseURL: url, token: apiKey)
+            return
+        }
+
         guard case .umami(let username, let password) = credentials else {
             throw APIError.authenticationFailed
         }
 
         guard let url = URL(string: serverURL) else {
             throw APIError.invalidURL
+        }
+
+        // Umami Cloud bietet keine Anmeldung mit Benutzername und Passwort an.
+        // Ohne diese Prüfung liefe der Versuch in ein generisches
+        // „Anmeldung fehlgeschlagen“, das wie ein Tippfehler aussieht.
+        if Self.isCloudURL(serverURL) {
+            throw APIError.umamiCloudRequiresAPIKey
         }
 
         // Dieser Weg kennt keine Rückfrage beim Nutzer. Verlangt der Server einen
@@ -235,6 +284,33 @@ actor UmamiAPI: AnalyticsProvider {
         try KeychainService.save(AnalyticsProviderType.umami.rawValue, for: .providerType)
 
         await configure(baseURL: url, token: token)
+    }
+
+    /// Prüft einen Umami-Cloud-API-Key gegen `/websites`.
+    ///
+    /// Die Cloud unterscheidet sauber: ohne Schlüssel `400`, mit ungültigem
+    /// Schlüssel `401`. Beides wird hier in eine Meldung übersetzt, die dem
+    /// Nutzer sagt, was zu tun ist.
+    private nonisolated func verifyCloudKey(baseURL: URL, apiKey: String) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("websites"))
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 30
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        switch httpResponse.statusCode {
+        case 200...299:
+            return
+        case 400, 401, 403:
+            throw APIError.invalidAPIKey
+        default:
+            throw APIError.serverError(httpResponse.statusCode)
+        }
     }
 
     // MARK: - AnalyticsProvider - Websites
@@ -727,6 +803,27 @@ actor UmamiAPI: AnalyticsProvider {
         let honoredUnit: Bool
     }
 
+    /// Ersatz für die Sammelroute: holt die Verläufe je Website einzeln.
+    ///
+    /// Gezählt werden wie dort Sitzungen, damit beide Wege dieselben Werte
+    /// liefern. Die Auflösung stammt direkt aus der Anfrage, deshalb gilt sie
+    /// immer als eingehalten.
+    private func websiteListChartsIndividually(
+        websiteIds: [String],
+        dateRange: DateRange
+    ) async throws -> BatchCharts {
+        var result: [String: [AnalyticsChartPoint]] = [:]
+
+        for websiteId in websiteIds {
+            let data = try await getPageviews(websiteId: websiteId, dateRange: dateRange)
+            result[websiteId] = data.sessions.map {
+                AnalyticsChartPoint(date: $0.date, value: $0.value)
+            }
+        }
+
+        return BatchCharts(charts: result, honoredUnit: true)
+    }
+
     /// Holt die Verlaufsdaten mehrerer Websites in einer einzigen Anfrage.
     /// `GET api/websites/charts` (ab Umami 3.3).
     ///
@@ -741,6 +838,16 @@ actor UmamiAPI: AnalyticsProvider {
         dateRange: DateRange
     ) async throws -> BatchCharts {
         guard !websiteIds.isEmpty else { return BatchCharts(charts: [:], honoredUnit: false) }
+
+        // Umami Cloud beantwortet diese Sammelroute derzeit mit HTTP 500
+        // ("ReadableStream is disturbed"). Solange das so ist, werden die
+        // Verläufe dort einzeln geholt; `pageviews` liefert dieselben Werte.
+        if _isCloud {
+            return try await websiteListChartsIndividually(
+                websiteIds: websiteIds,
+                dateRange: dateRange
+            )
+        }
 
         let dates = dateRange.dates
         let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
@@ -1521,12 +1628,22 @@ actor UmamiAPI: AnalyticsProvider {
         return body
     }
 
+    /// Passt einen self-hosted-Pfad an die aktive Basisadresse an.
+    ///
+    /// Die Aufrufer im Rest der Datei sind auf self-hosted zugeschnitten und
+    /// beginnen mit `api/`. Die Cloud-Basis `…/v1` enthält diesen Bestandteil
+    /// bereits, dort würde daraus sonst `/v1/api/websites`.
+    private func normalized(_ endpoint: String) -> String {
+        guard _isCloud, endpoint.hasPrefix("api/") else { return endpoint }
+        return String(endpoint.dropFirst("api/".count))
+    }
+
     private func request(endpoint: String, queryItems: [URLQueryItem] = []) async throws -> Data {
         guard let baseURL = _baseURL, let token = _token else {
             throw APIError.notConfigured
         }
 
-        guard var components = URLComponents(url: baseURL.appendingPathComponent(endpoint), resolvingAgainstBaseURL: true) else {
+        guard var components = URLComponents(url: baseURL.appendingPathComponent(normalized(endpoint)), resolvingAgainstBaseURL: true) else {
             throw APIError.invalidURL
         }
         if !queryItems.isEmpty {
@@ -1563,7 +1680,7 @@ actor UmamiAPI: AnalyticsProvider {
             throw APIError.notConfigured
         }
 
-        let url = baseURL.appendingPathComponent(endpoint)
+        let url = baseURL.appendingPathComponent(normalized(endpoint))
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -1643,6 +1760,8 @@ enum APIError: LocalizedError, Sendable {
     case twoFactorInvalidCode
     case twoFactorLocked(until: Double?)
     case twoFactorRequired
+    case umamiCloudRequiresAPIKey
+    case invalidAPIKey
 
     var errorDescription: String? {
         switch self {
@@ -1664,6 +1783,10 @@ enum APIError: LocalizedError, Sendable {
             return "Zu viele Fehlversuche. Bitte später erneut versuchen."
         case .twoFactorRequired:
             return "Für dieses Konto ist eine Bestätigung in zwei Schritten aktiv. Bitte über die Anmeldemaske anmelden."
+        case .umamiCloudRequiresAPIKey:
+            return "Umami Cloud verwendet keine Anmeldung mit Benutzername und Passwort. Bitte in Umami unter Einstellungen → API keys einen Schlüssel erzeugen und hier eintragen."
+        case .invalidAPIKey:
+            return "Der API-Schlüssel wurde nicht akzeptiert. Bitte in Umami unter Einstellungen → API keys prüfen."
         }
     }
 }

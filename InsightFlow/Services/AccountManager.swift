@@ -409,6 +409,9 @@ class AccountManager: ObservableObject {
             let token: String
             switch account.providerType {
             case .umami:
+                // Gilt für beide Umami-Varianten: self-hosted legt das
+                // erhaltene Bearer-Token ab, Cloud den API-Schlüssel — beide
+                // im Feld `token`, beide als Bearer verwendet.
                 token = account.credentials.token ?? ""
             case .plausible:
                 token = account.credentials.apiKey ?? ""
