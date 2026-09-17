@@ -30,6 +30,14 @@ ersten Store-Veröffentlichung.
   API-Schlüssel und sagt, wo er zu finden ist.
 - Wird die Adresse von Umami Cloud von Hand eingetragen, erklärt die Meldung jetzt den
   Grund, statt einen Anmeldefehler anzuzeigen.
+- Beim Wechsel zwischen mehreren Konten konnten die Zugangsdaten des zuvor geöffneten
+  Kontos bestehen bleiben. Verläufe, Orte, Ziele und alle übrigen Auswertungen blieben
+  dann gleichzeitig leer, ohne dass die App zur Anmeldung zurückkehrte. Die Zugangsdaten
+  werden jetzt bei jedem Kontowechsel vollständig ersetzt. Wer betroffen war, braucht das
+  Konto nicht mehr neu einzurichten.
+- Dasselbe konnte ohne eigenes Zutun passieren, wenn im Hintergrund die täglichen
+  Zusammenfassungen für mehrere Konten erstellt wurden. Danach gilt wieder das Konto,
+  das in der App ausgewählt ist.
 
 ## [2.0.0] – 2026-08-16
 

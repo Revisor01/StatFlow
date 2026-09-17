@@ -271,6 +271,29 @@ class AccountManager: ObservableObject {
         )
     }
 
+    /// Entfernt die Zugangsdaten der laufenden Sitzung aus der Keychain.
+    ///
+    /// Anders als `clearSession()` bleiben Kontenliste, aktives Konto und die
+    /// konfigurierten Dienste unangetastet — hier geht es nur darum, dass beim
+    /// Konfigurieren eines Kontos kein Feld des vorherigen überlebt. `token`
+    /// und `apiKey` gehören zusammen zur Adresse in `serverURL`; wird die
+    /// ersetzt, müssen es beide ebenfalls.
+    private func clearSessionCredentials() {
+        KeychainService.delete(for: .token)
+        KeychainService.delete(for: .apiKey)
+    }
+
+    /// Schreibt die Zugangsdaten des aktiven Kontos zurück in die Keychain.
+    ///
+    /// Gedacht für Abläufe, die nacheinander über mehrere Konten gehen — etwa
+    /// die Benachrichtigungen im Hintergrund. Sie setzen dabei die globalen
+    /// Felder auf das jeweils bearbeitete Konto; ohne diesen Abschluss bliebe
+    /// das zuletzt bearbeitete stehen, obwohl die App ein anderes anzeigt.
+    func restoreActiveAccountCredentials() async {
+        guard let account = activeAccount else { return }
+        await configureProviderForAccount(account)
+    }
+
     // MARK: - Lightweight Provider Configuration (no side effects)
 
     /// Configures API provider for a specific account WITHOUT changing global state.
@@ -280,6 +303,11 @@ class AccountManager: ObservableObject {
         // Write credentials to Keychain so API actors can read them
         try? KeychainService.save(account.serverURL, for: .serverURL)
         try? KeychainService.save(account.providerType.rawValue, for: .providerType)
+
+        // Wie in `applyAccountCredentials`: erst die Zugangsdaten des zuvor
+        // konfigurierten Kontos entfernen. Diese Schleife läuft über alle
+        // Konten, dort fällt ein übernommenes Token sonst besonders leicht an.
+        clearSessionCredentials()
 
         switch account.providerType {
         case .umami:
@@ -311,6 +339,12 @@ class AccountManager: ObservableObject {
         // Save to Keychain for the API services
         try? KeychainService.save(account.serverURL, for: .serverURL)
         try? KeychainService.save(account.providerType.rawValue, for: .providerType)
+
+        // Die Zugangsdaten des vorherigen Kontos müssen weichen, bevor die des
+        // neuen geschrieben werden. Sonst bleibt bei einem Konto ohne eigenes
+        // Token das fremde stehen, während die Serveradresse bereits zum neuen
+        // Konto gehört — der Server antwortet dann auf allen Routen mit 401.
+        clearSessionCredentials()
 
         switch account.providerType {
         case .umami:
