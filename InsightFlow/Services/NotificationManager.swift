@@ -157,6 +157,12 @@ class NotificationManager: ObservableObject {
             await scheduleNotificationsForAccount(account, center: center)
         }
 
+        // Die Schleife hat die Zugangsdaten jedes Kontos nacheinander in die
+        // Keychain geschrieben. Ohne Wiederherstellung bliebe dort das zuletzt
+        // bearbeitete Konto stehen, während die App ein anderes anzeigt — die
+        // Auswertungen liefen dann gegen fremde Zugangsdaten ins Leere.
+        await AccountManager.shared.restoreActiveAccountCredentials()
+
         // Debug: Zeige geplante Notifications
         let pending = await center.pendingNotificationRequests()
         Logger.ui.debug("Geplante Notifications: \(pending.count)")
@@ -304,6 +310,10 @@ class NotificationManager: ObservableObject {
         for account in accounts {
             await sendNotificationsForAccount(account, settings: settings, dataSource: dataSource, notificationHour: notificationHour)
         }
+
+        // Wie oben: die Zugangsdaten des aktiven Kontos zurückschreiben, damit
+        // nach dem Hintergrundlauf nicht die des zuletzt bearbeiteten gelten.
+        await AccountManager.shared.restoreActiveAccountCredentials()
     }
 
     private nonisolated func sendNotificationsForAccount(_ account: AnalyticsAccount, settings: [String: NotificationSetting], dataSource: NotificationDataSource, notificationHour: Int) async {

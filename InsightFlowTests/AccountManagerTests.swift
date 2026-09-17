@@ -238,4 +238,177 @@ class AccountManagerTests: XCTestCase {
         XCTAssertEqual(KeychainService.load(for: .providerType), "umami")
         XCTAssertEqual(KeychainService.load(for: .token), "test-token")
     }
+
+    // MARK: - Kontowechsel darf keine fremden Zugangsdaten stehen lassen
+
+    /// Der verbotene Fall: Ein Konto ohne hinterlegtes Token darf nicht das
+    /// Token des zuvor aktiven Kontos weiterverwenden.
+    ///
+    /// `applyAccountCredentials` schrieb `serverURL` bedingungslos, das Token
+    /// aber nur, wenn eines vorhanden war. Beim Wechsel auf ein Konto ohne
+    /// Token blieb dadurch das fremde Token in der Keychain stehen und wurde
+    /// gegen die neue Serveradresse gesendet. Der Server antwortet darauf auf
+    /// allen Routen gleichzeitig mit 401 — Verläufe, Orte und Ziele bleiben
+    /// zusammen leer, ohne dass die App zur Anmeldung zurückkehrt.
+    func testSwitchingToAccountWithoutTokenDoesNotKeepPreviousToken() async throws {
+        let manager = AccountManager.shared
+
+        // Diese Tests setzen ein aktives Konto und konfigurieren darüber den
+        // global geteilten AnalyticsManager. Ohne Rücknahme erbt der nächste
+        // Test im selben Lauf diesen Zustand.
+        addTeardownBlock { @MainActor in
+            AccountManager.shared.clearActiveAccount()
+            KeychainService.delete(for: .serverURL)
+            KeychainService.delete(for: .providerType)
+            KeychainService.delete(for: .token)
+        }
+
+        let withToken = AnalyticsAccount(
+            name: "Mit Token",
+            serverURL: "https://erste.example.com",
+            providerType: .umami,
+            credentials: AccountCredentials(token: "token-des-ersten-kontos", apiKey: nil)
+        )
+        manager.addAccount(withToken)
+        await manager.setActiveAccount(withToken)
+        XCTAssertEqual(KeychainService.load(for: .token), "token-des-ersten-kontos")
+
+        let withoutToken = AnalyticsAccount(
+            name: "Ohne Token",
+            serverURL: "https://zweite.example.com",
+            providerType: .umami,
+            credentials: AccountCredentials(token: nil, apiKey: nil)
+        )
+        manager.addAccount(withoutToken)
+        await manager.setActiveAccount(withoutToken)
+
+        // Die Adresse gehört zum zweiten Konto ...
+        XCTAssertEqual(KeychainService.load(for: .serverURL), "https://zweite.example.com")
+        // ... also darf dort nicht das Token des ersten Kontos liegen.
+        XCTAssertNotEqual(
+            KeychainService.load(for: .token),
+            "token-des-ersten-kontos",
+            "Fremdes Token nach Kontowechsel: Server und Token stammen aus verschiedenen Konten"
+        )
+        XCTAssertNil(KeychainService.load(for: .token))
+    }
+
+    /// Der erlaubte Fall: Ein Konto mit eigenem Token ersetzt das vorherige
+    /// vollständig.
+    func testSwitchingBetweenAccountsReplacesToken() async throws {
+        let manager = AccountManager.shared
+
+        // Diese Tests setzen ein aktives Konto und konfigurieren darüber den
+        // global geteilten AnalyticsManager. Ohne Rücknahme erbt der nächste
+        // Test im selben Lauf diesen Zustand.
+        addTeardownBlock { @MainActor in
+            AccountManager.shared.clearActiveAccount()
+            KeychainService.delete(for: .serverURL)
+            KeychainService.delete(for: .providerType)
+            KeychainService.delete(for: .token)
+        }
+
+        let first = AnalyticsAccount(
+            name: "Erstes",
+            serverURL: "https://erste.example.com",
+            providerType: .umami,
+            credentials: AccountCredentials(token: "token-eins", apiKey: nil)
+        )
+        let second = AnalyticsAccount(
+            name: "Zweites",
+            serverURL: "https://zweite.example.com",
+            providerType: .umami,
+            credentials: AccountCredentials(token: "token-zwei", apiKey: nil)
+        )
+
+        manager.addAccount(first)
+        await manager.setActiveAccount(first)
+        manager.addAccount(second)
+        await manager.setActiveAccount(second)
+
+        XCTAssertEqual(KeychainService.load(for: .serverURL), "https://zweite.example.com")
+        XCTAssertEqual(KeychainService.load(for: .token), "token-zwei")
+    }
+
+    /// Beim Wechsel von Plausible auf Umami darf der Plausible-Schlüssel nicht
+    /// als Umami-Token zurückbleiben und umgekehrt.
+    func testSwitchingProviderDoesNotLeaveForeignCredential() async throws {
+        let manager = AccountManager.shared
+
+        addTeardownBlock { @MainActor in
+            AccountManager.shared.clearActiveAccount()
+            KeychainService.delete(for: .serverURL)
+            KeychainService.delete(for: .providerType)
+            KeychainService.delete(for: .token)
+            KeychainService.delete(for: .apiKey)
+        }
+
+        let umami = AnalyticsAccount(
+            name: "Umami",
+            serverURL: "https://umami.example.com",
+            providerType: .umami,
+            credentials: AccountCredentials(token: "umami-token", apiKey: nil)
+        )
+        manager.addAccount(umami)
+        await manager.setActiveAccount(umami)
+
+        let plausible = AnalyticsAccount(
+            name: "Plausible",
+            serverURL: "https://plausible.example.com",
+            providerType: .plausible,
+            credentials: AccountCredentials(token: nil, apiKey: "plausible-key")
+        )
+        manager.addAccount(plausible)
+        await manager.setActiveAccount(plausible)
+
+        XCTAssertEqual(KeychainService.load(for: .serverURL), "https://plausible.example.com")
+        XCTAssertEqual(KeychainService.load(for: .apiKey), "plausible-key")
+        XCTAssertNil(
+            KeychainService.load(for: .token),
+            "Umami-Token bleibt nach Wechsel auf Plausible in der Keychain stehen"
+        )
+    }
+
+    /// Läuft ein Hintergrundlauf über mehrere Konten (Zusammenfassungen), setzt
+    /// er die globalen Zugangsdaten nacheinander auf jedes Konto. Danach muss
+    /// wieder das aktive Konto gelten, sonst laufen die Auswertungen der App
+    /// gegen die Zugangsdaten des zuletzt bearbeiteten Kontos.
+    func testRestoreActiveAccountCredentialsUndoesIteration() async throws {
+        let manager = AccountManager.shared
+
+        addTeardownBlock { @MainActor in
+            AccountManager.shared.clearActiveAccount()
+            KeychainService.delete(for: .serverURL)
+            KeychainService.delete(for: .providerType)
+            KeychainService.delete(for: .token)
+            KeychainService.delete(for: .apiKey)
+        }
+
+        let aktiv = AnalyticsAccount(
+            name: "Aktiv",
+            serverURL: "https://aktiv.example.com",
+            providerType: .umami,
+            credentials: AccountCredentials(token: "token-aktiv", apiKey: nil)
+        )
+        let anderes = AnalyticsAccount(
+            name: "Anderes",
+            serverURL: "https://anderes.example.com",
+            providerType: .umami,
+            credentials: AccountCredentials(token: "token-anderes", apiKey: nil)
+        )
+
+        manager.addAccount(aktiv)
+        manager.addAccount(anderes)
+        await manager.setActiveAccount(aktiv)
+
+        // Der Hintergrundlauf konfiguriert zwischendurch ein anderes Konto ...
+        await manager.configureProviderForAccount(anderes)
+        XCTAssertEqual(KeychainService.load(for: .token), "token-anderes")
+
+        // ... und stellt am Ende das aktive wieder her.
+        await manager.restoreActiveAccountCredentials()
+
+        XCTAssertEqual(KeychainService.load(for: .serverURL), "https://aktiv.example.com")
+        XCTAssertEqual(KeychainService.load(for: .token), "token-aktiv")
+    }
 }
