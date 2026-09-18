@@ -5,228 +5,151 @@
 <h1 align="center">StatFlow</h1>
 
 <p align="center">
-  Native iOS-App für <a href="https://umami.is">Umami</a> und <a href="https://plausible.io">Plausible</a> Analytics.
+  Die iPhone-App für <a href="https://umami.is">Umami</a> und <a href="https://plausible.io">Plausible</a> —<br>
+  die Zahlen der eigenen Websites, ohne Umweg über den Browser.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-iOS%2018%2B-blue?style=flat-square" alt="Platform">
-  <img src="https://img.shields.io/badge/Swift-6.0-orange?style=flat-square&logo=swift" alt="Swift">
-  <img src="https://img.shields.io/badge/Xcode-16%2B-blue?style=flat-square&logo=xcode" alt="Xcode">
-  <img src="https://img.shields.io/github/license/Revisor01/StatFlow?style=flat-square" alt="License">
-  <img src="https://img.shields.io/github/v/tag/Revisor01/StatFlow?style=flat-square&label=Version" alt="Version">
+  <img src="https://img.shields.io/badge/Plattform-iOS%2018%2B-blue" alt="Plattform">
+  <img src="https://img.shields.io/github/v/release/Revisor01/StatFlow?label=Version&color=green&sort=semver" alt="Version">
+  <img src="https://img.shields.io/badge/Swift-6.0-orange?logo=swift" alt="Swift">
+  <img src="https://img.shields.io/github/license/Revisor01/StatFlow" alt="Lizenz">
 </p>
 
-## Features
+## Worum es geht
 
-- **Multi-Account-Unterstützung**: Verwalte mehrere Analytics-Konten verschiedener Anbieter in einer App
-- **Echtzeit-Dashboard**: Besucher, Seitenaufrufe, Absprungrate und Sitzungsdauer auf einen Blick
-- **Detaillierte Analysen**: Top-Seiten, Referrer, Geografie, Geräte und Browser
-- **Periodenvergleich**: Beliebige Zeiträume vergleichen (Woche, Monat, Jahr)
-- **Events & Reports**: Custom Events, Funnel-Analysen, UTM-Tracking, Goals und Attribution
-- **Vermerke**: Notizen zum Verlauf („Newsletter verschickt", „Relaunch") anlegen, bearbeiten und löschen — erklären im Nachhinein, warum die Zahlen ausschlagen (Umami ab 3.4)
-- **Home-Screen-Widgets**: Schneller Blick auf die wichtigsten Statistiken direkt vom Home Screen
-- **Push-Benachrichtigungen**: Tägliche oder wöchentliche Zusammenfassungen
-- **Offline-Modus**: Gecachte Daten als Fallback auch ohne Netzwerk verfügbar
-- **Dark Mode**: Vollständige Unterstützung für den Dunkelmodus
-- **Lokalisierung**: Deutsch und Englisch
+Umami und Plausible zählen Besuche, ohne ihre Besucher:innen zu verfolgen. Beide
+haben ein Dashboard im Browser — auf dem Handy ist das mühsam.
 
-## Unterstützte Anbieter
+StatFlow holt dieselben Zahlen auf den Sperrbildschirm: Wie läuft die Website
+heute, woher kommen die Leute, was lesen sie. Mehrere Konten und beide Anbieter
+nebeneinander, in einer App. Die Zugangsdaten bleiben im Schlüsselbund des
+Geräts, die Daten auf dem eigenen Server — es gibt keinen Dienst dazwischen.
 
-| Anbieter | API | Funktionen |
-|----------|-----|------------|
-| **Umami** | REST API | Alle Funktionen inkl. Sessions, Journeys, Share-Links, Segmente, Ladezeiten (Web Vitals), Besuchszeiten und Umsatz |
-| **Plausible** | Stats API v2 | Dashboard, Diagramme, Metriken inkl. Scrolltiefe und Verhaltensfiltern (keine Einzelsitzungen) |
+## Funktionen
 
-### Server-Kompatibilität
-
-| Anbieter | Benötigte Version | Getestet gegen | Anmerkung |
-|----------|-------------------|----------------|-----------|
-| **Umami** | **ab 3.0** (self-hosted) | **3.3.0 und 3.4.0** | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. Segmente, Web Vitals, Besuchszeiten und Umsatz gibt es ebenfalls erst ab v3. Die Anmeldung mit Bestätigung in zwei Schritten setzt Umami 3.3 voraus. |
-| **Plausible** | **ab CE 2.1** bzw. Cloud | **CE 3.2.1** | Erst ab CE 2.1 gibt es die Query-API `POST /api/v2/query`. Zusätzlich wird `GET /api/v1/stats/realtime/visitors` für Echtzeitdaten genutzt. |
-
-Die Angaben in der Spalte „Getestet gegen" bezeichnen die Versionen, gegen deren
-laufende Instanzen sämtliche Abfragen der App zuletzt geprüft wurden
-(Stand: September 2026).
-
-**Umami 3.4:** Die Auswertungen zu Zielen, Trichtern, Wiederkehr, Pfaden, Zuordnung
-und Ladezeiten sind in 3.4 auf `GET /api/websites/{id}/…` umgestellt; die früheren
-`POST /api/reports/…` bleiben dort über eine Kompatibilitätsschicht erreichbar. Die App
-erkennt selbst, welche Adressen ein Server versteht, und fragt entsprechend — die
-angezeigten Zahlen sind in beiden Fällen dieselben. Einzige Abweichung: die
-Wiederkehr-Auswertung richtet die Tagesgrenzen ab 3.4 nach der Zeitzone des Geräts
-statt nach UTC.
-
-Neu in 3.4 und von der App genutzt sind außerdem die Vermerke
-(`/api/websites/{id}/annotations`). Sie erscheinen in den Auswertungen als eigener
-Bereich; auf älteren Servern zeigt die App dort einen Hinweis statt einer leeren Liste.
-Anlegen, Ändern und Löschen verlangen serverseitig das Bearbeitungsrecht an der Website.
-
-Ebenfalls ab 3.4: eigene Instanzen lassen sich über einen **API-Schlüssel** anbinden
-(Umami → Einstellungen → API-Schlüssel) statt über Benutzername und Passwort. Der
-Schlüssel wird wie das Anmelde-Token als `Authorization: Bearer …` gesendet, umgeht die
-Bestätigung in zwei Schritten und läuft nicht ab. Die Admin-Routen (`/api/admin/…`) sind
-für Schlüssel gesperrt; die App nutzt sie nicht.
-
-**Wichtige Einschränkungen:**
-
-- **Umami Cloud wird über einen API-Schlüssel angebunden.** Selbst gehostete Instanzen melden sich über `POST /api/auth/login` an und erhalten ein Bearer-Token. Umami Cloud bietet diesen Endpunkt nicht an (er antwortet dort mit `404`); stattdessen wird der Schlüssel aus den Kontoeinstellungen (Einstellungen → API keys) ebenfalls als `Authorization: Bearer …` gesendet, gegen die Basisadresse `https://api.umami.is/v1`. Jeder Schlüssel ist auf 50 Aufrufe je 15 Sekunden begrenzt.
-- **Plausibles Sites-API ist Cloud/Enterprise-only.** Websites anlegen und löschen, Ziele verwalten und Share-Links erzeugen laufen über `/api/v1/sites…`. Diese Routen gibt es in der Community Edition nicht — auf CE-Servern meldet die App das als nicht verfügbar. Dashboard, Diagramme und alle Statistiken funktionieren dort uneingeschränkt.
-- Die Plausible-Stats-API v1 ist zwar als „legacy" markiert, in CE 3.2 aber weiterhin verfügbar; ein Abschalttermin ist nicht angekündigt.
-- **Umsatzkennzahlen (`total_revenue`, `average_revenue`) gibt es bei Plausible nur in Cloud/Enterprise** — die Community Edition lehnt sie als unbekannte Metrik ab.
-- **Funnels und Segmente sind bei Plausible nicht über die API erreichbar**: sie laufen ausschließlich über interne Routen mit Cookie-Anmeldung, nicht über den API-Key.
-- Umami-Auswertungen wie Funnels, Ziele, Attribution, Sitzungen und Journeys existieren bei Plausible nicht und werden dort ausgeblendet.
-
-## Architektur
-
-StatFlow verwendet MVVM mit klarer Schichttrennung und einem einheitlichen Provider-Protokoll, das Umami und Plausible abstrahiert.
-
-```
-┌─────────────────────────────────────────┐
-│         Presentation Layer              │
-│   SwiftUI Views + ViewModels            │
-│   (Dashboard, Detail, Reports, Events)  │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│           Service Layer                 │
-│   UmamiAPI · PlausibleAPI (actors)      │
-│   AccountManager · AnalyticsManager     │
-│   NotificationManager                   │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│            Model Layer                  │
-│   Codable structs für API-Responses     │
-│   AnalyticsWebsite · AnalyticsStats     │
-│   AnalyticsMetricItem · DateRange       │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│         Infrastructure Layer            │
-│   KeychainService · AppDelegate         │
-│   AnalyticsCacheService                 │
-│   BackgroundTasks · UserNotifications   │
-└─────────────────────────────────────────┘
-```
-
-**Kernprinzipien:**
-- **AnalyticsProvider-Protokoll**: Einheitliche Schnittstelle für Umami und Plausible — ViewModels arbeiten provider-agnostisch
-- **Actor-based Concurrency**: `UmamiAPI` und `PlausibleAPI` sind Swift Actors für thread-sichere API-Kommunikation
-- **Credential-Isolation**: Zugangsdaten in der Keychain pro Account-ID gespeichert (nicht in UserDefaults)
-- **Keine externen Dependencies**: Ausschließlich Apple Frameworks (SwiftUI, Foundation, WidgetKit, Security, UserNotifications, BackgroundTasks)
-
-## Screenshots
-
-| Dashboard | Website-Detail |
-|-----------|----------------|
-| <img src="docs/screenshots/dashboard.png" alt="Dashboard" width="280"> | <img src="docs/screenshots/details.png" alt="Website-Detail" width="280"> |
-
-| Echtzeit | Widgets & Benachrichtigungen |
-|----------|------------------------------|
-| <img src="docs/screenshots/realtime.png" alt="Echtzeit-Ansicht" width="280"> | <img src="docs/screenshots/combo.png" alt="Widgets und Benachrichtigungen" width="280"> |
-
-## Voraussetzungen
-
-- iOS 18.0+
-- Eigene Umami-Instanz ab Version 3.0 (self-hosted) **oder** eigene Plausible-Instanz ab CE 2.1 bzw. Plausible Cloud
-
-Details und Einschränkungen siehe [Server-Kompatibilität](#server-kompatibilität).
+- **Übersicht** — Besuche, Aufrufe, Absprungrate und Verweildauer, auch in Echtzeit
+- **Auswertungen** — Seiten, Verweise, Länder, Geräte, Browser und eigene Ereignisse
+- **Vergleiche** — beliebige Zeiträume gegeneinander, Woche gegen Woche, Jahr gegen Jahr
+- **Vermerke** — Notizen im Verlauf („Newsletter verschickt", „Relaunch"), die im
+  Nachhinein erklären, warum die Zahlen ausschlagen
+- **Widgets** — die wichtigsten Zahlen auf dem Home-Bildschirm
+- **Mitteilungen** — Zusammenfassung täglich oder wöchentlich
+- **Ohne Netz** — zuletzt geladene Zahlen bleiben lesbar
+- **Mehrere Konten** — verschiedene Anbieter und Instanzen nebeneinander
+- Deutsch und Englisch, Hell und Dunkel
 
 ## Installation
 
-### App Store
+**[Im App Store laden »](https://apps.apple.com/app/id6761671122)**
 
-Verfügbar im App Store: **[StatsFlow](https://apps.apple.com/app/id6761671122)**
+> Im App Store heißt die App **StatsFlow** — *StatFlow* war dort schon vergeben.
+> Im Quelltext und in der Dokumentation heißt sie weiter StatFlow, der
+> Xcode-Zielname `InsightFlow` stammt noch aus der Anfangszeit.
 
-> Im App Store heißt die App **StatsFlow** — der Name *StatFlow* war dort bereits vergeben.
-> Repository, Quellcode und Dokumentation verwenden weiterhin *StatFlow*.
+Zum Loslegen braucht es ein Konto bei Umami oder Plausible: in der App die
+Adresse des Servers und die Zugangsdaten eintragen, Websites auswählen, fertig.
 
-### Selbst kompilieren
+## Welche Server passen
 
-1. Repository klonen:
-   ```bash
-   git clone https://github.com/Revisor01/StatFlow.git
-   ```
-2. `InsightFlow.xcodeproj` in Xcode 16+ öffnen (der Xcode-Zielname stammt aus der
-   Entwicklungshistorie der App und wurde bei der Umbenennung zu StatFlow beibehalten)
-3. Bundle ID in den Signing-Einstellungen auf die eigene Team-ID anpassen
-4. Auf Gerät oder Simulator bauen und ausführen
+| Anbieter | Nötig | Zuletzt geprüft gegen |
+|----------|-------|-----------------------|
+| **Umami** | ab 3.0, selbst betrieben oder Cloud | 3.3.0 und 3.4.0 |
+| **Plausible** | ab CE 2.1 oder Cloud | CE 3.2.1 |
 
-## Konfiguration
+Umami 2.x antwortet in einem anderen Format und wird nicht unterstützt. Einige
+Auswertungen setzen neuere Stände voraus — Vermerke und die Anmeldung per
+API-Schlüssel etwa Umami 3.4. Die App erkennt selbst, was ein Server kann, und
+blendet den Rest aus.
 
-1. App starten
-2. Analytics-Konto mit Server-URL und API-Zugangsdaten hinzufügen
-3. Websites auswählen und Statistiken anzeigen
-4. Optional: Widgets auf dem Home Screen hinzufügen und Benachrichtigungen aktivieren
+Was bei welchem Anbieter geht und woran es liegt, steht in
+[docs/kompatibilitaet.md](docs/kompatibilitaet.md).
 
-## Mitwirken
+## Bildschirmfotos
 
-Beiträge sind willkommen! Pull Requests können gerne eingereicht werden.
+| Übersicht | Website |
+|-----------|---------|
+| <img src="docs/screenshots/dashboard.png" alt="Übersicht" width="280"> | <img src="docs/screenshots/details.png" alt="Website" width="280"> |
+
+| Echtzeit | Widgets und Mitteilungen |
+|----------|--------------------------|
+| <img src="docs/screenshots/realtime.png" alt="Echtzeit" width="280"> | <img src="docs/screenshots/combo.png" alt="Widgets und Mitteilungen" width="280"> |
+
+## Versionen
+
+Was sich wann geändert hat, steht in [CHANGELOG.md](CHANGELOG.md) — nach
+[Keep a Changelog](https://keepachangelog.com/de/1.1.0/), aus Sicht der
+Nutzer:innen geschrieben. Die
+[Releases](https://github.com/Revisor01/StatFlow/releases) fassen jede Version
+zusammen.
+
+## Selbst bauen
+
+```bash
+git clone https://github.com/Revisor01/StatFlow.git
+cd StatFlow
+open InsightFlow.xcodeproj
+```
+
+Xcode 16 oder neuer, Ziel ist iOS 18. In den Signierungs-Einstellungen das
+eigene Team eintragen, dann auf Gerät oder Simulator starten. Die App kommt
+ohne fremde Bibliotheken aus, es gibt nichts nachzuladen.
+
+## Aufbau
+
+```
+StatFlow
+├── InsightFlow/
+│   ├── Views/          — SwiftUI nach Bereich: Dashboard, Detail,
+│   │                     Reports, Events, Realtime, Settings …
+│   │                     das ViewModel liegt jeweils daneben
+│   ├── Services/       — UmamiAPI und PlausibleAPI als Actors,
+│   │                     Konten, Schlüsselbund, Zwischenspeicher
+│   └── Models/         — Antworten der APIs, anbieterunabhängig
+├── InsightFlowWidget/  — Home-Bildschirm-Widgets
+├── InsightFlowTests/   — 126 Tests
+└── docs/
+```
+
+**Worauf es beim Bauen ankommt:**
+- **Ein Protokoll für beide Anbieter.** `AnalyticsProvider` verdeckt die
+  Unterschiede zwischen Umami und Plausible; die ViewModels wissen nicht,
+  womit sie gerade reden.
+- **Zugangsdaten gehören in den Schlüsselbund**, je Konto getrennt — nie in
+  die Einstellungen.
+- **Keine fremden Bibliotheken.** Nur was Apple mitliefert.
+- **Ältere Server dürfen nicht brechen.** Neue Auswertungen werden geprüft
+  und bei Bedarf ausgeblendet, statt einen Fehler zu zeigen.
+
+## Mitmachen
+
+Fehlermeldungen und Vorschläge sind willkommen — gern als
+[Issue](https://github.com/Revisor01/StatFlow/issues).
+
+## Datenschutz
+
+StatFlow sammelt nichts. Keine Analyse, keine Werbung, keine fremden
+Bausteine, kein Server dazwischen. Die App spricht ausschließlich mit den
+Instanzen, die man selbst einträgt; Zugangsdaten liegen im Schlüsselbund des
+Geräts und verschwinden mit der App.
+
+Die vollständige Erklärung steht unter
+[simonluthe.de/apps/statsflow/datenschutz](https://simonluthe.de/apps/statsflow/datenschutz/).
 
 ## Lizenz
 
-Dieses Projekt steht unter der GNU General Public License v3.0 — siehe [LICENSE](LICENSE) für Details.
-
-## Danksagung
-
-- [Umami Analytics](https://umami.is) — Open-Source, datenschutzfreundliche Web-Analytik
-- [Plausible Analytics](https://plausible.io) — Einfache, datenschutzfreundliche Analytik
+StatFlow steht unter der [GNU General Public License v3.0](LICENSE).
 
 ## Hinweis
 
-Dies ist eine inoffizielle Companion-App. StatFlow ist nicht mit Umami Software, Inc. oder Plausible Insights OU verbunden oder von diesen unterstützt.
+Eine App von außen, kein offizielles Produkt: StatFlow gehört weder zu Umami
+Software, Inc. noch zu Plausible Insights OÜ und wird von beiden nicht
+unterstützt.
 
-## Datenschutzerklärung
+Dank an [Umami](https://umami.is) und [Plausible](https://plausible.io) dafür,
+dass es datenschutzfreundliche Analytik überhaupt gibt.
 
-> Die vollständige Datenschutzerklärung ist auch unter [simonluthe.de/apps/statflow/datenschutz](https://simonluthe.de/apps/statflow/datenschutz/) verfügbar.
+## Kontakt
 
-**Verantwortlicher**
-
-Simon Luthe
-Suderstrasse 18
-25779 Hennstedt
-Deutschland
-
-E-Mail: mail@simonluthe.de
-Telefon: +49 151 21563194
-Web: simonluthe.de
-
-**Datenverarbeitung**
-
-StatFlow speichert und verarbeitet folgende Daten ausschließlich lokal auf deinem Gerät:
-
-- URLs deiner Umami- oder Plausible-Instanzen
-- API-Zugangsdaten (Token, Benutzername/Passwort) für die Authentifizierung
-- App-Einstellungen und Präferenzen
-- Gecachte Analytics-Daten für den Offline-Modus
-
-Es werden keine Daten an externe Server übertragen. Die gesamte Kommunikation erfolgt ausschließlich zwischen deinem iOS-Gerät und deinen konfigurierten Analytics-Instanzen.
-
-**Keine Tracking- oder Analysedienste**
-
-StatFlow verwendet:
-
-- Keine Analytics oder Tracking-Tools
-- Keine Werbung
-- Keine Cloud-Dienste
-- Keine Drittanbieter-SDKs, die Daten sammeln
-
-**Netzwerkverbindungen**
-
-Die App stellt ausschließlich Verbindungen zu den von dir konfigurierten Analytics-Instanzen (Umami oder Plausible) her.
-
-**Datenspeicherung**
-
-Alle Daten werden lokal in der iOS-Keychain (für Zugangsdaten) bzw. in den App-Einstellungen gespeichert. Bei Deinstallation der App werden alle Daten vollständig entfernt.
-
-**Deine Rechte (DSGVO)**
-
-Da alle Daten ausschließlich lokal auf deinem Gerät gespeichert werden und keine Übertragung an den Entwickler oder Dritte erfolgt, hast du die volle Kontrolle über deine Daten. Du kannst diese jederzeit durch Löschen der App vollständig entfernen.
-
-Bei Fragen zum Datenschutz kannst du dich jederzeit an die oben genannte Kontaktadresse wenden.
-
-**Änderungen**
-
-Diese Datenschutzerklärung kann bei Bedarf aktualisiert werden. Die aktuelle Version ist stets in diesem Repository verfügbar.
-
-Stand: März 2026
+Pastor Simon Luthe · [mail@simonluthe.de](mailto:mail@simonluthe.de) ·
+[simonluthe.de](https://simonluthe.de)
