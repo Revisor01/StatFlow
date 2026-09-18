@@ -206,12 +206,14 @@ actor UmamiAPI: AnalyticsProvider {
         self._baseURL = baseURL
         self._token = token
         self._isCloud = Self.isCloudURL(baseURL.absoluteString)
+        self._hasFeatureRoutes = nil
     }
 
     func clearConfiguration() {
         self._baseURL = nil
         self._token = nil
         self._isCloud = false
+        self._hasFeatureRoutes = nil
     }
 
     /// Reconfigure from Keychain - called when switching accounts
@@ -227,6 +229,82 @@ actor UmamiAPI: AnalyticsProvider {
             self._token = nil
             self._isCloud = false
         }
+        // Die Erkennung gehört zum Server, nicht zur App: bei jedem Wechsel neu.
+        self._hasFeatureRoutes = nil
+    }
+
+    // MARK: - Routenwahl (Umami 3.4)
+
+    /// Ob der Server die Auswertungs-Routen aus Umami 3.4 kennt
+    /// (`GET api/websites/{id}/…`), oder noch die älteren Report-Routen
+    /// (`POST api/reports/…`) braucht. `nil`, solange ungeprüft.
+    ///
+    /// Beides gleichzeitig zu unterstützen ist nötig, weil 3.4 die alten Routen
+    /// über eine Kompatibilitätsschicht weiterhin beantwortet, ältere Server die
+    /// neuen aber nicht kennen — dort liefert die Anfrage die Weboberfläche
+    /// (HTTP 404, `text/html`) statt JSON.
+    private var _hasFeatureRoutes: Bool?
+
+    /// Verhindert, dass mehrere gleichzeitige Abfragen dieselbe Erkennung
+    /// mehrfach über das Netz schicken.
+    private var featureRouteProbe: Task<Bool, Never>?
+
+    /// Prüft einmal je Server, ob die 3.4-Routen vorhanden sind, und merkt sich
+    /// das Ergebnis für die Lebensdauer der Konfiguration.
+    ///
+    /// Geprüft wird an `performance/stats`: die Route braucht außer dem
+    /// Zeitraum keine Parameter und verändert nichts. Ein JSON-Objekt bedeutet
+    /// „vorhanden“; HTTP 404 bedeutet „älterer Server“. Andere Fehler (etwa 401
+    /// oder eine Zeitüberschreitung) sagen nichts über die Umami-Version aus,
+    /// werden deshalb nicht gemerkt und führen zum alten Weg, der auf beiden
+    /// Fassungen funktioniert.
+    private func hasFeatureRoutes(websiteId: String) async -> Bool {
+        if let known = _hasFeatureRoutes { return known }
+        if let probe = featureRouteProbe { return await probe.value }
+
+        let probe = Task<Bool, Never> { [weak self] in
+            guard let self else { return false }
+            return await self.probeFeatureRoutes(websiteId: websiteId)
+        }
+        featureRouteProbe = probe
+        let result = await probe.value
+        featureRouteProbe = nil
+        return result
+    }
+
+    private func probeFeatureRoutes(websiteId: String) async -> Bool {
+        let now = Date()
+        let start = now.addingTimeInterval(-3600)
+
+        do {
+            _ = try await request(
+                endpoint: "api/websites/\(websiteId)/performance/stats",
+                queryItems: [
+                    URLQueryItem(name: "startAt", value: String(Int(start.timeIntervalSince1970 * 1000))),
+                    URLQueryItem(name: "endAt", value: String(Int(now.timeIntervalSince1970 * 1000)))
+                ]
+            )
+            _hasFeatureRoutes = true
+            Logger.api.debug("Umami: Auswertungs-Routen aus 3.4 vorhanden")
+            return true
+        } catch APIError.serverError(404) {
+            _hasFeatureRoutes = false
+            Logger.api.debug("Umami: älterer Server, Report-Routen werden verwendet")
+            return false
+        } catch {
+            // Unklar — nicht merken, damit die nächste Abfrage erneut prüft.
+            Logger.api.debug("Umami: Routenerkennung nicht möglich (\(error.localizedDescription)), Report-Routen werden verwendet")
+            return false
+        }
+    }
+
+    /// Zeitraum als Millisekunden-Paar, wie die 3.4-Routen es erwarten.
+    private func featureRouteDateItems(_ dateRange: DateRange) -> [URLQueryItem] {
+        let dates = dateRange.dates
+        return [
+            URLQueryItem(name: "startAt", value: String(Int(dates.start.timeIntervalSince1970 * 1000))),
+            URLQueryItem(name: "endAt", value: String(Int(dates.end.timeIntervalSince1970 * 1000)))
+        ]
     }
 
     // MARK: - AnalyticsProvider - Authentication
@@ -1222,6 +1300,18 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     func getJourneyReport(websiteId: String, dateRange: DateRange, steps: Int = 5) async throws -> [JourneyPath] {
+        // Ab Umami 3.4: `GET api/websites/{id}/journeys`. `steps` ist hier eine
+        // einfache Zahl, keine JSON-Liste wie bei den Trichtern.
+        if await hasFeatureRoutes(websiteId: websiteId) {
+            let data = try await request(
+                endpoint: "api/websites/\(websiteId)/journeys",
+                queryItems: featureRouteDateItems(dateRange) + [
+                    URLQueryItem(name: "steps", value: String(steps))
+                ] + filterQueryItems
+            )
+            return try decoder.decode([JourneyPath].self, from: data)
+        }
+
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -1242,6 +1332,19 @@ actor UmamiAPI: AnalyticsProvider {
     // MARK: - Reports
 
     func getRetention(websiteId: String, dateRange: DateRange) async throws -> [RetentionRow] {
+        // Ab Umami 3.4: `GET api/websites/{id}/retention`. Anders als der
+        // Report-Weg berücksichtigt die Route `timezone` und schneidet die Tage
+        // damit entlang der Gerätezeitzone statt in UTC. Das ist der Grund,
+        // weshalb die Zahlen von den früheren abweichen können — die
+        // Tagesgrenze ist eine andere, nicht die Zählweise.
+        if await hasFeatureRoutes(websiteId: websiteId) {
+            let data = try await request(
+                endpoint: "api/websites/\(websiteId)/retention",
+                queryItems: featureRouteDateItems(dateRange) + [timezoneQueryItem] + filterQueryItems
+            )
+            return try decoder.decode([RetentionRow].self, from: data)
+        }
+
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -1271,6 +1374,22 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     func getFunnelReport(websiteId: String, dateRange: DateRange, steps: [[String: String]], window: Int = 60) async throws -> [FunnelStep] {
+        // Ab Umami 3.4: `GET api/websites/{id}/funnels/stats`. Die Schritte
+        // reist der Server als JSON-Zeichenkette im Abfrageparameter an;
+        // URLComponents kodiert sie beim Bauen der Adresse.
+        if await hasFeatureRoutes(websiteId: websiteId),
+           let stepsData = try? JSONSerialization.data(withJSONObject: steps),
+           let stepsJSON = String(data: stepsData, encoding: .utf8) {
+            let data = try await request(
+                endpoint: "api/websites/\(websiteId)/funnels/stats",
+                queryItems: featureRouteDateItems(dateRange) + [
+                    URLQueryItem(name: "steps", value: stepsJSON),
+                    URLQueryItem(name: "window", value: String(window))
+                ] + filterQueryItems
+            )
+            return try decoder.decode([FunnelStep].self, from: data)
+        }
+
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -1348,6 +1467,19 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     func getGoalReport(websiteId: String, dateRange: DateRange, goalType: String, goalValue: String) async throws -> GoalReportResult {
+        // Ab Umami 3.4: `GET api/websites/{id}/goals/stats`. Gegen 3.4.0
+        // gemessen liefert die Route dieselben Werte wie der Report-Weg.
+        if await hasFeatureRoutes(websiteId: websiteId) {
+            let data = try await request(
+                endpoint: "api/websites/\(websiteId)/goals/stats",
+                queryItems: featureRouteDateItems(dateRange) + [
+                    URLQueryItem(name: "type", value: goalType),
+                    URLQueryItem(name: "value", value: goalValue)
+                ] + filterQueryItems
+            )
+            return try decoder.decode(GoalReportResult.self, from: data)
+        }
+
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -1370,22 +1502,38 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     func getAttributionReport(websiteId: String, dateRange: DateRange, model: String = "last-click", type: String = "path", step: String = "/") async throws -> [AttributionItem] {
-        let dates = dateRange.dates
+        let data: Data
 
-        let body: [String: Any] = [
-            "websiteId": websiteId,
-            "type": "attribution",
-            "filters": [:],
-            "parameters": [
-                "startDate": isoDate(dates.start),
-                "endDate": isoDate(dates.end),
-                "model": model,
-                "type": type,
-                "step": step
+        // Ab Umami 3.4: `GET api/websites/{id}/attribution`. Die Antwortform
+        // (referrer, paidAds, utm_*) bleibt dieselbe.
+        if await hasFeatureRoutes(websiteId: websiteId) {
+            data = try await request(
+                endpoint: "api/websites/\(websiteId)/attribution",
+                queryItems: featureRouteDateItems(dateRange) + [
+                    URLQueryItem(name: "model", value: model),
+                    URLQueryItem(name: "type", value: type),
+                    URLQueryItem(name: "step", value: step)
+                ] + filterQueryItems
+            )
+        } else {
+            let dates = dateRange.dates
+
+            let body: [String: Any] = [
+                "websiteId": websiteId,
+                "type": "attribution",
+                "filters": [:],
+                "parameters": [
+                    "startDate": isoDate(dates.start),
+                    "endDate": isoDate(dates.end),
+                    "model": model,
+                    "type": type,
+                    "step": step
+                ]
             ]
-        ]
 
-        let data = try await postRequest(endpoint: "api/reports/attribution", body: body)
+            data = try await postRequest(endpoint: "api/reports/attribution", body: body)
+        }
+
         let response = try decoder.decode(AttributionResponse.self, from: data)
 
         // Attribution covers referrers, paid ads and all UTM dimensions the
@@ -1464,6 +1612,21 @@ actor UmamiAPI: AnalyticsProvider {
         dateRange: DateRange,
         metric: UmamiWebVitalMetric = .lcp
     ) async throws -> UmamiPerformanceReport {
+        // Ab Umami 3.4 ist der eine Report auf drei Routen aufgeteilt:
+        // `performance/stats` (alle fünf Vitals), `performance/chart` (die über
+        // `metric` gewählte Zeitreihe) und `performance/metrics`, das je Aufruf
+        // eine Aufschlüsselung liefert. Die vier Aufschlüsselungen laufen
+        // deshalb parallel — sonst würde aus einer Anfrage eine Kette von
+        // sechs. Gegen 3.4.0 gemessen stimmen die Perzentile mit dem alten
+        // Report überein.
+        if await hasFeatureRoutes(websiteId: websiteId) {
+            return try await featureRoutePerformanceReport(
+                websiteId: websiteId,
+                dateRange: dateRange,
+                metric: metric
+            )
+        }
+
         let dates = dateRange.dates
 
         let body: [String: Any] = [
@@ -1481,6 +1644,66 @@ actor UmamiAPI: AnalyticsProvider {
 
         let data = try await postRequest(endpoint: "api/reports/performance", body: body)
         return try decoder.decode(UmamiPerformanceReport.self, from: data)
+    }
+
+    /// Setzt den Ladezeiten-Report aus den Einzelrouten von Umami 3.4 zusammen.
+    private func featureRoutePerformanceReport(
+        websiteId: String,
+        dateRange: DateRange,
+        metric: UmamiWebVitalMetric
+    ) async throws -> UmamiPerformanceReport {
+        let dateItems = featureRouteDateItems(dateRange)
+        let filters = filterQueryItems
+
+        let statsData = try await request(
+            endpoint: "api/websites/\(websiteId)/performance/stats",
+            queryItems: dateItems + filters
+        )
+        let summary = try decoder.decode(UmamiPerformanceSummary.self, from: statsData)
+
+        let chartData = try await request(
+            endpoint: "api/websites/\(websiteId)/performance/chart",
+            queryItems: dateItems + [
+                URLQueryItem(name: "metric", value: metric.rawValue),
+                URLQueryItem(name: "unit", value: dateRange.unit),
+                timezoneQueryItem
+            ] + filters
+        )
+        struct ChartResponse: Decodable { let chart: [UmamiPerformanceChartPoint]? }
+        let chart = (try? decoder.decode(ChartResponse.self, from: chartData).chart) ?? []
+
+        // Die vier Aufschlüsselungen unterscheiden sich nur im `type`.
+        func breakdown(_ type: String) async -> [UmamiPerformanceMetric] {
+            do {
+                let data = try await request(
+                    endpoint: "api/websites/\(websiteId)/performance/metrics",
+                    queryItems: dateItems + [
+                        URLQueryItem(name: "metric", value: metric.rawValue),
+                        URLQueryItem(name: "type", value: type)
+                    ] + filters
+                )
+                return try decoder.decode([UmamiPerformanceMetric].self, from: data)
+            } catch {
+                // Eine fehlende Aufschlüsselung soll den Report nicht kippen —
+                // die Kennzahlen oben stehen dann trotzdem.
+                Logger.api.debug("performance/metrics type=\(type) fehlgeschlagen: \(error.localizedDescription)")
+                return []
+            }
+        }
+
+        async let pages = breakdown("path")
+        async let pageTitles = breakdown("title")
+        async let devices = breakdown("device")
+        async let browsers = breakdown("browser")
+
+        return UmamiPerformanceReport(
+            chart: chart,
+            summary: summary,
+            pages: await pages,
+            pageTitles: await pageTitles,
+            devices: await devices,
+            browsers: await browsers
+        )
     }
 
     // MARK: - Revenue (v3)
