@@ -1,196 +1,180 @@
-# Handoff — Stand 16. August 2026, abends
+# Handoff — Stand 18.09.2026, 23:20 Uhr
 
-**StatsFlow 2.0.0 ist bei Apple in der Review** (abgesendet 20:50 Uhr, Build 17).
-Veröffentlichung erfolgt automatisch nach der Freigabe.
-
----
-
-## 1. Was als Nächstes ansteht
-
-**Auf die Freigabe warten.** Danach:
-
-1. GitHub-Release zu `v2.0.0` anlegen (Tag ist gesetzt, Release fehlt noch).
-2. Prüfen, ob die Veröffentlichung durchgelaufen ist.
-
-Wird die Version **abgelehnt**, sind die wahrscheinlichsten Gründe:
-
-- Das Demokonto funktioniert nicht (siehe Abschnitt 4) — dann Zugang prüfen.
-- Leere Diagramme werden als Fehler gewertet. In den Review-Hinweisen steht
-  bereits, dass die Demo-Website noch keine Messdaten hat.
+Übergabe aus einer langen Sitzung. Alles Genannte ist committet und gepusht;
+das Arbeitsverzeichnis ist sauber.
 
 ---
 
-## 2. Was in dieser Sitzung entstanden ist
+## 1. Die offene Aufgabe: CI erzeugt bei jedem Lauf ein Zertifikat
 
-| Commit | Inhalt |
-|---|---|
-| `8755019` | Zweiter Faktor auch beim Hinzufügen weiterer Konten |
-| `c7747db` | Websites aus Umami-Teams (die Hauptneuerung) |
-| `486a313` | Fünf Fehler aus einer unabhängigen Prüfung |
-| `6ec9ff0` | Build-Nummer 17 |
+**Das ist das zu lösende Problem.** Alles andere unten ist Kontext.
 
-### Teams — warum es nötig war
+### Worum es geht
 
-Die App las nur `api/websites`, also die persönlichen Websites. Wer seine
-Websites in Umami-Teams organisiert, sah in der App nichts davon, obwohl
-Umamis Oberfläche sie zeigt.
+Der GitHub-Runner ist bei jedem Lauf eine frische Maschine ohne Zertifikat im
+Schlüsselbund. Mit `-allowProvisioningUpdates` und automatischer Signierung
+legt Xcode deshalb **bei jedem Build ein neues Development-Zertifikat** an.
+Apple erlaubt zwei je Konto. Nach etwa zwei Release-Builds scheitert der
+nächste mit:
 
-**Die Falle dabei:** `api/me/websites?includeTeams=1` sieht nach dem richtigen
-Weg aus, filtert Team-Websites aber auf Eigentümer und Verwalter. Mitglieder
-und Nur-Lesen sehen dort nichts. Richtig ist der Weg über `api/me/teams` und
-`api/teams/{teamId}/websites` — genau den nimmt auch Umamis Oberfläche.
-
-Für Zugriff genügt **jede** Team-Mitgliedschaft, auch „nur lesen": Sowohl die
-Website-Liste als auch alle Zahlen (`stats`, `pageviews`, `charts`) prüfen nur,
-ob eine Mitgliedschaft existiert.
-
-### Die Prüfung hat fünf Fehler gefunden
-
-Am wichtigsten: **`api/websites` lieferte ohne `pageSize` nur 20 Einträge.**
-Team-Listen wurden vollständig geladen, die eigenen gekappt — ausgerechnet die
-Fehlerklasse, die der Teams-Commit beheben sollte. Betraf App und Widget.
-
-Außerdem: fehlendes `orderBy` beim Blättern (Team-Listen haben serverseitig
-keine Standardsortierung, Einträge konnten doppelt oder gar nicht ankommen),
-stumm verschluckte Fehler samt Cache-Überschreiben, doppelte Kennungen im
-Alle-Konten-Modus, und sequentielle Team-Abrufe im Widget.
-
----
-
-## 3. Offener Punkt für 2.1
-
-**Reentrancy am geteilten Actor.** `UmamiAPI` ist ein Singleton-Actor, der pro
-Konto umkonfiguriert wird (`configureProviderForAccount` → Keychain →
-`reconfigureFromKeychain`). Laufen Dashboard und Benachrichtigungen gleichzeitig,
-kann ein Abruf mitten im Ladevorgang die Zugangsdaten eines anderen Kontos
-erwischen.
-
-Das Muster wurde experimentell bestätigt (Swift-Nachbau: der Effekt tritt
-reproduzierbar auf). **Aber:** Es müssen vier Bedingungen zusammentreffen —
-mindestens zwei Umami-Konten, aktive Benachrichtigungen (sonst bricht
-`scheduleAllNotifications` vorher ab), ein gleichzeitiger Ladevorgang und eine
-zeitliche Überschneidung im Millisekundenbereich. Der Alle-Konten-Modus ist
-zudem `@State` ohne Persistenz und beim Start immer aus.
-
-Folge wäre eine Website-Liste mit Einträgen des falschen Kontos, unter falscher
-Kennung zwischengespeichert. Kein Datenverlust, heilt sich beim nächsten Laden.
-
-**Saubere Lösung:** Zugangsdaten pro Anfrage mitgeben statt im Actor halten.
-Berührt jede Methode des API-Dienstes — eigene Version, ordentlicher Test.
-
----
-
-## 4. Server (t.godsapp.de)
-
-**Achtung: Dort läuft ein selbstgebautes Image**, nicht das offizielle:
-`umami-patched:charts-unit` statt `ghcr.io/umami-software/umami:3.3.0`.
-Gewollt, damit die Stundenwerte getestet werden können.
-
-**Zurück auf offiziell:** Im Portainer-Stack `umami` (ID 237, Environment 1) das
-Image ändern und neu deployen. Datenbank bleibt unberührt, Backup-Config liegt
-als `/opt/stacks/umami/docker-compose.yml.bak-3.3.0`.
-
-### Für die App-Review angelegt — nicht löschen
-
-- **Team „App Review"** (`1b0f1224-1cbf-4a0c-bf64-e6022fec2930`)
-- **Website „App Review Demo"** (`demo.statsflow.app`) in diesem Team
-- **Konto `appreview`** / `ReviewVgwEMLE7NL`, Rolle `team-view-only`, **ohne 2FA**
-
-Das ist das Demokonto in den Review-Hinweisen. Es hat bewusst keine eigenen
-Websites — seine einzige Website kommt über das Team. Nach der Freigabe kann
-alles bleiben (für künftige Reviews) oder weg.
-
-### 2FA-Schlüssel — nicht verlieren
-
-Umami 3.3 braucht `TWO_FACTOR_ENCRYPTION_KEY` (64 Hex-Zeichen), sonst schlägt
-das Einrichten von 2FA fehl. Der Schlüssel steht in der Stack-Config und als
-`UMAMI_TWO_FACTOR_KEY` in `~/.claude/secrets.env`. **Geht er verloren, sind alle
-eingerichteten zweiten Faktoren unbrauchbar** — auch Simons eigener.
-
-Das Konto `admin` hat 2FA aktiv (seit 16.08.). Für API-Zugriffe braucht es also
-einen TOTP-Code; `appreview` kommt ohne aus.
-
-### Konten auf der Instanz
-
-Es gibt nur noch `admin` (mit 2FA) und `appreview` (ohne, für die App-Review).
-Das zweite Admin-Konto `fnxnxnc` war selbst angelegt und wurde am 16.08.2026
-gelöscht — es hatte keine Websites und keine Team-Mitgliedschaften.
-
----
-
-## 5. Upstream-PR bei Umami
-
-**https://github.com/umami-software/umami/pull/4455** — offen, `MERGEABLE`,
-Ziel-Branch `dev`. Fügt `/api/websites/charts` einen `unit`-Parameter hinzu.
-
-**Wichtig: Der Commit läuft auf `Revisor01 <mail@simonluthe.de>` und enthält
-bewusst keinerlei Hinweise auf KI-Unterstützung.** Bei künftigen Änderungen
-beibehalten.
-
-Review-Bot Greptile: 4/5, ein berechtigter Punkt (stilles Kappen bei zu großen
-Zeiträumen) wurde behoben. Von menschlichen Maintainern noch keine Reaktion.
-Wahrscheinlichste Rückfrage: den PR aufteilen (ein Feature + drei Bugfixes).
-
----
-
-## 6. Erkenntnisse, die Zeit sparen
-
-**Export nach TestFlight scheitert an Homebrews rsync.** Xcode ruft rsync mit
-`-E` auf, das die Homebrew-Version nicht kennt. Fehlermeldung ist nur
-„Copy failed". Deshalb mit Apples Variante bauen:
-
-```bash
-set -a && source ~/.claude/secrets.env && set +a
-xcodebuild -project InsightFlow.xcodeproj -scheme InsightFlow \
-  -configuration Release -destination 'generic/platform=iOS' \
-  -archivePath /tmp/statflow.xcarchive archive
-
-# ExportOptions.plist: method=app-store-connect, uploadSymbols=true,
-# manageAppVersionAndBuildNumber=false
-PATH="/usr/bin:/bin:/usr/sbin:/sbin" xcodebuild -exportArchive \
-  -archivePath /tmp/statflow.xcarchive \
-  -exportOptionsPlist /tmp/ExportOptions.plist \
-  -exportPath /tmp/statflow-export \
-  -authenticationKeyPath "$APP_STORE_CONNECT_KEY_PATH" \
-  -authenticationKeyID "$APP_STORE_CONNECT_KEY_ID" \
-  -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
-
-PATH="/usr/bin:/bin:/usr/sbin:/sbin" xcrun altool --upload-app \
-  -f /tmp/statflow-export/InsightFlow.ipa -t ios \
-  --apiKey "$APP_STORE_CONNECT_KEY_ID" \
-  --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+```
+error: Choose a certificate to revoke. Your account has reached the maximum number of…
+error: No profiles for 'de.godsapp.statflow' were found
 ```
 
-**`secrets.env` exportiert nicht.** Die Variablen stehen ohne `export`, sind
-also nur Shell-Variablen und erreichen Python nicht. Immer
-`set -a && source ~/.claude/secrets.env && set +a` nutzen.
+Die Meldung liest sich wie ein Profil-Problem, ist aber das Zertifikatslimit.
 
-**Die ASC-API schluckt Parameter still.** `sort` bei `/v1/apps/{id}/builds`
-liefert eine leere Liste, `fields[builds]=…` ebenfalls, und `include=` bei
-Builds auch. Ohne diese Parameter abfragen und in Python filtern.
+### Belege (gemessen, nicht vermutet)
 
-**Neue Builds brauchen 1–2 Minuten**, bis sie in der API auftauchen. Vorher
-liefert die Abfrage schlicht nichts — kein Fehler, keine Meldung.
+| Zeitpunkt | Development-Zertifikate |
+|---|---|
+| 18.09. nachmittags | 11 → Build scheiterte |
+| nach Widerruf von 9 | 2 |
+| nach **einem** CI-Lauf | 3 |
+| nach dem nächsten Lauf | **4** |
 
-**Version umbenennen statt neu anlegen:** Solange eine Version in ASC noch
-`PREPARE_FOR_SUBMISSION` ist, lässt sich `versionString` per PATCH ändern. So
-bleiben die eingetragenen Texte erhalten (1.1.0 → 2.0.0 lief so).
+Konfi Quest und Plietsche Plünn nutzen dasselbe Muster, laufen aber seltener
+und erzeugen ihr iOS-Projekt per `expo prebuild` — dort fiel es nie auf.
 
-**Die Nullen-Falle bei `/api/websites/charts`** (unverändertes Umami 3.3.0):
-HTTP 200 und lauter Nullen in `values`, während `total` korrekt bleibt — wenn
-`timezone` oder `unit` fehlt oder `startAt` nicht auf einer Bucket-Grenze liegt.
+### Was bereits versucht wurde (und warum es scheiterte)
 
-**Umami schließt `event_type` 2 und 5 aus** (customEvent und performance), nicht
-2 und 3. Bei SQL-Gegenproben beachten.
+Commit `daa108c` stellte auf manuelle Signierung um und wurde mit `8e27cbe`
+**zurückgenommen**. Der Ansatz war im Kern richtig — die Zertifikatszahl blieb
+stehen —, scheiterte aber an einem Detail:
 
-**Metrik-Typen heißen in Umami 3 anders:** `path` statt `url`, `hostname` statt
-`host`. UTM-Typen sind camelCase (`utmSource`), Rohfelder snake_case.
+```
+error: Provisioning profile "StatFlow AppStore 2026" has app ID "de.godsapp.statflow"
+```
 
-**`docker compose` gibt es auf dem Server nicht** — nur das eigenständige
-`docker-compose`, das teilweise mit der neuen Docker-Version kollidiert
-(`KeyError: 'ContainerConfig'`). Im Zweifel `docker run` oder Portainer.
+`PROVISIONING_PROFILE_SPECIFIER` wurde **global** gesetzt. Damit versucht Xcode,
+auch das Widget mit dem App-Profil zu signieren; die Bundle-IDs passen nicht.
 
-**Bot-Traffic:** Plausible zählt Besucher, die Umami herausfiltert (Chrome auf
-Desktop-Linux, nur Startseite, keine Folgeklicks). Beide zählen korrekt, sie
-beantworten nur leicht unterschiedliche Fragen. Bei kleinen Zahlen fällt der
-Unterschied stark auf.
+### Der richtige Weg
+
+Die Profile müssen **pro Ziel** hinterlegt werden, nicht global — also in
+`InsightFlow.xcodeproj/project.pbxproj` je Target:
+
+| Target | Bundle-ID | Profil |
+|---|---|---|
+| `InsightFlow` | `de.godsapp.statflow` | `StatFlow AppStore 2026` |
+| `InsightFlowWidgetExtension` | `de.godsapp.statflow.InsightFlowWidget` | `StatFlow Widget AppStore 2026` |
+
+Beide Profile existieren bereits, sind `ACTIVE`, hängen am
+Distribution-Zertifikat und tragen die richtigen Bundle-IDs — es muss nichts
+Neues angelegt werden. UUIDs:
+`8c65d623-7694-4ddf-ada1-79edd0d7cc64` (App),
+`88103870-5a84-486c-bf58-fe760afeac9b` (Widget).
+
+Im zurückgenommenen Commit steckt ein **funktionierendes** Skript
+`.github/scripts/fetch-profiles.sh`, das beide Profile aus App Store Connect
+lädt (JWT mit openssl, ohne Fremdbibliothek, lokal gegen die echte API
+geprüft). Es lässt sich mit `git show daa108c -- .github/scripts/` wiederholen.
+
+**Zusätzlich umzustellen:** Der Export-Schritt braucht `signingStyle: manual`
+plus `provisioningProfiles`-Zuordnung je Bundle-ID in der ExportOptions-Plist.
+Auch das steht im zurückgenommenen Commit.
+
+### Achtung beim Arbeiten daran
+
+- Es ist der **einzige** Release-Weg. Ein Fehler blockiert alle Store-Uploads.
+- Nach jedem Versuch die Zertifikate zählen — steigt die Zahl, greift der
+  Umbau nicht.
+- Die Build-Nummer muss vor jedem Lauf erhöht werden, sonst lehnt Apple den
+  Upload mit `ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE` ab.
+- Lokale Builds sind wegen macOS-Beta nicht brauchbar (ITMS-90111), es muss
+  über die CI gehen.
+
+---
+
+## 2. App-Stand: Version 2.2.0
+
+### In TestFlight (alle VALID)
+
+| Build | Inhalt |
+|---|---|
+| 23 | Umami-3.4-Routen mit Versionsweiche, Vermerke-Liste |
+| 24 | + Anmeldung per API-Schlüssel bei eigenen Instanzen |
+| 25 | + Vermerke als Marken im Diagramm |
+| 26 | + Marke rastet auf den richtigen Datenpunkt ein |
+| 27 | + Symbol sichtbar, Uhrzeit frei wählbar, Notiz → Liste |
+| **28** | + Knopfgröße an den Diagramm-Umschalter angeglichen |
+
+**Build 28 ist der aktuelle Teststand.** 126 Tests, keine Fehlschläge.
+
+### Was in 2.2.0 steckt
+
+- **Umami 3.4**: Ziele, Trichter, Wiederkehr, Pfade, Zuordnung und Ladezeiten
+  laufen über die neuen GET-Routen. Die App erkennt selbst, was der Server
+  kann (Prüfpunkt `performance/stats`: 200 = neu, 404 = alt). Ältere Server
+  werden unverändert bedient.
+- **Vermerke** (Annotations): Marken im Diagramm, Notiz beim Antippen, Knopf
+  zum Anlegen, eigene Liste unter den Auswertungen.
+- **API-Schlüssel** für eigene Instanzen — umgeht 2FA, läuft nicht ab. Das
+  Widget arbeitet damit ebenfalls (gemessen).
+- **Behoben**: hängender Ladekreis beim Verlassen der Website-Ansicht;
+  grauer Anmeldeknopf bei Umami Cloud trotz eingetragenem Schlüssel.
+
+### Noch offen bei der App
+
+- **2.1.0 steht auf `WAITING_FOR_REVIEW`.** 2.2.0 kann erst eingereicht
+  werden, wenn das durch ist.
+- Beim Testen von Build 28 prüfen, ob Diagramm-Marken und Plus-Knopf so
+  sitzen, wie gedacht.
+
+---
+
+## 3. Weitere offene Punkte
+
+### Dringend: Distribution-Zertifikat läuft ab
+
+**28.11.2026** — das sind noch rund 70 Tage. Daran hängen CI und alle
+Store-Uploads. Die Provisioning-Profile laufen am selben Tag ab. Rechtzeitig
+erneuern, sonst steht die Auslieferung.
+
+### Secrets erneuern
+
+Im Chat-Verlauf stehen und sollten ersetzt werden:
+- API-Schlüssel der Umami-Instanz (`umami_BVGZ…`)
+- TOTP-Secret für die 2FA von t.godsapp.de (liegt in `secrets.env` unter
+  `UMAMI_TOTP_SECRET`)
+
+### Umami-Patch verloren
+
+`t.godsapp.de` läuft seit 18.09. auf offiziellem **3.4.0**. Der selbstgebaute
+`unit`-Patch (PR umami-software/umami#4455, weiterhin offen) ging dabei
+verloren. Folge: `unit` wird an `/api/websites/charts` ignoriert, die App lädt
+die Verläufe einzeln — nichts bricht, das Dashboard baut sich nur langsamer
+auf (laut PR-Messung 5,6 s statt 0,6 s bei 18 Websites). Gepatchter Quellcode
+liegt unter `/opt/stacks/umami-patch/src` und müsste auf 3.4.0 portiert
+werden.
+
+Backup vor dem Upgrade:
+`/opt/backups/umami-vor-3.4.0-20260918-1659.sql.gz` (7,6 MB).
+
+### Wartungscheck erweitert
+
+Neues Modul `~/.claude/skills/maintenance-check/references/apple-dev.md`,
+auslösbar über „check apple". Zählt Zertifikate, warnt vor Ablauf, sieht nach
+hängenden Builds. Committet in `~/claude-config`.
+
+---
+
+## 4. Nützliche Befehle
+
+```bash
+# Zertifikate zählen (nach jedem CI-Lauf sinnvoll)
+source ~/.claude/secrets.env
+~/.claude/secrets/asc-jwt.sh get \
+  "/v1/certificates?limit=100&fields%5Bcertificates%5D=certificateType" \
+  | python3 -c 'import sys,json;from collections import Counter;print(Counter(r["attributes"]["certificateType"] for r in json.load(sys.stdin)["data"]))'
+
+# Builds bei Apple
+~/.claude/secrets/asc-jwt.sh get \
+  "/v1/builds?filter%5Bapp%5D=6761671122&limit=3&sort=-uploadedDate&fields%5Bbuilds%5D=version,processingState"
+
+# CI starten (Build-Nummer vorher erhöhen!)
+gh workflow run ios-release.yml --ref main
+```
+
+**Fallstrick:** Eckige Klammern in Query-Parametern müssen als `%5B`/`%5D`
+kodiert werden, sonst bricht curl mit „bad range in URL" ab.
