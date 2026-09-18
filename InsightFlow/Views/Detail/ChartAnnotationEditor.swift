@@ -25,6 +25,9 @@ struct ChartAnnotationEditor: View {
 
     @State private var note = ""
     @State private var isAllDay: Bool
+    /// Der aus dem Diagramm übernommene Zeitpunkt — änderbar, damit sich auch
+    /// eine krumme Uhrzeit eintragen lässt, die kein Datenpunkt trifft.
+    @State private var selectedDate: Date
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -39,6 +42,7 @@ struct ChartAnnotationEditor: View {
         self.allDay = allDay
         self.onCreated = onCreated
         _isAllDay = State(initialValue: allDay)
+        _selectedDate = State(initialValue: date)
     }
 
     /// Der Server lehnt leere Notizen und mehr als 500 Zeichen mit HTTP 400 ab.
@@ -59,14 +63,20 @@ struct ChartAnnotationEditor: View {
                     .lineLimit(3...6)
                 } header: {
                     Text("annotations.note")
-                } footer: {
-                    Text(isAllDay
-                         ? date.formatted(date: .long, time: .omitted)
-                         : date.formatted(date: .long, time: .shortened))
                 }
 
                 Section {
                     Toggle(String(localized: "annotations.allday"), isOn: $isAllDay)
+                    // Vorbelegt mit dem angetippten Punkt, aber änderbar: wer
+                    // eine genaue Uhrzeit festhalten will, ist sonst an das
+                    // Raster der Datenpunkte gebunden.
+                    DatePicker(
+                        String(localized: "annotations.date"),
+                        selection: $selectedDate,
+                        displayedComponents: isAllDay ? [.date] : [.date, .hourAndMinute]
+                    )
+                } footer: {
+                    Text("annotations.date.description")
                 }
 
                 if let errorMessage {
@@ -102,7 +112,7 @@ struct ChartAnnotationEditor: View {
         do {
             let created = try await UmamiAPI.shared.createAnnotation(
                 websiteId: websiteId,
-                date: date,
+                date: selectedDate,
                 note: note.trimmingCharacters(in: .whitespacesAndNewlines),
                 allDay: isAllDay
             )
