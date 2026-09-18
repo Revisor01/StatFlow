@@ -184,6 +184,26 @@ struct UmamiPerformanceReport: Codable, Sendable {
         devices = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .devices)) as? [UmamiPerformanceMetric] ?? []
         browsers = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .browsers)) as? [UmamiPerformanceMetric] ?? []
     }
+
+    /// Ab Umami 3.4 kommen diese Angaben aus getrennten Routen
+    /// (`performance/stats`, `performance/chart`, `performance/metrics`) und
+    /// werden hier zu derselben Form zusammengesetzt, die die Ansichten schon
+    /// erwarten.
+    init(
+        chart: [UmamiPerformanceChartPoint],
+        summary: UmamiPerformanceSummary,
+        pages: [UmamiPerformanceMetric],
+        pageTitles: [UmamiPerformanceMetric],
+        devices: [UmamiPerformanceMetric],
+        browsers: [UmamiPerformanceMetric]
+    ) {
+        self.chart = chart
+        self.summary = summary
+        self.pages = pages
+        self.pageTitles = pageTitles
+        self.devices = devices
+        self.browsers = browsers
+    }
 }
 
 /// Web-Vital-Kennzahl, die der Performance-Report als Zeitreihe ausgibt.
