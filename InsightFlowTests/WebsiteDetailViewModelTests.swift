@@ -14,10 +14,11 @@ class WebsiteDetailViewModelTests: XCTestCase {
             await viewModel.loadData(dateRange: .today)
         }
 
-        // Kurz warten damit loadData startet
-        try await Task.sleep(nanoseconds: 100_000_000) // 0.1s
-
-        // cancelLoading aufrufen
+        // Auf `isLoading == true` zu warten wäre unzuverlässig: ohne
+        // konfigurierte API ist der Ladevorgang nach wenigen Millisekunden
+        // wieder fertig, der Zwischenzustand also flüchtig. Geprüft wird
+        // deshalb nur das Ergebnis — nach `cancelLoading` darf kein
+        // Ladezustand zurückbleiben, gleich ob noch geladen wurde oder nicht.
         viewModel.cancelLoading()
 
         // Task abwarten (sollte nach Cancel schnell beenden)
@@ -53,5 +54,29 @@ class WebsiteDetailViewModelTests: XCTestCase {
 
         // Kein Crash, isLoading stabil
         // Der zweite Aufruf hat den ersten erfolgreich gecancelt (kein assert noetig — Test prueft Stabilitaet)
+    }
+
+    /// `cancelLoading` muss den Ladezustand zurücknehmen.
+    ///
+    /// Der `defer` in `loadData` lässt `isLoading` bei Abbruch bewusst stehen,
+    /// damit ein abgelöster Ladevorgang den Spinner des nachfolgenden nicht
+    /// ausschaltet. Nach einem echten Abbruch folgt aber keiner mehr. Die
+    /// Website-Ansicht ruft `cancelLoading` bei jedem Verlassen auf
+    /// (`onDisappear`) — ohne Rücknahme blieb der Ladekreis stehen und war beim
+    /// nächsten Öffnen sofort wieder zu sehen.
+    func testCancelLoadingResetsLoadingState() {
+        let viewModel = WebsiteDetailViewModel(websiteId: "test-id", domain: "test.com")
+
+        // Ladezustand setzen, wie ihn ein laufender Ladevorgang hinterlässt.
+        // Direkt gesetzt statt über `loadData` erzeugt, weil der echte Vorgang
+        // ohne API zu schnell durchläuft, um ihn verlässlich zu treffen.
+        viewModel.isLoading = true
+
+        viewModel.cancelLoading()
+
+        XCTAssertFalse(
+            viewModel.isLoading,
+            "cancelLoading muss den Ladezustand zurücknehmen"
+        )
     }
 }

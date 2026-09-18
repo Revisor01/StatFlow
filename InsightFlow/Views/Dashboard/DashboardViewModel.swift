@@ -46,6 +46,12 @@ class DashboardViewModel: ObservableObject {
     func cancelLoading() {
         loadingTask?.cancel()
         loadingTask = nil
+
+        // Wie in der Website-Ansicht: der `defer` in `loadData` lässt
+        // `isLoading` bei Abbruch stehen, damit ein abgelöster Ladevorgang den
+        // Spinner des nachfolgenden nicht ausschaltet. Nach einem echten
+        // Abbruch folgt keiner mehr — ohne dies bliebe der Ladekreis stehen.
+        isLoading = false
     }
 
     private var orderKey: String {
