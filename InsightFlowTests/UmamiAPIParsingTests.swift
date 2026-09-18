@@ -733,4 +733,116 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(response.referrer?[0].value, 4)
         XCTAssertEqual(response.paidAds?.count, 0)
     }
+
+    // MARK: - Vermerke (Annotations, ab Umami 3.4)
+
+    /// Die Beispiele stammen aus echten Antworten einer 3.4.0-Instanz
+    /// (gemessen am 18.09.2026), inklusive des Paged-Envelopes der Liste.
+
+    private func annotationDecoder() -> JSONDecoder {
+        // Dieselbe Datumsbehandlung wie im API-Layer: Umami schickt ISO-8601
+        // mit Sekundenbruchteilen.
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let string = try container.decode(String.self)
+            let formatters = [
+                ISO8601DateFormatter(),
+                {
+                    let f = ISO8601DateFormatter()
+                    f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    return f
+                }()
+            ]
+            for formatter in formatters {
+                if let date = formatter.date(from: string) { return date }
+            }
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date: \(string)")
+        }
+        return decoder
+    }
+
+    func testAnnotationDecodingFromCreateResponse() throws {
+        let json = """
+        {
+          "id": "a4b6f962-13d1-4736-a85e-9e8aa41cd231",
+          "websiteId": "96efd249-a5e3-486a-8d7e-6da7d8c1ed17",
+          "userId": "41e2b680-648e-4b09-bcd7-3e2b10c06264",
+          "date": "2026-09-18T10:00:00.000Z",
+          "allDay": true,
+          "note": "Newsletter verschickt",
+          "createdAt": "2026-09-18T12:18:07.712Z",
+          "updatedAt": "2026-09-18T12:18:07.712Z"
+        }
+        """.data(using: .utf8)!
+
+        let annotation = try annotationDecoder().decode(UmamiAnnotation.self, from: json)
+        XCTAssertEqual(annotation.id, "a4b6f962-13d1-4736-a85e-9e8aa41cd231")
+        XCTAssertEqual(annotation.note, "Newsletter verschickt")
+        XCTAssertTrue(annotation.allDay)
+        XCTAssertEqual(annotation.date.timeIntervalSince1970, 1789725600, accuracy: 1)
+    }
+
+    func testAnnotationListDecodesPagedEnvelope() throws {
+        let json = """
+        {
+          "data": [
+            {"id": "a4b6f962-13d1-4736-a85e-9e8aa41cd231", "websiteId": "96efd249-a5e3-486a-8d7e-6da7d8c1ed17",
+             "userId": null, "date": "2026-09-18T10:00:00.000Z", "allDay": true, "note": "Newsletter verschickt",
+             "createdAt": "2026-09-18T12:18:07.712Z", "updatedAt": "2026-09-18T12:18:07.712Z"},
+            {"id": "f7a31ebe-f477-415c-8b2d-62c0d988eb77", "websiteId": "96efd249-a5e3-486a-8d7e-6da7d8c1ed17",
+             "userId": null, "date": "2026-09-17T19:30:00.000Z", "allDay": false, "note": "Beitrag im Gemeindebrief",
+             "createdAt": "2026-09-18T12:18:08.100Z", "updatedAt": "2026-09-18T12:18:08.100Z"}
+          ],
+          "count": 2, "page": 1, "pageSize": 20
+        }
+        """.data(using: .utf8)!
+
+        let response = try annotationDecoder().decode(UmamiAnnotationsResponse.self, from: json)
+        XCTAssertEqual(response.count, 2)
+        XCTAssertEqual(response.data.count, 2)
+        XCTAssertEqual(response.data[0].note, "Newsletter verschickt")
+        XCTAssertFalse(response.data[1].allDay, "Vermerk mit Uhrzeit darf nicht als ganztägig gelten")
+    }
+
+    func testAnnotationToleratesMissingUser() throws {
+        // `userId` ist in der Datenbank optional — ein Vermerk ohne Urheber
+        // darf die Liste nicht kippen.
+        let json = """
+        {"id": "x", "websiteId": "w", "userId": null, "date": "2026-09-18T10:00:00.000Z",
+         "allDay": true, "note": "Ohne Urheber", "createdAt": null, "updatedAt": null}
+        """.data(using: .utf8)!
+
+        let annotation = try annotationDecoder().decode(UmamiAnnotation.self, from: json)
+        XCTAssertNil(annotation.userId)
+        XCTAssertNil(annotation.createdAt)
+        XCTAssertEqual(annotation.note, "Ohne Urheber")
+    }
+
+    func testAnnotationNoteLimitMatchesServerSchema() {
+        // Der Server lehnt mehr als 500 Zeichen mit HTTP 400 ab (gemessen:
+        // 500 -> 200, 501 -> 400). Die Eingabe prüft dagegen.
+        XCTAssertEqual(UmamiAnnotation.noteLimit, 500)
+    }
+
+    func testAnnotationDateTextHidesTimeForAllDay() throws {
+        // Bei ganztägigen Vermerken ist die gespeicherte Uhrzeit bedeutungslos
+        // und darf keine Genauigkeit vortäuschen.
+        let json = """
+        [
+          {"id": "1", "websiteId": "w", "userId": null, "date": "2026-09-18T10:00:00.000Z",
+           "allDay": true, "note": "Ganztägig", "createdAt": null, "updatedAt": null},
+          {"id": "2", "websiteId": "w", "userId": null, "date": "2026-09-18T10:00:00.000Z",
+           "allDay": false, "note": "Mit Uhrzeit", "createdAt": null, "updatedAt": null}
+        ]
+        """.data(using: .utf8)!
+
+        let items = try annotationDecoder().decode([UmamiAnnotation].self, from: json)
+        let allDayText = AnnotationsView.dateText(for: items[0])
+        let timedText = AnnotationsView.dateText(for: items[1])
+
+        XCTAssertNotEqual(allDayText, timedText)
+        XCTAssertFalse(allDayText.contains(":"), "Ganztägiger Vermerk zeigt keine Uhrzeit")
+        XCTAssertTrue(timedText.contains(":"), "Vermerk mit Uhrzeit zeigt sie auch")
+    }
 }

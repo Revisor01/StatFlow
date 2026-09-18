@@ -16,6 +16,16 @@ ersten Store-Veröffentlichung.
 
 ## [Unreleased] - 2.2.0
 
+### Hinzugefügt
+
+- **Vermerke**: Notizen zum Verlauf einer Website — „Newsletter verschickt", „Beitrag im
+  Gemeindebrief", „Relaunch". Sie lassen sich in der App anlegen, bearbeiten und löschen
+  und erklären im Nachhinein, warum die Zahlen an einem Tag ausschlagen. Wahlweise für
+  einen ganzen Tag oder auf die Uhrzeit genau. Die Funktion setzt Umami 3.4 voraus; auf
+  älteren Servern erscheint statt der Liste ein Hinweis. Zum Anlegen und Ändern werden
+  Bearbeitungsrechte an der Website benötigt — mit reinem Leserecht bleiben die Vermerke
+  sichtbar, aber unveränderlich.
+
 ### Geändert
 
 - **Umami 3.4**: Auf Servern ab Umami 3.4 nutzt die App die neuen Auswertungs-Adressen

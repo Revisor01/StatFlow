@@ -23,6 +23,7 @@
 - **Detaillierte Analysen**: Top-Seiten, Referrer, Geografie, Geräte und Browser
 - **Periodenvergleich**: Beliebige Zeiträume vergleichen (Woche, Monat, Jahr)
 - **Events & Reports**: Custom Events, Funnel-Analysen, UTM-Tracking, Goals und Attribution
+- **Vermerke**: Notizen zum Verlauf („Newsletter verschickt", „Relaunch") anlegen, bearbeiten und löschen — erklären im Nachhinein, warum die Zahlen ausschlagen (Umami ab 3.4)
 - **Home-Screen-Widgets**: Schneller Blick auf die wichtigsten Statistiken direkt vom Home Screen
 - **Push-Benachrichtigungen**: Tägliche oder wöchentliche Zusammenfassungen
 - **Offline-Modus**: Gecachte Daten als Fallback auch ohne Netzwerk verfügbar
@@ -54,6 +55,11 @@ erkennt selbst, welche Adressen ein Server versteht, und fragt entsprechend — 
 angezeigten Zahlen sind in beiden Fällen dieselben. Einzige Abweichung: die
 Wiederkehr-Auswertung richtet die Tagesgrenzen ab 3.4 nach der Zeitzone des Geräts
 statt nach UTC.
+
+Neu in 3.4 und von der App genutzt sind außerdem die Vermerke
+(`/api/websites/{id}/annotations`). Sie erscheinen in den Auswertungen als eigener
+Bereich; auf älteren Servern zeigt die App dort einen Hinweis statt einer leeren Liste.
+Anlegen, Ändern und Löschen verlangen serverseitig das Bearbeitungsrecht an der Website.
 
 **Wichtige Einschränkungen:**
 

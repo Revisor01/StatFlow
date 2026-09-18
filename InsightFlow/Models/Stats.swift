@@ -495,6 +495,42 @@ struct UmamiSegmentsResponse: Codable, Sendable {
     let pageSize: Int?
 }
 
+// MARK: - Vermerke (`api/websites/{id}/annotations`, ab Umami 3.4)
+
+/// Datierte Notiz an der Zeitachse einer Website — etwa ein Versand, ein
+/// Relaunch oder ein Presseartikel. Umami führt sie ab 3.4; ältere Server
+/// kennen die Adresse nicht.
+///
+/// `date` ist der Zeitpunkt, auf den sich der Vermerk bezieht (nicht der der
+/// Erfassung). Bei `allDay` zählt nur der Tag, die Uhrzeit wird dann nicht
+/// angezeigt. `note` ist serverseitig auf 500 Zeichen begrenzt und darf nicht
+/// leer sein — beides führt sonst zu HTTP 400.
+struct UmamiAnnotation: Codable, Sendable, Identifiable, Equatable {
+    let id: String
+    let websiteId: String?
+    let userId: String?
+    let date: Date
+    let allDay: Bool
+    let note: String
+    let createdAt: Date?
+    let updatedAt: Date?
+
+    /// Serverseitige Obergrenze für `note` (`annotationSchema`).
+    static let noteLimit = 500
+
+    static func == (lhs: UmamiAnnotation, rhs: UmamiAnnotation) -> Bool {
+        lhs.id == rhs.id && lhs.date == rhs.date && lhs.note == rhs.note && lhs.allDay == rhs.allDay
+    }
+}
+
+/// Paged-Envelope, den Umamis `pagedQuery` für Vermerk-Listen zurückgibt.
+struct UmamiAnnotationsResponse: Codable, Sendable {
+    let data: [UmamiAnnotation]
+    let count: Int?
+    let page: Int?
+    let pageSize: Int?
+}
+
 /// Minimaler, typloser JSON-Container für Felder ohne festes Schema.
 enum UmamiJSONValue: Codable, Sendable {
     case string(String)
