@@ -793,3 +793,21 @@
 
 "visittimes.hours.title" = "Distribution across the day";
 "visittimes.hours.subtitle" = "All weekdays combined, in hours of your time zone.";
+
+// MARK: - Annotations (Umami 3.4 and newer)
+"annotations.title" = "Annotations";
+"annotations.subtitle" = "Notes on your traffic";
+"annotations.add" = "Add annotation";
+"annotations.edit" = "Edit annotation";
+"annotations.note" = "Note";
+"annotations.note.placeholder" = "What happened on this day?";
+"annotations.note.remaining" = "%d characters left";
+"annotations.allday" = "All day";
+"annotations.date" = "Date";
+"annotations.date.description" = "The moment the note refers to — not the moment you write it.";
+"annotations.empty" = "No annotations";
+"annotations.empty.description" = "Record what explains your traffic: a newsletter, a press mention, a relaunch.";
+"annotations.unsupported" = "Annotations require Umami 3.4";
+"annotations.unsupported.description" = "This Umami instance is older and does not support annotations yet. They become available after updating to version 3.4.";
+"annotations.delete.confirm" = "Delete this annotation?";
+"annotations.error.readonly" = "You only have read access to this website. Adding or changing annotations requires edit permission.";

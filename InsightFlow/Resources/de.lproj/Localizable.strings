@@ -794,3 +794,21 @@
 
 "visittimes.hours.title" = "Verteilung über den Tag";
 "visittimes.hours.subtitle" = "Alle Wochentage zusammengefasst, in Stunden deiner Zeitzone.";
+
+// MARK: - Vermerke (Annotations, ab Umami 3.4)
+"annotations.title" = "Vermerke";
+"annotations.subtitle" = "Notizen zum Verlauf";
+"annotations.add" = "Vermerk anlegen";
+"annotations.edit" = "Vermerk bearbeiten";
+"annotations.note" = "Notiz";
+"annotations.note.placeholder" = "Was ist an diesem Tag passiert?";
+"annotations.note.remaining" = "Noch %d Zeichen";
+"annotations.allday" = "Ganzer Tag";
+"annotations.date" = "Zeitpunkt";
+"annotations.date.description" = "Der Zeitpunkt, auf den sich die Notiz bezieht — nicht der, an dem du sie schreibst.";
+"annotations.empty" = "Keine Vermerke";
+"annotations.empty.description" = "Halte fest, was den Verlauf erklärt: ein Newsletter, ein Zeitungsartikel, ein Relaunch.";
+"annotations.unsupported" = "Vermerke brauchen Umami 3.4";
+"annotations.unsupported.description" = "Diese Umami-Instanz ist älter und kennt noch keine Vermerke. Nach einer Aktualisierung auf Version 3.4 steht die Funktion zur Verfügung.";
+"annotations.delete.confirm" = "Diesen Vermerk löschen?";
+"annotations.error.readonly" = "Für diese Website hast du nur Leserechte. Vermerke anlegen oder ändern kann nur, wer die Website bearbeiten darf.";

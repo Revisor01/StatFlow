@@ -128,6 +128,19 @@ struct ReportsHubView: View {
             }
             .buttonStyle(.plain)
 
+            // Ab Umami 3.4 verfügbar; ältere Server melden das in der Ansicht.
+            NavigationLink {
+                AnnotationsView(website: website, dateRange: selectedDateRange)
+            } label: {
+                ReportCategoryCard(
+                    icon: "bookmark",
+                    color: .teal,
+                    title: String(localized: "annotations.title"),
+                    subtitle: String(localized: "annotations.subtitle")
+                )
+            }
+            .buttonStyle(.plain)
+
             // Ab Umami v3 verfügbar.
             NavigationLink {
                 WebVitalsView(website: website)
