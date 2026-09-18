@@ -568,4 +568,169 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(website.id, "abc")
         XCTAssertNil(website.teamName)
     }
+
+    // MARK: - Auswertungs-Routen aus Umami 3.4
+
+    /// Die JSON-Beispiele in diesem Abschnitt stammen aus echten Antworten
+    /// einer Umami-3.4.0-Instanz (gemessen am 18.09.2026 gegen eine Kopie der
+    /// eigenen Datenbank). IDs und Domains sind belassen, wo sie unkritisch
+    /// sind, Werte unverändert.
+
+    func testGoalStatsFeatureRouteMatchesReportShape() throws {
+        // `GET api/websites/{id}/goals/stats` antwortet mit derselben Form wie
+        // der frühere `POST api/reports/goal` — deshalb dasselbe Modell.
+        let json = """
+        {"num": 72, "total": 276}
+        """.data(using: .utf8)!
+
+        let result = try JSONDecoder().decode(GoalReportResult.self, from: json)
+        XCTAssertEqual(result.num, 72)
+        XCTAssertEqual(result.total, 276)
+        XCTAssertEqual(result.completionRate, 72.0 / 276.0 * 100, accuracy: 0.0001)
+    }
+
+    func testRetentionFeatureRouteDecoding() throws {
+        let json = """
+        [
+          {"date": "2026-08-19T00:00:00Z", "day": 0, "visitors": 5, "returnVisitors": 5, "percentage": 100},
+          {"date": "2026-08-19T00:00:00Z", "day": 1, "visitors": 5, "returnVisitors": 1, "percentage": 20}
+        ]
+        """.data(using: .utf8)!
+
+        let rows = try JSONDecoder().decode([RetentionRow].self, from: json)
+        XCTAssertEqual(rows.count, 2)
+        XCTAssertEqual(rows[0].day, 0)
+        XCTAssertEqual(rows[0].visitors, 5)
+        XCTAssertEqual(rows[1].returnVisitors, 1)
+        XCTAssertEqual(rows[1].percentage, 20)
+    }
+
+    func testJourneyFeatureRouteDecoding() throws {
+        // Die neue Route liefert `items` mit null-Einträgen für ungenutzte
+        // Schritte — genau wie der frühere Report.
+        let json = """
+        [
+          {"items": ["/", "sektion-gesehen", "app-oeffnen", null], "count": 92},
+          {"items": ["/freizeit/", "ankunft-neu-geoeffnet", null, null], "count": 34}
+        ]
+        """.data(using: .utf8)!
+
+        let paths = try JSONDecoder().decode([JourneyPath].self, from: json)
+        XCTAssertEqual(paths.count, 2)
+        XCTAssertEqual(paths[0].count, 92)
+        XCTAssertEqual(paths[1].count, 34)
+    }
+
+    func testFunnelStatsFeatureRouteDecoding() throws {
+        let json = """
+        [
+          {"type": "path", "value": "/", "visitors": 178, "previous": 0, "dropped": 0, "dropoff": null, "remaining": 1},
+          {"type": "event", "value": "app-oeffnen", "visitors": 72, "previous": 178, "dropped": 106, "dropoff": 0.5955, "remaining": 0.4045}
+        ]
+        """.data(using: .utf8)!
+
+        let steps = try JSONDecoder().decode([FunnelStep].self, from: json)
+        XCTAssertEqual(steps.count, 2)
+        XCTAssertEqual(steps[0].visitors, 178)
+        XCTAssertEqual(steps[1].visitors, 72)
+    }
+
+    func testPerformanceStatsFeatureRouteDecodesAsSummary() throws {
+        // `performance/stats` liefert das, was im alten Report unter `summary`
+        // stand — ohne Umschlag. Die Perzentile stimmten in der Messung mit
+        // dem alten Weg überein.
+        let json = """
+        {
+          "lcp": {"p50": 609, "p75": 1146, "p95": 3514.3499999999967},
+          "inp": {"p50": 48, "p75": 56, "p95": 111.19999999999997},
+          "cls": {"p50": 0.0027, "p75": 0.0245, "p95": 0.09855},
+          "fcp": {"p50": 290, "p75": 612, "p95": 1884},
+          "ttfb": {"p50": 41, "p75": 128, "p95": 456},
+          "count": 101
+        }
+        """.data(using: .utf8)!
+
+        let summary = try JSONDecoder().decode(UmamiPerformanceSummary.self, from: json)
+        XCTAssertEqual(summary.lcp.p50, 609)
+        XCTAssertEqual(summary.lcp.p75, 1146)
+        XCTAssertEqual(summary.inp.p50, 48)
+        XCTAssertEqual(summary.cls.p50, 0.0027, accuracy: 0.00001)
+        XCTAssertEqual(summary.count, 101)
+    }
+
+    func testPerformanceMetricsFeatureRouteToleratesNullPercentiles() throws {
+        // Seiten ohne Messwerte liefern null statt einer Zahl; das darf die
+        // Liste nicht kippen, sonst fehlt die ganze Aufschlüsselung.
+        let json = """
+        [
+          {"name": "/datenschutz/", "p50": null, "p75": null, "p95": null, "count": 3},
+          {"name": "/apps/moinkark/datenschutz/", "p50": 4143, "p75": 4143, "p95": 4143, "count": 1}
+        ]
+        """.data(using: .utf8)!
+
+        let metrics = try JSONDecoder().decode([UmamiPerformanceMetric].self, from: json)
+        XCTAssertEqual(metrics.count, 2)
+        XCTAssertEqual(metrics[0].name, "/datenschutz/")
+        XCTAssertEqual(metrics[0].p50, 0, "null wird als 0 gelesen, nicht als Fehler")
+        XCTAssertEqual(metrics[0].count, 3)
+        XCTAssertEqual(metrics[1].p50, 4143)
+    }
+
+    func testPerformanceChartFeatureRouteDecoding() throws {
+        let json = """
+        {"chart": [
+          {"t": "2026-08-19T00:00:00Z", "p50": 5121, "p75": 5121, "p95": 5121},
+          {"t": "2026-08-20T00:00:00Z", "p50": 172, "p75": 932, "p95": 2571.2999999999943}
+        ]}
+        """.data(using: .utf8)!
+
+        struct ChartResponse: Decodable { let chart: [UmamiPerformanceChartPoint]? }
+        let chart = try JSONDecoder().decode(ChartResponse.self, from: json).chart ?? []
+        XCTAssertEqual(chart.count, 2)
+        XCTAssertEqual(chart[0].t, "2026-08-19T00:00:00Z")
+        XCTAssertEqual(chart[1].p75, 932)
+    }
+
+    func testPerformanceReportComposesFromSeparateRoutes() throws {
+        // Aus den Einzelrouten muss dieselbe Form entstehen, die die Ansichten
+        // erwarten — sonst bliebe die Ladezeiten-Auswertung leer.
+        let summaryJSON = """
+        {"lcp": {"p50": 609, "p75": 1146, "p95": 3514}, "inp": {"p50": 48, "p75": 56, "p95": 111},
+         "cls": {"p50": 0.0027, "p75": 0.0245, "p95": 0.09855}, "fcp": {"p50": 290, "p75": 612, "p95": 1884},
+         "ttfb": {"p50": 41, "p75": 128, "p95": 456}, "count": 101}
+        """.data(using: .utf8)!
+        let metricsJSON = """
+        [{"name": "mobile", "p50": 1094, "p75": 2286.25, "p95": 3864.45, "count": 74}]
+        """.data(using: .utf8)!
+
+        let summary = try JSONDecoder().decode(UmamiPerformanceSummary.self, from: summaryJSON)
+        let devices = try JSONDecoder().decode([UmamiPerformanceMetric].self, from: metricsJSON)
+
+        let report = UmamiPerformanceReport(
+            chart: [],
+            summary: summary,
+            pages: [],
+            pageTitles: [],
+            devices: devices,
+            browsers: []
+        )
+
+        XCTAssertEqual(report.summary.lcp.p50, 609)
+        XCTAssertEqual(report.devices.count, 1)
+        XCTAssertEqual(report.devices[0].name, "mobile")
+        XCTAssertTrue(report.pages.isEmpty)
+    }
+
+    func testAttributionFeatureRouteKeepsResponseShape() throws {
+        let json = """
+        {"referrer": [{"name": "google.com", "value": 4}, {"name": "ecosia.org", "value": 1}],
+         "paidAds": [], "utm_source": [], "utm_medium": [], "utm_campaign": [], "utm_content": [], "utm_term": []}
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(AttributionResponse.self, from: json)
+        XCTAssertEqual(response.referrer?.count, 2)
+        XCTAssertEqual(response.referrer?[0].name, "google.com")
+        XCTAssertEqual(response.referrer?[0].value, 4)
+        XCTAssertEqual(response.paidAds?.count, 0)
+    }
 }

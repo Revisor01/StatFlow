@@ -14,7 +14,20 @@ Die Versionen 1.0 bis 1.0.6 sind die im App Store ausgelieferten Releases. Die V
 0.1.0 bis 1.3.0 stammen aus der Vorgeschichte als InsightFlow bzw. PrivacyFlow, vor der
 ersten Store-Veröffentlichung.
 
-## [Unreleased] - 2.1.0
+## [Unreleased] - 2.2.0
+
+### Geändert
+
+- **Umami 3.4**: Auf Servern ab Umami 3.4 nutzt die App die neuen Auswertungs-Adressen
+  für Ziele, Trichter, Wiederkehr, Pfade, Zuordnung und Ladezeiten. Welche Adressen ein
+  Server versteht, erkennt die App selbst; auf älteren Umami-Versionen fragt sie
+  unverändert wie bisher. Die angezeigten Zahlen bleiben in beiden Fällen dieselben —
+  geprüft gegen Umami 3.4.0 und 3.3.0.
+- Bei der Wiederkehr-Auswertung richten sich die Tagesgrenzen auf Servern ab Umami 3.4
+  nach der Zeitzone des Geräts statt nach UTC. Dadurch können die Werte geringfügig von
+  früheren abweichen; sie passen jetzt zu den übrigen Auswertungen.
+
+## [2.1.0] – 2026-09-18
 
 ### Hinzugefügt
 
