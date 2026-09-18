@@ -24,9 +24,13 @@ ersten Store-Veröffentlichung.
   wird. Angelegt wird er in Umami unter Einstellungen → API-Schlüssel; die Funktion setzt
   Umami 3.4 voraus. Benutzername und Passwort funktionieren unverändert weiter.
 - **Vermerke**: Notizen zum Verlauf einer Website — „Newsletter verschickt", „Beitrag im
-  Gemeindebrief", „Relaunch". Sie lassen sich in der App anlegen, bearbeiten und löschen
-  und erklären im Nachhinein, warum die Zahlen an einem Tag ausschlagen. Wahlweise für
-  einen ganzen Tag oder auf die Uhrzeit genau. Die Funktion setzt Umami 3.4 voraus; auf
+  Gemeindebrief", „Relaunch". Sie erscheinen als Markierung im Diagramm der Website: eine
+  senkrechte Linie mit Lesezeichen an der betreffenden Stelle. Tippt man den Punkt an,
+  steht die Notiz neben dem Wert, und ein Knopf legt für genau diesen Zeitpunkt einen
+  neuen Vermerk an — in der Tagesansicht für den Tag, in der Stundenansicht auf die
+  Uhrzeit genau. Verwalten lassen sie sich zusätzlich in einer eigenen Liste unter den
+  Auswertungen: anlegen, bearbeiten, löschen. Wahlweise für einen ganzen Tag oder auf die
+  Uhrzeit genau. Die Funktion setzt Umami 3.4 voraus; auf
   älteren Servern erscheint statt der Liste ein Hinweis. Zum Anlegen und Ändern werden
   Bearbeitungsrechte an der Website benötigt — mit reinem Leserecht bleiben die Vermerke
   sichtbar, aber unveränderlich.

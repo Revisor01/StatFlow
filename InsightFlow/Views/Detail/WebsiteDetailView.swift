@@ -42,6 +42,8 @@ struct WebsiteDetailView: View {
     @State private var selectedChartPoint: TimeSeriesPoint?
     @State private var selectedMetric: ChartMetric = .pageviews
     @State private var selectedChartStyle: ChartStyle = .bar
+    /// Zeitpunkt, für den gerade ein Vermerk angelegt wird (aus dem Diagramm heraus).
+    @State private var annotationDraftDate: Date?
     @State private var showCustomDatePicker = false
     @State private var customStartDate = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
     @State private var customEndDate = Date()
@@ -80,7 +82,10 @@ struct WebsiteDetailView: View {
                         selectedMetric: $selectedMetric,
                         selectedChartPoint: $selectedChartPoint,
                         selectedChartStyle: $selectedChartStyle,
-                        selectedDateRange: selectedDateRange
+                        selectedDateRange: selectedDateRange,
+                        onAddAnnotation: { date in
+                            annotationDraftDate = date
+                        }
                     )
                 } else if viewModel.isChartLoading {
                     ChartLoadingSkeleton()
@@ -181,6 +186,20 @@ struct WebsiteDetailView: View {
             @unknown default:
                 break
             }
+        }
+        .sheet(item: Binding(
+            get: { annotationDraftDate.map(AnnotationDraft.init) },
+            set: { if $0 == nil { annotationDraftDate = nil } }
+        )) { draft in
+            ChartAnnotationEditor(
+                websiteId: viewModel.websiteId,
+                date: draft.date,
+                // Bei Stundenauflösung zählt die Uhrzeit, sonst nur der Tag.
+                allDay: selectedDateRange.unit != "hour",
+                onCreated: { annotation in
+                    viewModel.addAnnotationLocally(annotation)
+                }
+            )
         }
         .onDisappear {
             viewModel.cancelLoading()

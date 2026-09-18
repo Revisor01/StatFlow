@@ -30,6 +30,9 @@ class WebsiteDetailViewModel: ObservableObject {
     @Published var screens: [MetricItem] = []
     @Published var events: [MetricItem] = []
     @Published var goals: [GoalConversion] = []
+    /// Vermerke im gewählten Zeitraum (Umami ab 3.4). Leer, wenn der
+    /// Server sie nicht kennt — im Diagramm erscheinen dann keine Marken.
+    @Published var annotations: [UmamiAnnotation] = []
     @Published var totalVisitors: Int = 0
     @Published var activeFilters: [PlausibleQueryFilter] = []
     @Published var isLoading = false
@@ -87,6 +90,7 @@ class WebsiteDetailViewModel: ObservableObject {
                 group.addTask { await self.loadEntryPages(dateRange: dateRange) }
                 group.addTask { await self.loadExitPages(dateRange: dateRange) }
                 group.addTask { await self.loadGoals(dateRange: dateRange) }
+                group.addTask { await self.loadAnnotations(dateRange: dateRange) }
             }
         }
         loadingTask = task
@@ -529,6 +533,40 @@ class WebsiteDetailViewModel: ObservableObject {
         } catch {
             if !Task.isCancelled { Logger.ui.error("Failed to load goals: \(error.localizedDescription)") }
         }
+    }
+
+    /// Lädt die Vermerke des Zeitraums für die Marken im Diagramm.
+    ///
+    /// Nur bei Umami und nur ab 3.4; ältere Server und Plausible liefern
+    /// stillschweigend nichts, statt einen Fehler anzuzeigen — die Marken sind
+    /// eine Zugabe, kein Kernbestandteil der Ansicht.
+    private func loadAnnotations(dateRange: DateRange) async {
+        guard let provider = AnalyticsManager.shared.currentProvider,
+              let umami = provider as? UmamiAPI else {
+            annotations = []
+            return
+        }
+        guard await umami.supportsAnnotations(websiteId: websiteId) else {
+            annotations = []
+            return
+        }
+        do {
+            let loaded = try await umami.getAnnotations(websiteId: websiteId, dateRange: dateRange)
+            guard !Task.isCancelled else { return }
+            annotations = loaded
+        } catch {
+            if !Task.isCancelled {
+                Logger.ui.debug("Vermerke nicht geladen: \(error.localizedDescription)")
+                annotations = []
+            }
+        }
+    }
+
+    /// Nimmt einen neu angelegten Vermerk sofort in die Marken auf, ohne die
+    /// ganze Ansicht neu zu laden.
+    func addAnnotationLocally(_ annotation: UmamiAnnotation) {
+        annotations.append(annotation)
+        annotations.sort { $0.date > $1.date }
     }
 
     func applyFilter(_ filter: PlausibleQueryFilter) {
