@@ -53,6 +53,12 @@ ersten Store-Veröffentlichung.
 - Beim Anmelden an Umami Cloud blieb der Knopf grau, obwohl der API-Schlüssel eingetragen
   war — die Eingabeprüfung verlangte dort weiterhin einen Benutzernamen.
 
+### Sonstiges
+
+- Die Auslieferung signiert jetzt mit festen Profilen statt bei jedem Lauf neue
+  Zertifikate anzulegen. Das Kontingent lief sonst nach wenigen Releases voll und
+  blockierte weitere Veröffentlichungen.
+
 ## [2.1.0] – 2026-09-18
 
 ### Hinzugefügt
