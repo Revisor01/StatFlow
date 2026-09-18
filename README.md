@@ -61,6 +61,12 @@ Neu in 3.4 und von der App genutzt sind außerdem die Vermerke
 Bereich; auf älteren Servern zeigt die App dort einen Hinweis statt einer leeren Liste.
 Anlegen, Ändern und Löschen verlangen serverseitig das Bearbeitungsrecht an der Website.
 
+Ebenfalls ab 3.4: eigene Instanzen lassen sich über einen **API-Schlüssel** anbinden
+(Umami → Einstellungen → API-Schlüssel) statt über Benutzername und Passwort. Der
+Schlüssel wird wie das Anmelde-Token als `Authorization: Bearer …` gesendet, umgeht die
+Bestätigung in zwei Schritten und läuft nicht ab. Die Admin-Routen (`/api/admin/…`) sind
+für Schlüssel gesperrt; die App nutzt sie nicht.
+
 **Wichtige Einschränkungen:**
 
 - **Umami Cloud wird über einen API-Schlüssel angebunden.** Selbst gehostete Instanzen melden sich über `POST /api/auth/login` an und erhalten ein Bearer-Token. Umami Cloud bietet diesen Endpunkt nicht an (er antwortet dort mit `404`); stattdessen wird der Schlüssel aus den Kontoeinstellungen (Einstellungen → API keys) ebenfalls als `Authorization: Bearer …` gesendet, gegen die Basisadresse `https://api.umami.is/v1`. Jeder Schlüssel ist auf 50 Aufrufe je 15 Sekunden begrenzt.

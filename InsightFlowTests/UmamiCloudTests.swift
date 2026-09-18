@@ -131,4 +131,61 @@ final class UmamiCloudTests: XCTestCase {
         XCTAssertFalse(account.credentials.isEmpty)
         XCTAssertEqual(account.providerType, .umami)
     }
+
+    // MARK: - API-Schlüssel an eigener Instanz (Umami ab 3.4)
+
+    /// Umami führt API-Schlüssel erst ab 3.4. Gegen die eigene Instanz gemessen
+    /// (18.09.2026): der Schlüssel wird als `Authorization: Bearer …`
+    /// akzeptiert — derselbe Header wie beim Anmelde-Token, deshalb bleibt die
+    /// Abfrageschicht unverändert. Der Header `x-umami-api-key` wird dort
+    /// dagegen mit 401 abgelehnt.
+    func testSelfHostedKeyIsDistinctFromCloudCredential() {
+        // Beide Wege reichen einen Schlüssel, führen aber zu verschiedenen
+        // Basisadressen: die Cloud hat eine feste, die eigene Instanz die
+        // eingetragene. Eine gemeinsame Variante würde das vermischen.
+        let cloud = AnalyticsCredentials.umamiCloud(apiKey: "umami_test")
+        let selfHosted = AnalyticsCredentials.umamiSelfHostedKey(apiKey: "umami_test")
+
+        if case .umamiCloud = selfHosted {
+            XCTFail("Eigene Instanz darf nicht als Cloud-Zugang gelten")
+        }
+        if case .umamiSelfHostedKey = cloud {
+            XCTFail("Cloud-Zugang darf nicht als eigene Instanz gelten")
+        }
+    }
+
+    func testSelfHostedKeyRejectsCloudAddress() async {
+        // Wer die Cloud-Adresse in das Feld für die eigene Instanz einträgt,
+        // landete sonst auf `…/v1/api/websites` — einen Pfad, den es dort nicht
+        // gibt. Die Meldung nennt stattdessen den richtigen Weg.
+        do {
+            try await UmamiAPI.shared.authenticate(
+                serverURL: UmamiAPI.cloudBaseURL,
+                credentials: .umamiSelfHostedKey(apiKey: "umami_test")
+            )
+            XCTFail("Cloud-Adresse hätte abgelehnt werden müssen")
+        } catch let error as APIError {
+            guard case .umamiCloudRequiresAPIKey = error else {
+                return XCTFail("Unerwarteter Fehler: \(error)")
+            }
+        } catch {
+            XCTFail("Unerwarteter Fehler: \(error)")
+        }
+    }
+
+    func testSelfHostedKeyRejectsMalformedURL() async {
+        do {
+            try await UmamiAPI.shared.authenticate(
+                serverURL: "",
+                credentials: .umamiSelfHostedKey(apiKey: "umami_test")
+            )
+            XCTFail("Leere Adresse hätte abgelehnt werden müssen")
+        } catch let error as APIError {
+            guard case .invalidURL = error else {
+                return XCTFail("Unerwarteter Fehler: \(error)")
+            }
+        } catch {
+            XCTFail("Unerwarteter Fehler: \(error)")
+        }
+    }
 }

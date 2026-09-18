@@ -140,6 +140,46 @@ class LoginViewModel: ObservableObject {
         isLoading = false
     }
 
+    /// Anmeldung an einer eigenen Instanz über einen API-Schlüssel.
+    ///
+    /// Umami führt API-Schlüssel erst ab 3.4. Der Schlüssel ersetzt das
+    /// Anmelde-Token: er wird ebenso als `Authorization: Bearer …` gesendet,
+    /// verlangt keine Bestätigung in zwei Schritten und läuft nicht ab.
+    func loginWithUmamiSelfHostedKey(serverURL: String, apiKey: String, accountName: String = "") async {
+        guard URL(string: serverURL) != nil else {
+            errorMessage = String(localized: "error.invalidURL")
+            return
+        }
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            try await umamiAPI.authenticate(
+                serverURL: serverURL,
+                credentials: .umamiSelfHostedKey(apiKey: apiKey)
+            )
+
+            let host = URL(string: serverURL)?.host ?? serverURL
+            let account = AnalyticsAccount(
+                name: accountName.isEmpty ? host : accountName,
+                serverURL: serverURL,
+                providerType: .umami,
+                // Wie beim Cloud-Weg: der Schlüssel liegt im Feld `token`,
+                // damit Widget-Sync und Kontowechsel unverändert bleiben.
+                credentials: AccountCredentials(token: apiKey, apiKey: nil)
+            )
+            AccountManager.shared.addAccount(account)
+            await AccountManager.shared.setActiveAccount(account)
+        } catch let error as APIError {
+            errorMessage = error.errorDescription
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isLoading = false
+    }
+
     func loginWithPlausible(serverURL: String, apiKey: String, accountName: String = "") async {
         isLoading = true
         errorMessage = nil
