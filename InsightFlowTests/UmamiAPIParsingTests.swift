@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 @testable import InsightFlow
 
 final class UmamiAPIParsingTests: XCTestCase {
@@ -879,5 +880,21 @@ final class UmamiAPIParsingTests: XCTestCase {
         }
         XCTAssertEqual(sameDay.count, 1)
         XCTAssertEqual(calendar.component(.day, from: sameDay[0]), 18)
+    }
+
+    /// Die in den Vermerk-Ansichten verwendeten Systemsymbole müssen existieren.
+    ///
+    /// `bookmark.badge.plus` gibt es nicht — der Knopf zum Anlegen blieb
+    /// dadurch leer und war im Diagramm unsichtbar. SwiftUI meldet einen
+    /// unbekannten Namen nicht, es wird schlicht nichts gezeichnet.
+    func testAnnotationSymbolsExist() throws {
+        let symbols = ["text.badge.plus", "bookmark.fill", "bookmark",
+                       "chevron.right", "calendar.badge.exclamationmark"]
+        for name in symbols {
+            XCTAssertNotNil(
+                UIImage(systemName: name),
+                "Systemsymbol \(name) existiert nicht — die Fläche bliebe leer"
+            )
+        }
     }
 }

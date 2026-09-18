@@ -10,6 +10,8 @@ struct WebsiteDetailChartSection: View {
     /// Wird mit dem Zeitpunkt des gewählten Punkts aufgerufen, wenn am Wert
     /// das Plus angetippt wird. `nil` blendet den Knopf aus.
     var onAddAnnotation: ((Date) -> Void)?
+    /// Öffnet die Liste der Vermerke — angetippt über eine Notiz im Kopfbereich.
+    var onOpenAnnotations: (() -> Void)?
 
     // MARK: - Computed helpers
 
@@ -198,16 +200,26 @@ struct WebsiteDetailChartSection: View {
                         }
 
                         // Notizen an diesem Punkt — dafür sind die Marken da.
+                        // Antippen führt zur Liste, wo sie sich bearbeiten und
+                        // löschen lassen.
                         ForEach(annotations(at: point.date)) { annotation in
-                            HStack(spacing: 4) {
-                                Image(systemName: "bookmark.fill")
-                                    .font(.system(size: 9))
-                                Text(annotation.note)
-                                    .lineLimit(2)
-                                    .multilineTextAlignment(.trailing)
+                            Button {
+                                onOpenAnnotations?()
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "bookmark.fill")
+                                        .font(.system(size: 9))
+                                    Text(annotation.note)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.trailing)
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 8))
+                                }
+                                .font(.caption)
+                                .foregroundStyle(.teal)
                             }
-                            .font(.caption)
-                            .foregroundStyle(.teal)
+                            .buttonStyle(.plain)
+                            .disabled(onOpenAnnotations == nil)
                         }
                     }
 
@@ -227,10 +239,12 @@ struct WebsiteDetailChartSection: View {
                         ?? Date()
                     onAddAnnotation(target)
                 } label: {
-                    Image(systemName: "bookmark.badge.plus")
-                        .font(.subheadline)
+                    // `bookmark.badge.plus` gibt es als Systemsymbol nicht —
+                    // der Knopf blieb dadurch leer und unsichtbar.
+                    Image(systemName: "text.badge.plus")
+                        .font(.title3)
                         .foregroundStyle(.teal)
-                        .padding(8)
+                        .frame(width: 40, height: 40)
                         .background(Color(.tertiarySystemGroupedBackground))
                         .clipShape(Circle())
                 }
