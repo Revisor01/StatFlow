@@ -44,6 +44,8 @@ struct WebsiteDetailView: View {
     @State private var selectedChartStyle: ChartStyle = .bar
     /// Zeitpunkt, für den gerade ein Vermerk angelegt wird (aus dem Diagramm heraus).
     @State private var annotationDraftDate: Date?
+    /// Öffnet die Vermerke-Liste, wenn im Diagramm eine Notiz angetippt wurde.
+    @State private var showsAnnotationList = false
     @State private var showCustomDatePicker = false
     @State private var customStartDate = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
     @State private var customEndDate = Date()
@@ -85,6 +87,9 @@ struct WebsiteDetailView: View {
                         selectedDateRange: selectedDateRange,
                         onAddAnnotation: { date in
                             annotationDraftDate = date
+                        },
+                        onOpenAnnotations: {
+                            showsAnnotationList = true
                         }
                     )
                 } else if viewModel.isChartLoading {
@@ -186,6 +191,9 @@ struct WebsiteDetailView: View {
             @unknown default:
                 break
             }
+        }
+        .navigationDestination(isPresented: $showsAnnotationList) {
+            AnnotationsView(website: website, dateRange: selectedDateRange)
         }
         .sheet(item: Binding(
             get: { annotationDraftDate.map(AnnotationDraft.init) },
