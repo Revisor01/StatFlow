@@ -1578,6 +1578,89 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode([MetricItem].self, from: data)
     }
 
+    // MARK: - Vermerke (Annotations, ab Umami 3.4)
+
+    /// Ob dieser Server Vermerke führen kann. Sie kamen mit denselben
+    /// Auswertungs-Routen in Umami 3.4, deshalb genügt dieselbe Erkennung.
+    func supportsAnnotations(websiteId: String) async -> Bool {
+        await hasFeatureRoutes(websiteId: websiteId)
+    }
+
+    /// Vermerke einer Website, optional auf einen Zeitraum begrenzt.
+    ///
+    /// Ohne Zeitraum liefert der Server die neuesten zuerst. Die Liste kommt im
+    /// Paged-Envelope; ältere Zwischenstände gaben ein nacktes Array zurück,
+    /// deshalb beide Formen lesen.
+    func getAnnotations(
+        websiteId: String,
+        dateRange: DateRange? = nil,
+        page: Int = 1,
+        pageSize: Int = 100
+    ) async throws -> [UmamiAnnotation] {
+        var queryItems = [
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "pageSize", value: String(pageSize))
+        ]
+        if let dateRange {
+            queryItems += featureRouteDateItems(dateRange)
+        }
+
+        let data = try await request(
+            endpoint: "api/websites/\(websiteId)/annotations",
+            queryItems: queryItems
+        )
+
+        if let response = try? decoder.decode(UmamiAnnotationsResponse.self, from: data) {
+            return response.data
+        }
+        return try decoder.decode([UmamiAnnotation].self, from: data)
+    }
+
+    /// Legt einen Vermerk an. Der Server verlangt eine nicht-leere Notiz von
+    /// höchstens 500 Zeichen und antwortet sonst mit HTTP 400.
+    @discardableResult
+    func createAnnotation(
+        websiteId: String,
+        date: Date,
+        note: String,
+        allDay: Bool = true
+    ) async throws -> UmamiAnnotation {
+        let data = try await postRequest(
+            endpoint: "api/websites/\(websiteId)/annotations",
+            body: [
+                "date": isoDate(date),
+                "allDay": allDay,
+                "note": note
+            ]
+        )
+        return try decoder.decode(UmamiAnnotation.self, from: data)
+    }
+
+    /// Ändert einen Vermerk. Umami nimmt dafür POST auf die Adresse mit ID —
+    /// nicht PUT oder PATCH — und erwartet alle drei Felder.
+    @discardableResult
+    func updateAnnotation(
+        websiteId: String,
+        annotationId: String,
+        date: Date,
+        note: String,
+        allDay: Bool
+    ) async throws -> UmamiAnnotation {
+        let data = try await postRequest(
+            endpoint: "api/websites/\(websiteId)/annotations/\(annotationId)",
+            body: [
+                "date": isoDate(date),
+                "allDay": allDay,
+                "note": note
+            ]
+        )
+        return try decoder.decode(UmamiAnnotation.self, from: data)
+    }
+
+    func deleteAnnotation(websiteId: String, annotationId: String) async throws {
+        _ = try await deleteRequest(endpoint: "api/websites/\(websiteId)/annotations/\(annotationId)")
+    }
+
     // MARK: - Segments (v3)
 
     /// Segmente bzw. Cohorts einer Website. `type` ist serverseitig Pflicht.
