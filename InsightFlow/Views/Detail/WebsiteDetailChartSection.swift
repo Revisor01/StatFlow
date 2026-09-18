@@ -241,10 +241,14 @@ struct WebsiteDetailChartSection: View {
                 } label: {
                     // `bookmark.badge.plus` gibt es als Systemsymbol nicht —
                     // der Knopf blieb dadurch leer und unsichtbar.
+                    //
+                    // Größe und Form bewusst identisch zum Umschalter für
+                    // Linie/Balken daneben, damit beide als gleichwertige
+                    // Werkzeuge der Kopfzeile lesbar sind.
                     Image(systemName: "text.badge.plus")
-                        .font(.title3)
+                        .font(.subheadline)
                         .foregroundStyle(.teal)
-                        .frame(width: 40, height: 40)
+                        .padding(8)
                         .background(Color(.tertiarySystemGroupedBackground))
                         .clipShape(Circle())
                 }
