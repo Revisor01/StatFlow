@@ -154,5 +154,10 @@ class LiveEventDetailViewModel: ObservableObject {
     func cancelLoading() {
         loadingTask?.cancel()
         loadingTask = nil
+
+        // Siehe Website- und Übersichts-Ansicht: `isLoading` bleibt im `defer`
+        // bei Abbruch bewusst stehen; nach einem echten Abbruch muss es hier
+        // zurückgesetzt werden, sonst dreht sich der Ladekreis weiter.
+        isLoading = false
     }
 }
