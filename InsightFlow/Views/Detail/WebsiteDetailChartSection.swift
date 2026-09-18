@@ -7,6 +7,9 @@ struct WebsiteDetailChartSection: View {
     @Binding var selectedChartPoint: TimeSeriesPoint?
     @Binding var selectedChartStyle: ChartStyle
     let selectedDateRange: DateRange
+    /// Wird mit dem Zeitpunkt des gewählten Punkts aufgerufen, wenn am Wert
+    /// das Plus angetippt wird. `nil` blendet den Knopf aus.
+    var onAddAnnotation: ((Date) -> Void)?
 
     // MARK: - Computed helpers
 
@@ -16,6 +19,27 @@ struct WebsiteDetailChartSection: View {
 
     private var isYearlyData: Bool {
         selectedDateRange.preset == .thisYear || selectedDateRange.preset == .lastYear
+    }
+
+    /// Vermerke, die in den dargestellten Zeitraum fallen.
+    private var visibleAnnotations: [UmamiAnnotation] {
+        guard let first = currentChartData.first?.date,
+              let last = currentChartData.last?.date else { return [] }
+        return viewModel.annotations.filter { $0.date >= first && $0.date <= last }
+    }
+
+    /// Vermerke am gewählten Punkt — bei Tagesauflösung alle desselben Tages,
+    /// bei Stundenauflösung die derselben Stunde. Sonst träfe ein Vermerk mit
+    /// Uhrzeit die Tagesmarke nie.
+    private func annotations(at date: Date) -> [UmamiAnnotation] {
+        let calendar = Calendar.current
+        let components: Set<Calendar.Component> = isHourlyData
+            ? [.year, .month, .day, .hour]
+            : [.year, .month, .day]
+        return visibleAnnotations.filter {
+            calendar.dateComponents(components, from: $0.date)
+                == calendar.dateComponents(components, from: date)
+        }
     }
 
     private var currentChartData: [TimeSeriesPoint] {
@@ -125,18 +149,46 @@ struct WebsiteDetailChartSection: View {
             Spacer()
 
             if let point = selectedChartPoint {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(point.value.formatted())
-                        .font(.headline)
-                        .foregroundStyle(selectedMetric.color)
-                    if isHourlyData {
-                        Text(point.date, style: .time)
+                HStack(spacing: 10) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(point.value.formatted())
+                            .font(.headline)
+                            .foregroundStyle(selectedMetric.color)
+                        if isHourlyData {
+                            Text(point.date, style: .time)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text(point.date, style: .date)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        // Notizen an diesem Punkt — dafür sind die Marken da.
+                        ForEach(annotations(at: point.date)) { annotation in
+                            HStack(spacing: 4) {
+                                Image(systemName: "bookmark.fill")
+                                    .font(.system(size: 9))
+                                Text(annotation.note)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.trailing)
+                            }
                             .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(point.date, style: .date)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.teal)
+                        }
+                    }
+
+                    // Vermerk für genau diesen Zeitpunkt anlegen.
+                    if let onAddAnnotation {
+                        Button {
+                            onAddAnnotation(point.date)
+                        } label: {
+                            Image(systemName: "bookmark.badge.plus")
+                                .font(.title3)
+                                .foregroundStyle(.teal)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(String(localized: "annotations.add"))
                     }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
@@ -203,6 +255,20 @@ struct WebsiteDetailChartSection: View {
                     .foregroundStyle(selectedMetric.color)
                     .symbolSize(currentChartData.count <= 12 ? 30 : 20)
                 }
+            }
+
+            // Vermerke: dünne senkrechte Linie mit Lesezeichen am oberen Rand.
+            // Bewusst vor der Auswahl-Marke gezeichnet, damit die gestrichelte
+            // Linie des gewählten Punkts obenauf bleibt.
+            ForEach(visibleAnnotations) { annotation in
+                RuleMark(x: .value("Datum", annotation.date))
+                    .foregroundStyle(.teal.opacity(0.45))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5))
+                    .annotation(position: .top, alignment: .center, spacing: 0) {
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.teal)
+                    }
             }
 
             if let selected = selectedChartPoint {
@@ -299,6 +365,20 @@ struct WebsiteDetailChartSection: View {
                             .clipShape(Capsule())
                     }
                 }
+            }
+
+            // Vermerke: dünne senkrechte Linie mit Lesezeichen am oberen Rand.
+            // Bewusst vor der Auswahl-Marke gezeichnet, damit die gestrichelte
+            // Linie des gewählten Punkts obenauf bleibt.
+            ForEach(visibleAnnotations) { annotation in
+                RuleMark(x: .value("Datum", annotation.date))
+                    .foregroundStyle(.teal.opacity(0.45))
+                    .lineStyle(StrokeStyle(lineWidth: 1.5))
+                    .annotation(position: .top, alignment: .center, spacing: 0) {
+                        Image(systemName: "bookmark.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.teal)
+                    }
             }
 
             if let selected = selectedChartPoint {
