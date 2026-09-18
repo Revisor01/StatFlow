@@ -58,28 +58,19 @@ jobs:
           echo "$ASC_KEY_P8_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
           chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
 
-      - name: Provisioning-Profile laden
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-        run: bash .github/scripts/fetch-profiles.sh
-
       - name: Archiv bauen
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
           set -o pipefail
-          # Manuell signiert mit den zuvor geladenen Profilen. Ohne
-          # -allowProvisioningUpdates legt Xcode keine Zertifikate mehr an —
-          # siehe .github/scripts/fetch-profiles.sh zur Vorgeschichte.
           xcodebuild -project InsightFlow.xcodeproj -scheme InsightFlow \
             -configuration Release -destination 'generic/platform=iOS' \
             -archivePath build/StatFlow.xcarchive archive \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="StatFlow AppStore 2026" \
-            | tail -40
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" | tail -40
 
       - name: SDK- und Host-Stempel pruefen
         run: |
@@ -111,24 +102,20 @@ jobs:
           <dict>
             <key>destination</key><string>export</string>
             <key>method</key><string>app-store-connect</string>
-            <key>signingStyle</key><string>manual</string>
+            <key>signingStyle</key><string>automatic</string>
             <key>stripSwiftSymbols</key><true/>
             <key>teamID</key><string>J459G9CJT5</string>
             <key>uploadSymbols</key><true/>
             <key>manageAppVersionAndBuildNumber</key><false/>
-            <key>signingCertificate</key><string>Apple Distribution</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>de.godsapp.statflow</key><string>StatFlow AppStore 2026</string>
-              <key>de.godsapp.statflow.InsightFlowWidget</key><string>StatFlow Widget AppStore 2026</string>
-            </dict>
           </dict>
           </plist>
           EOF
-          # Ebenfalls manuell, mit den zuvor geladenen Profilen — sonst legte
-          # auch dieser Schritt wieder ein Zertifikat an.
           xcodebuild -exportArchive -archivePath build/StatFlow.xcarchive \
-            -exportPath build/export -exportOptionsPlist ExportOptions-ci.plist | tail -10
+            -exportPath build/export -exportOptionsPlist ExportOptions-ci.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" | tail -10
 
       - name: Zu App Store Connect hochladen
         env:
