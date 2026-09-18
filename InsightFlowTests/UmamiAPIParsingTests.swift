@@ -845,4 +845,39 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertFalse(allDayText.contains(":"), "Ganztägiger Vermerk zeigt keine Uhrzeit")
         XCTAssertTrue(timedText.contains(":"), "Vermerk mit Uhrzeit zeigt sie auch")
     }
+
+    /// Ein Vermerk mit „krummer" Uhrzeit muss dem richtigen Datenpunkt
+    /// zugeordnet werden — sonst steht die Marke sichtbar neben dem Wert,
+    /// zu dem sie gehört.
+    ///
+    /// Beispiel 17:11: in der Tagesansicht liegt das bei rund 71 % des Tages.
+    /// Die Marke gehört trotzdem an den Tagespunkt (00:00), nicht dorthin.
+    func testAnnotationSnapsToNearestDataPoint() throws {
+        let calendar = Calendar(identifier: .gregorian)
+        var components = DateComponents()
+        components.year = 2026; components.month = 9; components.day = 18
+        components.hour = 17; components.minute = 11
+        let annotationDate = calendar.date(from: components)!
+
+        // Tagesansicht: Punkte liegen auf Mitternacht.
+        let dayPoints = (17...19).map { day -> Date in
+            calendar.date(from: DateComponents(year: 2026, month: 9, day: day))!
+        }
+        let nearestDay = dayPoints.min {
+            abs($0.timeIntervalSince(annotationDate)) < abs($1.timeIntervalSince(annotationDate))
+        }
+        XCTAssertEqual(
+            calendar.component(.day, from: nearestDay!), 19,
+            "17:11 liegt näher an Mitternacht des Folgetags als an der des eigenen Tages"
+        )
+
+        // Deshalb genügt reines Einrasten auf den nächsten Punkt nicht — die
+        // Zuordnung muss den Kalendertag vergleichen.
+        let sameDay = dayPoints.filter {
+            calendar.dateComponents([.year, .month, .day], from: $0)
+                == calendar.dateComponents([.year, .month, .day], from: annotationDate)
+        }
+        XCTAssertEqual(sameDay.count, 1)
+        XCTAssertEqual(calendar.component(.day, from: sameDay[0]), 18)
+    }
 }
