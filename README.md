@@ -40,11 +40,20 @@
 
 | Anbieter | Benötigte Version | Getestet gegen | Anmerkung |
 |----------|-------------------|----------------|-----------|
-| **Umami** | **ab 3.0** (self-hosted) | **3.3.0** | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. Segmente, Web Vitals, Besuchszeiten und Umsatz gibt es ebenfalls erst ab v3. Die Anmeldung mit Bestätigung in zwei Schritten setzt Umami 3.3 voraus. |
+| **Umami** | **ab 3.0** (self-hosted) | **3.3.0 und 3.4.0** | Ab v3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`. Umami 2.x verwendet ein anderes Antwortformat und wird nicht unterstützt. Segmente, Web Vitals, Besuchszeiten und Umsatz gibt es ebenfalls erst ab v3. Die Anmeldung mit Bestätigung in zwei Schritten setzt Umami 3.3 voraus. |
 | **Plausible** | **ab CE 2.1** bzw. Cloud | **CE 3.2.1** | Erst ab CE 2.1 gibt es die Query-API `POST /api/v2/query`. Zusätzlich wird `GET /api/v1/stats/realtime/visitors` für Echtzeitdaten genutzt. |
 
 Die Angaben in der Spalte „Getestet gegen" bezeichnen die Versionen, gegen deren
-laufende Instanzen sämtliche Abfragen der App zuletzt geprüft wurden (Stand: August 2026).
+laufende Instanzen sämtliche Abfragen der App zuletzt geprüft wurden
+(Stand: September 2026).
+
+**Umami 3.4:** Die Auswertungen zu Zielen, Trichtern, Wiederkehr, Pfaden, Zuordnung
+und Ladezeiten sind in 3.4 auf `GET /api/websites/{id}/…` umgestellt; die früheren
+`POST /api/reports/…` bleiben dort über eine Kompatibilitätsschicht erreichbar. Die App
+erkennt selbst, welche Adressen ein Server versteht, und fragt entsprechend — die
+angezeigten Zahlen sind in beiden Fällen dieselben. Einzige Abweichung: die
+Wiederkehr-Auswertung richtet die Tagesgrenzen ab 3.4 nach der Zeitzone des Geräts
+statt nach UTC.
 
 **Wichtige Einschränkungen:**
 
