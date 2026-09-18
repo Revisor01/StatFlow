@@ -548,6 +548,8 @@ struct AddAccountView: View {
     @State private var apiKey = ""
 
     @State private var serverType: ServerType = .cloud
+    /// Eigene Instanz über API-Schlüssel statt Benutzername/Passwort (Umami ab 3.4).
+    @State private var useAPIKeyForSelfHosted = false
     @State private var isLoading = false
     @State private var errorMessage: String?
 
@@ -689,6 +691,21 @@ struct AddAccountView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                } else if selectedProvider == .umami && useAPIKeyForSelfHosted {
+                    // Eigene Instanz über API-Schlüssel (Umami ab 3.4).
+                    VStack(alignment: .leading, spacing: 8) {
+                        SecureField("account.add.apiKey", text: $apiKey)
+                            .textContentType(.password)
+                            .padding()
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        Text("login.selfhosted.apiKey.help")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        selfHostedMethodToggle
+                    }
                 } else if selectedProvider == .umami {
                     VStack(spacing: 12) {
                         TextField("account.add.username", text: $username)
@@ -703,6 +720,8 @@ struct AddAccountView: View {
                             .padding()
                             .background(Color(.secondarySystemGroupedBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                        selfHostedMethodToggle
                     }
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
@@ -832,10 +851,36 @@ struct AddAccountView: View {
         return useBackupCode ? !trimmed.isEmpty : trimmed.count == 6
     }
 
+    /// Wechsel zwischen Passwort- und Schlüssel-Anmeldung bei eigenen Instanzen.
+    private var selfHostedMethodToggle: some View {
+        Button {
+            useAPIKeyForSelfHosted.toggle()
+            // Die jeweils andere Eingabe leeren, damit nichts aus dem
+            // vorherigen Versuch stehen bleibt und mitgeschickt wird.
+            if useAPIKeyForSelfHosted {
+                username = ""
+                password = ""
+            } else {
+                apiKey = ""
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: useAPIKeyForSelfHosted ? "person.fill" : "key.fill")
+                Text(useAPIKeyForSelfHosted
+                     ? "login.selfhosted.usePassword"
+                     : "login.selfhosted.useApiKey")
+                    .font(.caption)
+            }
+            .foregroundStyle(.secondary)
+        }
+    }
+
     private var isFormValid: Bool {
         let hasValidServer = serverType == .cloud || !serverURL.isEmpty
         if selectedProvider == .umami && serverType == .cloud {
             return !apiKey.isEmpty
+        } else if selectedProvider == .umami && useAPIKeyForSelfHosted {
+            return hasValidServer && !apiKey.isEmpty
         } else if selectedProvider == .umami {
             return hasValidServer && !username.isEmpty && !password.isEmpty
         } else {
@@ -867,6 +912,21 @@ struct AddAccountView: View {
                     try await UmamiAPI.shared.authenticate(
                         serverURL: normalizedURL,
                         credentials: .umamiCloud(apiKey: apiKey)
+                    )
+                    await createUmamiAccount(token: apiKey, serverURL: normalizedURL)
+                    await MainActor.run {
+                        onAccountAdded?()
+                        dismiss()
+                    }
+                    return
+                }
+
+                // Eigene Instanz mit API-Schlüssel: kein Anmeldevorgang nötig,
+                // der Schlüssel ist bereits das Bearer-Token.
+                if useAPIKeyForSelfHosted {
+                    try await UmamiAPI.shared.authenticate(
+                        serverURL: normalizedURL,
+                        credentials: .umamiSelfHostedKey(apiKey: apiKey)
                     )
                     await createUmamiAccount(token: apiKey, serverURL: normalizedURL)
                     await MainActor.run {

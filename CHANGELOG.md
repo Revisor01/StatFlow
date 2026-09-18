@@ -18,6 +18,11 @@ ersten Store-Veröffentlichung.
 
 ### Hinzugefügt
 
+- **Anmeldung mit API-Schlüssel bei eigenen Instanzen**: Statt Benutzername und Passwort
+  lässt sich jetzt auch ein API-Schlüssel eintragen. Er umgeht die Bestätigung in zwei
+  Schritten und läuft nicht ab — praktisch, wenn die Sitzung sonst regelmäßig abgemeldet
+  wird. Angelegt wird er in Umami unter Einstellungen → API-Schlüssel; die Funktion setzt
+  Umami 3.4 voraus. Benutzername und Passwort funktionieren unverändert weiter.
 - **Vermerke**: Notizen zum Verlauf einer Website — „Newsletter verschickt", „Beitrag im
   Gemeindebrief", „Relaunch". Sie lassen sich in der App anlegen, bearbeiten und löschen
   und erklären im Nachhinein, warum die Zahlen an einem Tag ausschlagen. Wahlweise für
@@ -36,6 +41,13 @@ ersten Store-Veröffentlichung.
 - Bei der Wiederkehr-Auswertung richten sich die Tagesgrenzen auf Servern ab Umami 3.4
   nach der Zeitzone des Geräts statt nach UTC. Dadurch können die Werte geringfügig von
   früheren abweichen; sie passen jetzt zu den übrigen Auswertungen.
+
+### Behoben
+
+- Beim Verlassen der Website-Ansicht während des Ladens blieb der Ladekreis stehen und war
+  beim nächsten Öffnen sofort wieder zu sehen, bis ein Ladevorgang vollständig durchlief.
+- Beim Anmelden an Umami Cloud blieb der Knopf grau, obwohl der API-Schlüssel eingetragen
+  war — die Eingabeprüfung verlangte dort weiterhin einen Benutzernamen.
 
 ## [2.1.0] – 2026-09-18
 
