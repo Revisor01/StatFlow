@@ -105,6 +105,13 @@ class WebsiteDetailViewModel: ObservableObject {
     func cancelLoading() {
         loadingTask?.cancel()
         loadingTask = nil
+
+        // Der `defer` in `loadData` setzt `isLoading` bei Abbruch bewusst nicht
+        // zurück — sonst würde ein abgelöster Ladevorgang den Spinner des
+        // nachfolgenden ausschalten. Wird hier abgebrochen, folgt aber keiner
+        // mehr: ohne dieses Zurücksetzen bliebe der Ladekreis stehen und wäre
+        // beim nächsten Öffnen der Ansicht sofort wieder zu sehen.
+        isLoading = false
     }
 
     /// Zeiträume, die im Hintergrund vorgeladen und gecacht werden, damit beim

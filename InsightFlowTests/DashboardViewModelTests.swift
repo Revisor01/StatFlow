@@ -18,10 +18,10 @@ class DashboardViewModelTests: XCTestCase {
             await viewModel.loadData(dateRange: .today, clearFirst: true)
         }
 
-        // Short wait for clearFirst to execute
-        try? await Task.sleep(nanoseconds: 50_000_000) // 0.05s
-
-        XCTAssertTrue(viewModel.websites.isEmpty, "websites muss nach clearFirst leer sein")
+        // `loadData` leert die Daten in einem eigenen Task. Eine feste Wartezeit
+        // reicht dafür nicht verlässlich: unter Last kommt dieser Task später
+        // dran, und der Test prüfte dann einen Zustand von vor dem Leeren.
+        await waitUntil("websites muss nach clearFirst leer sein") { viewModel.websites.isEmpty }
         task.cancel()
     }
 
@@ -35,9 +35,8 @@ class DashboardViewModelTests: XCTestCase {
             await viewModel.loadData(dateRange: .today, clearFirst: true)
         }
 
-        try? await Task.sleep(nanoseconds: 50_000_000)
-
-        XCTAssertTrue(viewModel.stats.isEmpty, "stats muss nach clearFirst leer sein")
+        // Siehe oben: auf den Zustand warten statt auf die Uhr.
+        await waitUntil("stats muss nach clearFirst leer sein") { viewModel.stats.isEmpty }
         XCTAssertTrue(viewModel.sparklineData.isEmpty, "sparklineData muss nach clearFirst leer sein")
         XCTAssertTrue(viewModel.activeVisitors.isEmpty, "activeVisitors muss nach clearFirst leer sein")
         task.cancel()
@@ -62,6 +61,27 @@ class DashboardViewModelTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    /// Wartet, bis `condition` zutrifft, höchstens aber `timeout` Sekunden.
+    ///
+    /// Ersetzt feste `Task.sleep`-Pausen: die geprüften Änderungen passieren in
+    /// einem eigenen Task, dessen Zeitpunkt unter Last schwankt. Trifft die
+    /// Bedingung nicht rechtzeitig ein, schlägt der Test mit derselben Aussage
+    /// fehl wie zuvor — die Erwartung wird also nicht aufgeweicht.
+    private func waitUntil(
+        _ message: String,
+        timeout: TimeInterval = 2,
+        file: StaticString = #filePath,
+        line: UInt = #line,
+        condition: () -> Bool
+    ) async {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() { return }
+            try? await Task.sleep(nanoseconds: 5_000_000) // 5 ms
+        }
+        XCTAssertTrue(condition(), message, file: file, line: line)
+    }
 
     private func makeTestWebsite() -> Website {
         Website(id: "test", name: "Test", domain: "test.com", shareId: nil, teamId: nil, resetAt: nil, createdAt: nil)
