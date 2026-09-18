@@ -812,3 +812,8 @@
 "annotations.unsupported.description" = "Diese Umami-Instanz ist älter und kennt noch keine Vermerke. Nach einer Aktualisierung auf Version 3.4 steht die Funktion zur Verfügung.";
 "annotations.delete.confirm" = "Diesen Vermerk löschen?";
 "annotations.error.readonly" = "Für diese Website hast du nur Leserechte. Vermerke anlegen oder ändern kann nur, wer die Website bearbeiten darf.";
+
+// MARK: - Anmeldung mit API-Schluessel an eigener Instanz (Umami ab 3.4)
+"login.selfhosted.useApiKey" = "Stattdessen API-Schlüssel verwenden";
+"login.selfhosted.usePassword" = "Stattdessen Benutzername und Passwort verwenden";
+"login.selfhosted.apiKey.help" = "Den Schlüssel legst du in Umami unter Einstellungen → API-Schlüssel an. Er umgeht die Bestätigung in zwei Schritten und läuft nicht ab. Setzt Umami 3.4 voraus.";

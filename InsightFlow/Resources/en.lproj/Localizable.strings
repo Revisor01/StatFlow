@@ -811,3 +811,8 @@
 "annotations.unsupported.description" = "This Umami instance is older and does not support annotations yet. They become available after updating to version 3.4.";
 "annotations.delete.confirm" = "Delete this annotation?";
 "annotations.error.readonly" = "You only have read access to this website. Adding or changing annotations requires edit permission.";
+
+// MARK: - API key login for self-hosted instances (Umami 3.4 and newer)
+"login.selfhosted.useApiKey" = "Use an API key instead";
+"login.selfhosted.usePassword" = "Use username and password instead";
+"login.selfhosted.apiKey.help" = "Create the key in Umami under Settings → API keys. It skips two-step verification and does not expire. Requires Umami 3.4.";

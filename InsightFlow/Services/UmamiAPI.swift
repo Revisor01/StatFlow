@@ -318,11 +318,35 @@ actor UmamiAPI: AnalyticsProvider {
                 throw APIError.invalidURL
             }
 
-            // Der Schlüssel wird gegen eine echte Route geprüft, damit ein
-            // ungültiger Key sofort auffällt und nicht erst im Dashboard.
-            try await verifyCloudKey(baseURL: url, apiKey: apiKey)
+            try await verifyAPIKey(baseURL: url, apiKey: apiKey, isCloud: true)
 
             try KeychainService.save(cloudURL, for: .serverURL)
+            try KeychainService.save(apiKey, for: .token)
+            try KeychainService.save(AnalyticsProviderType.umami.rawValue, for: .providerType)
+
+            await configure(baseURL: url, token: apiKey)
+            return
+        }
+
+        // Eigene Instanz mit API-Schlüssel (Umami ab 3.4). Der Schlüssel wird
+        // wie ein Anmelde-Token als `Authorization: Bearer …` gesendet, deshalb
+        // bleibt die gesamte Abfrageschicht unverändert. Vorteil gegenüber
+        // Benutzername und Passwort: keine Bestätigung in zwei Schritten nötig
+        // und kein Ablaufen der Sitzung.
+        if case .umamiSelfHostedKey(let apiKey) = credentials {
+            guard let url = URL(string: serverURL) else {
+                throw APIError.invalidURL
+            }
+
+            // Die Cloud hat einen eigenen Weg mit fester Basisadresse; wer sie
+            // hier einträgt, landete sonst auf einem Pfad, den es dort nicht gibt.
+            if Self.isCloudURL(serverURL) {
+                throw APIError.umamiCloudRequiresAPIKey
+            }
+
+            try await verifyAPIKey(baseURL: url, apiKey: apiKey, isCloud: false)
+
+            try KeychainService.save(serverURL, for: .serverURL)
             try KeychainService.save(apiKey, for: .token)
             try KeychainService.save(AnalyticsProviderType.umami.rawValue, for: .providerType)
 
@@ -369,8 +393,14 @@ actor UmamiAPI: AnalyticsProvider {
     /// Die Cloud unterscheidet sauber: ohne Schlüssel `400`, mit ungültigem
     /// Schlüssel `401`. Beides wird hier in eine Meldung übersetzt, die dem
     /// Nutzer sagt, was zu tun ist.
-    private nonisolated func verifyCloudKey(baseURL: URL, apiKey: String) async throws {
-        var request = URLRequest(url: baseURL.appendingPathComponent("websites"))
+    /// Prüft einen API-Schlüssel gegen eine echte Route, damit ein ungültiger
+    /// Schlüssel sofort auffällt und nicht erst im Dashboard.
+    ///
+    /// Die Cloud-Basis `…/v1` enthält den Pfadbestandteil `api` bereits, eine
+    /// selbst gehostete Instanz nicht — deshalb der unterschiedliche Pfad.
+    private nonisolated func verifyAPIKey(baseURL: URL, apiKey: String, isCloud: Bool) async throws {
+        let path = isCloud ? "websites" : "api/websites"
+        var request = URLRequest(url: baseURL.appendingPathComponent(path))
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.timeoutInterval = 30

@@ -192,6 +192,10 @@ enum AnalyticsCredentials {
     /// Umami Cloud kennt keine Anmeldung mit Benutzername und Passwort —
     /// der API-Schlüssel aus den Kontoeinstellungen ist das Bearer-Token.
     case umamiCloud(apiKey: String)
+    /// Eigene Instanz, angebunden über einen API-Schlüssel statt über
+    /// Benutzername und Passwort. Umami führt Schlüssel erst ab 3.4; sie
+    /// umgehen die Bestätigung in zwei Schritten und laufen nicht ab.
+    case umamiSelfHostedKey(apiKey: String)
     case plausible(apiKey: String)
 }
 

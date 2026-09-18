@@ -95,6 +95,9 @@ struct LoginView: View {
     @State private var accountName = ""
     @State private var twoFactorCode = ""
     @State private var useBackupCode = false
+    /// Eigene Instanz: Anmeldung über API-Schlüssel statt Benutzername
+    /// und Passwort. Umami kennt Schlüssel erst ab 3.4.
+    @State private var useAPIKeyForSelfHosted = false
 
     @FocusState private var focusedField: Field?
 
@@ -294,6 +297,8 @@ struct LoginView: View {
                 // Kontoeinstellungen.
                 if serverType == .cloud {
                     umamiCloudCredentialsFields
+                } else if useAPIKeyForSelfHosted {
+                    umamiSelfHostedKeyFields
                 } else {
                     umamiCredentialsFields
                 }
@@ -398,7 +403,58 @@ struct LoginView: View {
             )
             .focused($focusedField, equals: .password)
 
+            umamiSelfHostedMethodToggle
+
             // Optional account name
+            accountNameField
+        }
+    }
+
+    /// Wechsel zwischen Passwort- und Schlüssel-Anmeldung bei eigenen Instanzen.
+    private var umamiSelfHostedMethodToggle: some View {
+        Button {
+            useAPIKeyForSelfHosted.toggle()
+            // Die jeweils andere Eingabe leeren, damit nichts aus dem vorherigen
+            // Versuch stehen bleibt und mitgeschickt wird.
+            if useAPIKeyForSelfHosted {
+                username = ""
+                password = ""
+            } else {
+                apiKey = ""
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: useAPIKeyForSelfHosted ? "person.fill" : "key.fill")
+                Text(useAPIKeyForSelfHosted
+                     ? "login.selfhosted.usePassword"
+                     : "login.selfhosted.useApiKey")
+                    .font(.caption)
+            }
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    /// Anmeldung an einer eigenen Instanz über einen API-Schlüssel (Umami 3.4).
+    private var umamiSelfHostedKeyFields: some View {
+        VStack(spacing: 16) {
+            GlassTextField(
+                icon: "key.fill",
+                placeholder: String(localized: "login.apiKey.placeholder"),
+                text: $apiKey,
+                isSecure: true
+            )
+            .focused($focusedField, equals: .apiKey)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+
+            Text("login.selfhosted.apiKey.help")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            umamiSelfHostedMethodToggle
+
             accountNameField
         }
     }
@@ -477,6 +533,12 @@ struct LoginView: View {
                             apiKey: apiKey,
                             accountName: accountName
                         )
+                    } else if useAPIKeyForSelfHosted {
+                        await viewModel.loginWithUmamiSelfHostedKey(
+                            serverURL: serverURL,
+                            apiKey: apiKey,
+                            accountName: accountName
+                        )
                     } else {
                         await viewModel.login(
                             serverURL: serverURL,
@@ -531,6 +593,12 @@ struct LoginView: View {
         let hasValidServer = serverType == .cloud || !serverURL.isEmpty
 
         if selectedProvider == .umami {
+            // Cloud und die Schlüssel-Anmeldung an eigenen Instanzen brauchen
+            // keinen Benutzernamen — zuvor verlangte die Prüfung ihn auch dort
+            // und ließ den Knopf bei Umami Cloud dauerhaft grau.
+            if serverType == .cloud || useAPIKeyForSelfHosted {
+                return hasValidServer && !apiKey.isEmpty
+            }
             return hasValidServer && !username.isEmpty && !password.isEmpty
         } else {
             return hasValidServer && !apiKey.isEmpty
