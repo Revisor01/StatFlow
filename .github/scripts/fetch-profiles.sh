@@ -40,7 +40,7 @@ pfad = os.path.join(os.environ["ZIEL"], a["uuid"] + ".mobileprovision")
 with open(pfad, "wb") as f:
     f.write(base64.b64decode(a["profileContent"]))
 # Laeuft das Profil bald ab, faellt das hier auf und nicht erst, wenn der
-# Release steht. Profile und Distribution-Zertifikat enden am 28.11.2026.
+# Release steht.
 rest = (datetime.fromisoformat(a["expirationDate"]) - datetime.now(timezone.utc)).days
 hinweis = "  ACHTUNG: laeuft in %d Tagen ab" % rest if rest < 30 else ""
 print("  %s -> %s (noch %d Tage)%s" % (name, a["uuid"], rest, hinweis))'
