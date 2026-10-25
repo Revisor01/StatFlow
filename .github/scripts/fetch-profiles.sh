@@ -1,19 +1,9 @@
 #!/usr/bin/env bash
-# Laedt die Provisioning-Profile fuer App und Widget aus App Store Connect
-# und legt sie dort ab, wo xcodebuild sie erwartet.
-#
-# Warum ueberhaupt: Der Runner ist jedes Mal eine frische Maschine ohne
-# Zertifikat im Schluesselbund. Mit `-allowProvisioningUpdates` legte Xcode
-# deshalb bei JEDEM Lauf ein neues Development-Zertifikat an. Apple erlaubt
-# davon zwei je Konto, danach scheitert der Build mit "Choose a certificate
-# to revoke" — passiert am 18.09.2026 nach acht Builds an einem Tag.
-#
-# Welches Profil welches Ziel signiert, steht pro Target in der
-# project.pbxproj (PROVISIONING_PROFILE_SPECIFIER). Global gesetzt bekaeme
-# auch das Widget das App-Profil und der Build braeche ab.
-#
-# Erwartet: ASC_KEY_ID, ASC_ISSUER_ID und den .p8 unter
-# ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+# Laedt die Provisioning-Profile fuer App und Widget aus App Store Connect und
+# legt sie ab, wo xcodebuild sie erwartet. Ohne fertige Profile legt Xcode auf
+# dem frischen Runner bei jedem Lauf ein Development-Zertifikat an; nach zwei
+# davon scheitert der Build. Erwartet ASC_KEY_ID, ASC_ISSUER_ID und den .p8
+# unter ~/.appstoreconnect/private_keys/.
 set -euo pipefail
 
 source "$(dirname "$0")/asc-jwt.sh"

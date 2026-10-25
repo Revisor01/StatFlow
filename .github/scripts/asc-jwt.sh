@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
-# Baut einen JWT fuer die App-Store-Connect-API und stellt `asc_get` bereit.
-# Wird von den anderen Skripten in diesem Ordner eingebunden (`source`), nicht
-# selbst aufgerufen.
-#
-# Bewusst ohne Fremdbibliothek: der Runner soll fuer einen signierten Request
-# kein Ruby-Gem und kein pip-Paket nachladen muessen. openssl und python3
-# liegen auf jedem macOS-Runner bereit.
-#
-# Erwartet: ASC_KEY_ID, ASC_ISSUER_ID und den .p8 unter
-# ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+# Baut einen JWT fuer die App-Store-Connect-API und stellt `asc_get` bereit;
+# wird von den anderen Skripten per `source` eingebunden. Nur openssl und
+# python3, damit der Runner nichts nachinstallieren muss. Erwartet ASC_KEY_ID,
+# ASC_ISSUER_ID und den .p8 unter ~/.appstoreconnect/private_keys/.
 
 ASC_KEY_PATH="$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
 
