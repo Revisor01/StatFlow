@@ -2,8 +2,8 @@ name: Tests
 
 # Fuehrt die Unit-Tests bei jedem PR auf einem Simulator aus. Ohne diesen
 # Check koennte die Pflicht "Checks gruen vor dem Merge" die Tests nicht
-# erfassen. Signiert wird ad hoc: ohne Signatur fehlen die Entitlements fuer
-# den Schluesselbund, und die Konto-Tests scheitern mit -34018.
+# erfassen. Signiert wird mit den Simulator-Einstellungen des Projekts (ad hoc),
+# damit dieser Check auch die lokale Konfiguration prueft.
 
 on:
   pull_request:
@@ -55,10 +55,6 @@ jobs:
             -destination "id=$SIM_UDID" \
             -only-testing:InsightFlowTests \
             -resultBundlePath "$RUNNER_TEMP/Tests.xcresult" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY=- \
-            PROVISIONING_PROFILE_SPECIFIER= \
-            DEVELOPMENT_TEAM= \
             > "$RUNNER_TEMP/tests.log" 2>&1 || status=$?
           grep -E "error:|failed|\*\* TEST" "$RUNNER_TEMP/tests.log" | tail -60 || true
           exit "$status"
