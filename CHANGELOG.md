@@ -14,6 +14,17 @@ Die Versionen 1.0 bis 1.0.6 sind die im App Store ausgelieferten Releases. Die V
 0.1.0 bis 1.3.0 stammen aus der Vorgeschichte als InsightFlow bzw. PrivacyFlow, vor der
 ersten Store-Veröffentlichung.
 
+## [Unreleased]
+
+### Sonstiges
+
+- Die einzige Abhängigkeit des Repos, `actions/checkout` im Release-Workflow, wurde
+  von v4 auf v7.0.1 gehoben und auf den Commit gepinnt. Die App selbst hat keine
+  Paketabhängigkeiten.
+- Die Kompatibilitätsübersicht nennt den Stand von Oktober 2026: Umami 3.4.1 ist ein
+  reiner Sicherheits-Hotfix ohne API-Änderung, Plausible CE 3.2.1 bleibt die aktuelle
+  Fassung.
+
 ## [2.2.0] – 2026-09-18
 
 ### Hinzugefügt
