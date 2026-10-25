@@ -168,31 +168,16 @@ alle Abfragen sind gegen laufende Instanzen dieser Versionen geprüft.
 - Abmelden entfernte die Konten nicht wirklich: Nach einem Neustart waren alle
   wieder da, und die App sprang zwischenzeitlich auf ein Konto eines anderen
   Anbieters. Der Knopf heißt jetzt „Von allen Konten abmelden" und tut das auch.
-
-## [1.0.7] – 2026-08-12
-
-### Hinzugefügt
-
-- Screenshots im README (`docs/screenshots/`).
-- Übersicht der unterstützten Server-Versionen von Umami und Plausible samt bekannter
-  Einschränkungen in der Dokumentation.
-
-### Behoben
-
 - Widgets zeigten bei Umami dauerhaft null aktive Besucher an.
 - Widgets und App konnten für denselben Zeitraum unterschiedliche Zahlen anzeigen, weil die
   Zeitzone des Geräts nicht überall berücksichtigt wurde.
 - Funktionen, die es auf selbst gehosteten Plausible-Servern nicht gibt (Websites anlegen,
   Ziele verwalten, Share-Links), melden das jetzt verständlich statt mit einem Serverfehler.
 
-### Entfernt
+### Sonstiges
 
-- App-Store-Grafiken und Screenshot-Generator aus dem Repository entfernt. Die Grafik-Erstellung
-  läuft jetzt zentral über `~/Documents/social-posts-studio` (Projekt `statflow`); Secrets liegen
-  in `~/.claude/secrets/`.
-- Ordner `app-store-screenshots-playbook/` entfernt — durch die zentrale Grafik-Werkstatt ersetzt.
-- Duplizierte App-Icon-Dateien (`AppIcon1.png`, `AppIcon2.png`, `AppIcon3.png`) aus dem
-  Repository-Root entfernt — identische Originale liegen unter `InsightFlow/Resources/`.
+- Das README zeigt Screenshots, und die Dokumentation nennt die unterstützten Versionen von
+  Umami und Plausible samt bekannter Einschränkungen.
 
 ## [1.0.6] – 2026-07-21
 
@@ -317,8 +302,10 @@ Erste Fassung als *InsightFlow*.
 - Offline-Caching und verbesserte Diagrammskalierung.
 - Datenschutzerklärung im README.
 
-[Unreleased]: https://github.com/Revisor01/StatFlow/compare/v1.0.7...HEAD
-[1.0.7]: https://github.com/Revisor01/StatFlow/compare/v1.0.6...v1.0.7
+[Unreleased]: https://github.com/Revisor01/StatFlow/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/Revisor01/StatFlow/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/Revisor01/StatFlow/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/Revisor01/StatFlow/compare/v1.0.6...v2.0.0
 [1.0.6]: https://github.com/Revisor01/StatFlow/compare/v1.0.5...v1.0.6
 [1.0.5]: https://github.com/Revisor01/StatFlow/compare/v1.0.4...v1.0.5
 [1.0.4]: https://github.com/Revisor01/StatFlow/compare/v1.0.3...v1.0.4
