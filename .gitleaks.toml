@@ -39,9 +39,9 @@ keywords = ["api", "key", "token", "secret"]
 
 [[rules]]
 id = "lokaler-pfad"
-description = "Lokaler Pfad unter /Users/"
-regex = '''/Users/[a-z][a-z0-9._-]+/'''
-keywords = ["/users/"]
+description = "Lokaler Pfad unter /Users/ oder ~/"
+regex = '''(?:/Users/[a-z][a-z0-9._-]+/|~/(?:Documents|Desktop|Downloads|Library|Backups|Projekte|code|\.claude|\.ssh|\.config)/)'''
+keywords = ["/users/", "~/"]
 
 [[rules]]
 id = "arbeitsnotiz"
