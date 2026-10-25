@@ -86,14 +86,9 @@ struct PrivacyFlowApp: App {
     }
 
     private func registerBackgroundTasks() {
-        // WICHTIG: Der Completion-Block muss nonisolated sein. BGTaskScheduler ruft ihn auf
-        // seiner eigenen Hintergrund-Queue (com.apple.BGTaskScheduler) auf, NICHT auf dem
-        // MainActor. Da registerBackgroundTasks() als App-Methode @MainActor-isoliert ist,
-        // würde ein normales Closure die Isolation erben — die Swift-Runtime prüft dann beim
-        // Eintritt swift_task_checkIsolated, stellt "nicht auf MainActor" fest und löst einen
-        // EXC_BREAKPOINT (SIGTRAP) aus. Genau das war der tägliche Background-Crash.
-        // `using: nil` heißt explizit: Apple wählt die Queue, also darf der Block nicht
-        // MainActor-isoliert sein.
+        // BGTaskScheduler ruft den Block auf seiner eigenen Queue auf. Ein vom
+        // MainActor geerbtes Closure löst dort beim Eintritt einen EXC_BREAKPOINT
+        // aus; der Block ist deshalb @Sendable und nicht isoliert.
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: "de.godsapp.statflow.refresh",
             using: nil
@@ -111,16 +106,9 @@ struct PrivacyFlowApp: App {
         // Hintergrund-Lauf nicht weiter.
         scheduleAppRefresh()
 
-        // Die eigentliche Arbeit läuft auf dem MainActor (NotificationManager ist
-        // @MainActor-isoliert). `task` selbst bleibt im nonisolated Kontext und wird NICHT
-        // über eine Concurrency-Boundary geschickt — BGAppRefreshTask ist nicht Sendable.
-        // expirationHandler und setTaskCompleted sind thread-safe (Apple-API) und werden
-        // daher synchron bzw. aus dem nonisolated Task heraus aufgerufen.
-        //
-        // WICHTIG: scheduleAllNotifications() statt sendScheduledNotifications() aufrufen.
-        // UNCalendarNotificationTrigger(repeats: true) friert den content.body beim Planen
-        // ein. scheduleAllNotifications() entfernt pending Requests und legt sie mit frisch
-        // geladenen Stats neu an — das ist exakt der Fix für den Frozen-Body-Bug.
+        // BGAppRefreshTask ist nicht Sendable und bleibt im nicht isolierten Kontext;
+        // nur die Arbeit wechselt auf den MainActor. Neu planen statt senden, weil
+        // wiederholende Trigger den Benachrichtigungstext beim Planen einfrieren.
         let work = Task { @MainActor in
             // UmamiAPI-Aktor-Filter clearen, sonst leaken in der Detail-View gesetzte
             // Filter in den Background-Refresh und reduzieren Stats auf 0.

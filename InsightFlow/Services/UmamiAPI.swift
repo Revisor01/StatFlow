@@ -328,11 +328,9 @@ actor UmamiAPI: AnalyticsProvider {
             return
         }
 
-        // Eigene Instanz mit API-Schlüssel (Umami ab 3.4). Der Schlüssel wird
-        // wie ein Anmelde-Token als `Authorization: Bearer …` gesendet, deshalb
-        // bleibt die gesamte Abfrageschicht unverändert. Vorteil gegenüber
-        // Benutzername und Passwort: keine Bestätigung in zwei Schritten nötig
-        // und kein Ablaufen der Sitzung.
+        // Eigene Instanz mit API-Schlüssel (ab Umami 3.4), gesendet wie ein Token
+        // als `Authorization: Bearer`. Keine Bestätigung in zwei Schritten, kein
+        // Ablauf der Sitzung.
         if case .umamiSelfHostedKey(let apiKey) = credentials {
             guard let url = URL(string: serverURL) else {
                 throw APIError.invalidURL
@@ -1362,11 +1360,9 @@ actor UmamiAPI: AnalyticsProvider {
     // MARK: - Reports
 
     func getRetention(websiteId: String, dateRange: DateRange) async throws -> [RetentionRow] {
-        // Ab Umami 3.4: `GET api/websites/{id}/retention`. Anders als der
-        // Report-Weg berücksichtigt die Route `timezone` und schneidet die Tage
-        // damit entlang der Gerätezeitzone statt in UTC. Das ist der Grund,
-        // weshalb die Zahlen von den früheren abweichen können — die
-        // Tagesgrenze ist eine andere, nicht die Zählweise.
+        // Ab Umami 3.4 per `GET …/retention`. Die Route schneidet die Tage nach der
+        // Zeitzone des Geräts statt nach UTC; abweichende Zahlen gegenüber früher
+        // kommen von der Tagesgrenze, nicht von der Zählweise.
         if await hasFeatureRoutes(websiteId: websiteId) {
             let data = try await request(
                 endpoint: "api/websites/\(websiteId)/retention",
@@ -1445,11 +1441,9 @@ actor UmamiAPI: AnalyticsProvider {
         // Umami stores UTM data in query metrics — parse utm_ params from query strings
         let queryMetrics = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .query, limit: 100)
 
-        // Umami returns one query-metric row per distinct query string, so two
-        // URLs that share the same UTM tags but differ in other params (e.g. gclid,
-        // or a different utm_content) arrive as separate rows. Aggregate by the full
-        // UTM tuple and sum visitors, otherwise the same campaign shows up as
-        // seemingly duplicate entries.
+        // Umami liefert je Query-String eine Zeile; URLs mit gleichen UTM-Werten,
+        // aber anderen Parametern (etwa gclid) kämen sonst als scheinbar doppelte
+        // Kampagnen an. Deshalb nach dem UTM-Tupel zusammenfassen.
         var aggregated: [String: UTMReportItem] = [:]
         for metric in queryMetrics {
             let query = metric.name
@@ -1725,13 +1719,9 @@ actor UmamiAPI: AnalyticsProvider {
         dateRange: DateRange,
         metric: UmamiWebVitalMetric = .lcp
     ) async throws -> UmamiPerformanceReport {
-        // Ab Umami 3.4 ist der eine Report auf drei Routen aufgeteilt:
-        // `performance/stats` (alle fünf Vitals), `performance/chart` (die über
-        // `metric` gewählte Zeitreihe) und `performance/metrics`, das je Aufruf
-        // eine Aufschlüsselung liefert. Die vier Aufschlüsselungen laufen
-        // deshalb parallel — sonst würde aus einer Anfrage eine Kette von
-        // sechs. Gegen 3.4.0 gemessen stimmen die Perzentile mit dem alten
-        // Report überein.
+        // Ab Umami 3.4 ist der Report auf drei Routen verteilt; die vier
+        // Aufschlüsselungen laufen parallel statt als Kette von sechs Anfragen.
+        // Gegen 3.4.0 gemessen stimmen die Perzentile mit dem alten Report überein.
         if await hasFeatureRoutes(websiteId: websiteId) {
             return try await featureRoutePerformanceReport(
                 websiteId: websiteId,

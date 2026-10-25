@@ -598,15 +598,9 @@ actor PlausibleAPI: AnalyticsProvider {
         }
     }
 
-    // HINWEIS zu exit_rate:
-    // exit_rate steht zwar in lib/plausible/stats/metrics.ex, ist aber in
-    // priv/json-schemas/query-api-schema.json (definitions.metric) NICHT
-    // enthalten. Jeder /api/v2/query-Request wird laut
-    // lib/plausible/stats/json_schema.ex gegen genau dieses Schema validiert
-    // ("internal queries expose some metrics ... not available on the public API").
-    // exit_rate ist damit dashboard-intern und über den API-Key NICHT abfragbar —
-    // deshalb bewusst keine Methode dafür. Ersatz: getExitPages() liefert die
-    // Ausstiegsseiten nach Besuchern.
+    // exit_rate fehlt im Schema der öffentlichen Query-API und ist nur
+    // dashboard-intern abfragbar; deshalb gibt es keine Methode dafür.
+    // Ersatz: getExitPages() liefert die Ausstiegsseiten nach Besuchern.
 
     /// Aggregierte Engagement-Kennzahlen fürs ganze Site (ohne Dimensionen).
     /// Hier NUR Metriken, die ohne event:page-Kontext erlaubt sind —

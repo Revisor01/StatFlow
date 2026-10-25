@@ -110,11 +110,9 @@ class WebsiteDetailViewModel: ObservableObject {
         loadingTask?.cancel()
         loadingTask = nil
 
-        // Der `defer` in `loadData` setzt `isLoading` bei Abbruch bewusst nicht
-        // zurück — sonst würde ein abgelöster Ladevorgang den Spinner des
-        // nachfolgenden ausschalten. Wird hier abgebrochen, folgt aber keiner
-        // mehr: ohne dieses Zurücksetzen bliebe der Ladekreis stehen und wäre
-        // beim nächsten Öffnen der Ansicht sofort wieder zu sehen.
+        // `loadData` setzt `isLoading` bei Abbruch bewusst nicht zurück, weil sonst
+        // ein abgelöster Lauf den Spinner des nächsten ausschaltet. Hier folgt kein
+        // Lauf mehr, also muss der Ladekreis an dieser Stelle aus.
         isLoading = false
     }
 
