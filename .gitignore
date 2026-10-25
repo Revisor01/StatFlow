@@ -42,20 +42,10 @@ Carthage/Checkouts/
 .idea/
 *.sublime-*
 
-# Claude Code
-.claude/
-.playwright-mcp/
-
 # Secrets & Credentials
-*.p12
-*.mobileprovision
 *.pem
 Secrets/
 credentials.json
-
-# Environment
-.env
-.env.*
 
 # Archives
 *.xcarchive
@@ -64,20 +54,24 @@ credentials.json
 *.tmp
 *.temp
 
-# Secrets
-app-store/secrets.md
-
-# Phase 23 — Screenshot Generator + Submission
-app-store/screenshots/generator/node_modules/
-app-store/screenshots/generator/.next/
-app-store/screenshots/generator/out/
-app-store/submission/node_modules/
-# Source-Shots werden NICHT committet (D-22 — können jederzeit aus Simulator regeneriert werden)
-app-store/screenshots/source/
-# Generator public/screenshots ist ein Runtime-Spiegel der source/-Shots
-app-store/screenshots/generator/public/screenshots/
-
-# Interne Arbeitsnotizen — gehoeren nicht in ein oeffentliches Repo
-# (Planungs-, Debug- und Uebergabenotizen mit Servernamen, Pfaden, Testkonten).
+# --- Arbeitsnotizen und lokale Konfiguration (gehoeren nicht ins Repo) ---
 .planning/
-HANDOFF.md
+.claude/
+CLAUDE.local.md
+HANDOFF*.md
+UEBERGABE*.md
+*review-notes*.md
+.playwright-mcp/
+
+# --- Zugangsdaten und Schluessel ---
+.env
+.env.*
+!.env.example
+*.env
+secrets*
+*.p8
+*.p12
+*.mobileprovision
+*.jks
+release.keystore
+*service-account*.json
