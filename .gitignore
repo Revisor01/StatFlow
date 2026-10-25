@@ -76,3 +76,8 @@ app-store/submission/node_modules/
 app-store/screenshots/source/
 # Generator public/screenshots ist ein Runtime-Spiegel der source/-Shots
 app-store/screenshots/generator/public/screenshots/
+
+# Interne Arbeitsnotizen — gehoeren nicht in ein oeffentliches Repo
+# (Planungs-, Debug- und Uebergabenotizen mit Servernamen, Pfaden, Testkonten).
+.planning/
+HANDOFF.md
