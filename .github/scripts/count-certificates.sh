@@ -1,19 +1,9 @@
 #!/usr/bin/env bash
-# Zaehlt die Development-Zertifikate des Kontos und schlaegt Alarm, wenn das
-# Limit erreicht ist.
-#
-# Warum: Apple erlaubt zwei Development-Zertifikate je Konto. Solange der
-# Build automatisch signierte, legte jeder Lauf ein weiteres an — bis der
-# naechste mit "Choose a certificate to revoke" abbrach. Die Meldung liest
-# sich wie ein Profil-Problem und kostete einen Abend Suche.
-#
-# Seit der Umstellung auf manuelle Signierung soll die Zahl stehen bleiben.
-# Dieser Schritt ist die Probe darauf: steigt sie doch, greift der Umbau
-# irgendwo nicht und das faellt beim naechsten Lauf auf, nicht erst, wenn
-# das Limit voll ist und ein Release wartet.
-#
-# Erwartet: ASC_KEY_ID, ASC_ISSUER_ID und den .p8 unter
-# ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+# Zaehlt die Development-Zertifikate des Kontos und bricht ab, wenn es mehr als
+# die erlaubten zwei sind; das zeigt, dass der Build wieder selbst Zertifikate
+# anlegt. Warnt ausserdem, wenn das Distribution-Zertifikat in weniger als 30
+# Tagen ablaeuft. Erwartet ASC_KEY_ID, ASC_ISSUER_ID und den .p8 unter
+# ~/.appstoreconnect/private_keys/.
 set -euo pipefail
 
 source "$(dirname "$0")/asc-jwt.sh"
