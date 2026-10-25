@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Plattform-iOS%2018%2B-blue" alt="Plattform">
-  <img src="https://img.shields.io/github/v/release/Revisor01/StatFlow?label=Version&color=green&sort=semver" alt="Version">
+  <img src="https://img.shields.io/itunes/v/6761671122?label=App%20Store&color=green" alt="Version im App Store">
   <img src="https://img.shields.io/badge/Swift-6.0-orange?logo=swift" alt="Swift">
   <img src="https://img.shields.io/github/license/Revisor01/StatFlow" alt="Lizenz">
 </p>
@@ -54,7 +54,7 @@ Adresse des Servers und die Zugangsdaten eintragen, Websites auswählen, fertig.
 
 | Anbieter | Nötig | Zuletzt geprüft gegen |
 |----------|-------|-----------------------|
-| **Umami** | ab 3.0, selbst betrieben oder Cloud | 3.3.0 und 3.4.0 |
+| **Umami** | ab 3.0, selbst betrieben oder Cloud | 3.3.0, 3.4.0 und 3.4.1 |
 | **Plausible** | ab CE 2.1 oder Cloud | CE 3.2.1 |
 
 Umami 2.x antwortet in einem anderen Format und wird nicht unterstützt. Einige
@@ -91,7 +91,7 @@ cd StatFlow
 open InsightFlow.xcodeproj
 ```
 
-Xcode 16 oder neuer, Ziel ist iOS 18. In den Signierungs-Einstellungen das
+Xcode 26 oder neuer, Ziel ist iOS 18. In den Signierungs-Einstellungen das
 eigene Team eintragen, dann auf Gerät oder Simulator starten. Die App kommt
 ohne fremde Bibliotheken aus, es gibt nichts nachzuladen.
 
@@ -107,7 +107,7 @@ StatFlow
 │   │                     Konten, Schlüsselbund, Zwischenspeicher
 │   └── Models/         — Antworten der APIs, anbieterunabhängig
 ├── InsightFlowWidget/  — Home-Bildschirm-Widgets
-├── InsightFlowTests/   — 126 Tests
+├── InsightFlowTests/   — 126 Tests, laufen bei jedem Pull Request
 └── docs/
 ```
 
@@ -124,7 +124,10 @@ StatFlow
 ## Mitmachen
 
 Fehlermeldungen und Vorschläge sind willkommen — gern als
-[Issue](https://github.com/Revisor01/StatFlow/issues).
+[Issue](https://github.com/Revisor01/StatFlow/issues); die Vorlage fragt nach
+App- und Server-Version. Sicherheitslücken bitte vertraulich melden, wie in
+[SECURITY.md](SECURITY.md) beschrieben. Pull Requests laufen durch Tests und
+einen Secret-Scan; die Grundsätze für Beiträge stehen in [CLAUDE.md](CLAUDE.md).
 
 ## Datenschutz
 
@@ -142,9 +145,9 @@ StatFlow steht unter der [GNU General Public License v3.0](LICENSE).
 
 ## Hinweis
 
-Eine App von außen, kein offizielles Produkt: StatFlow gehört weder zu Umami
-Software, Inc. noch zu Plausible Insights OÜ und wird von beiden nicht
-unterstützt.
+StatFlow ist eine unabhängige App. Sie ist kein offizielles Produkt von Umami
+Software, Inc. oder Plausible Insights OÜ und wird von keinem der beiden
+Unternehmen unterstützt oder geprüft.
 
 Dank an [Umami](https://umami.is) und [Plausible](https://plausible.io) dafür,
 dass es datenschutzfreundliche Analytik überhaupt gibt.
