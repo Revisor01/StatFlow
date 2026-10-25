@@ -14,11 +14,9 @@ class WebsiteDetailViewModelTests: XCTestCase {
             await viewModel.loadData(dateRange: .today)
         }
 
-        // Auf `isLoading == true` zu warten wäre unzuverlässig: ohne
-        // konfigurierte API ist der Ladevorgang nach wenigen Millisekunden
-        // wieder fertig, der Zwischenzustand also flüchtig. Geprüft wird
-        // deshalb nur das Ergebnis — nach `cancelLoading` darf kein
-        // Ladezustand zurückbleiben, gleich ob noch geladen wurde oder nicht.
+        // Der Zwischenzustand `isLoading == true` ist ohne API nach Millisekunden
+        // vorbei; geprüft wird deshalb nur, dass nach `cancelLoading` kein
+        // Ladezustand zurückbleibt.
         viewModel.cancelLoading()
 
         // Task abwarten (sollte nach Cancel schnell beenden)
