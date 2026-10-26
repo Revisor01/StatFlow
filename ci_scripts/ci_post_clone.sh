@@ -1,6 +1,6 @@
 #!/bin/bash
 # Xcode Cloud, nach dem Klonen: Signieren auf automatisch stellen und die
-# Build-Nummer pruefen. Der Release auf GitHub signiert fest mit eigenen
+# Build-Nummer pruefen. Das Projekt signiert Release fest mit eigenen
 # Profilen, die es in der Cloud nicht gibt; umgestellt wird nur der Klon.
 set -euo pipefail
 

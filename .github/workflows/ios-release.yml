@@ -1,9 +1,10 @@
 name: iOS Release Build
 
-# Baut das iOS-Release auf einem Runner mit stabilem macOS und laedt es zu App
-# Store Connect hoch; Builds von einem Beta-macOS lehnt Apple mit ITMS-90111 ab,
-# und die lokale Validierung erkennt das nicht. Version und Build-Nummer kommen
-# aus dem Xcode-Projekt und werden dort vor dem Start erhoeht.
+# Baut das Release in Xcode Cloud (Workflow „StatFlow TestFlight“) und wartet
+# darauf; der Build landet in TestFlight und kann von dort in den App Store.
+# Xcode Cloud vergibt die Build-Nummer selbst und signiert selbst, siehe
+# ci_scripts/ci_post_clone.sh. Die Workflow-ID steht in der Repo-Variable
+# XCODE_CLOUD_WORKFLOW.
 
 on:
   workflow_dispatch:
@@ -12,128 +13,11 @@ permissions:
   contents: read
 
 jobs:
-  build-upload:
-    runs-on: macos-26
-    timeout-minutes: 60
-    steps:
-      - name: Checkout
-        # Auf den Commit gepinnt, nicht auf das bewegliche Tag: ein Tag kann
-        # nachtraeglich umgehaengt werden, ein Commit nicht. Die Version steht
-        # als Kommentar dahinter; beim naechsten Anheben beides zusammen aendern.
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Neuestes stabiles Xcode waehlen
-        run: |
-          # Beta-Installationen ausschliessen — genau deren Stempel verursachen ITMS-90111.
-          XCODE=$(ls -d /Applications/Xcode_*.app 2>/dev/null | grep -iv beta | sort -V | tail -1)
-          if [ -z "$XCODE" ]; then XCODE=/Applications/Xcode.app; fi
-          echo "Verwende: $XCODE"
-          sudo xcode-select -s "$XCODE/Contents/Developer"
-          xcodebuild -version
-          echo "Host-macOS (muss ein Release-Build sein, kein Beta-Seed):"
-          sw_vers
-
-      - name: Signing-Keychain einrichten
-        env:
-          P12_BASE64: ${{ secrets.IOS_DIST_P12_BASE64 }}
-          P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
-        run: |
-          echo "$P12_BASE64" | base64 --decode > dist.p12
-          security create-keychain -p ci-build build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p ci-build build.keychain
-          security set-keychain-settings -t 3600 build.keychain
-          security import dist.p12 -k build.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple: -s -k ci-build build.keychain >/dev/null
-          rm dist.p12
-
-      - name: ASC-API-Key ablegen
-        env:
-          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-        run: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo "$ASC_KEY_P8_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-          chmod 600 ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
-
-      - name: Provisioning-Profile laden
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-        run: bash .github/scripts/fetch-profiles.sh
-
-      - name: Archiv bauen
-        run: |
-          set -o pipefail
-          # Manuell signiert, damit Xcode keine Zertifikate anlegt. Die Profile
-          # stehen pro Ziel im Projekt; global gesetzt bekaeme das Widget das
-          # App-Profil, und der Build bricht ab.
-          xcodebuild -project InsightFlow.xcodeproj -scheme InsightFlow \
-            -configuration Release -destination 'generic/platform=iOS' \
-            -archivePath build/StatFlow.xcarchive archive | tail -40
-
-      - name: SDK- und Host-Stempel pruefen
-        run: |
-          APP=build/StatFlow.xcarchive/Products/Applications/InsightFlow.app
-          echo "=== App ==="
-          plutil -p "$APP/Info.plist" | grep -iE "DTSDKName|DTXcodeBuild|BuildMachineOSBuild|MinimumOSVersion|CFBundleVersion|CFBundleShortVersion"
-          echo "=== Widget-Extension ==="
-          plutil -p "$APP/PlugIns/InsightFlowWidgetExtension.appex/Info.plist" \
-            | grep -iE "DTSDKName|DTXcodeBuild|BuildMachineOSBuild|MinimumOSVersion"
-          # Beta-Seeds tragen einen Kleinbuchstaben am Ende der Build-Version
-          # (z.B. 26A5388g). Ein Release-Stempel endet auf eine Ziffer.
-          STAMP=$(plutil -extract BuildMachineOSBuild raw "$APP/Info.plist")
-          echo "BuildMachineOSBuild: $STAMP"
-          if echo "$STAMP" | grep -qE '[a-z]$'; then
-            echo "FEHLER: Build stammt von einem macOS-Beta-Host ($STAMP) — Apple lehnt das mit ITMS-90111 ab."
-            exit 1
-          fi
-
-      - name: IPA exportieren
-        run: |
-          set -o pipefail
-          cat > ExportOptions-ci.plist <<'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>destination</key><string>export</string>
-            <key>method</key><string>app-store-connect</string>
-            <key>signingStyle</key><string>manual</string>
-            <key>stripSwiftSymbols</key><true/>
-            <key>teamID</key><string>J459G9CJT5</string>
-            <key>uploadSymbols</key><true/>
-            <key>manageAppVersionAndBuildNumber</key><false/>
-            <key>signingCertificate</key><string>Apple Distribution</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>de.godsapp.statflow</key><string>StatFlow AppStore 2026</string>
-              <key>de.godsapp.statflow.InsightFlowWidget</key><string>StatFlow Widget AppStore 2026</string>
-            </dict>
-          </dict>
-          </plist>
-          EOF
-          # Ebenfalls manuell, je Bundle-ID ein Profil — sonst legte auch
-          # dieser Schritt wieder ein Zertifikat an.
-          xcodebuild -exportArchive -archivePath build/StatFlow.xcarchive \
-            -exportPath build/export -exportOptionsPlist ExportOptions-ci.plist | tail -10
-
-      - name: Zertifikatszahl pruefen
-        if: always()
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-        run: |
-          # Der Umbau auf manuelle Signierung soll verhindern, dass ein Lauf
-          # Zertifikate anlegt. Das ist die Probe darauf: Apple erlaubt zwei
-          # Development-Zertifikate je Konto: ist das Limit voll, scheitert
-          # der naechste Build mit "Choose a certificate to revoke".
-          bash .github/scripts/count-certificates.sh
-
-      - name: Zu App Store Connect hochladen
-        env:
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
-        run: |
-          xcrun altool --upload-app -f build/export/InsightFlow.ipa -t ios \
-            --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+  bauen:
+    uses: Revisor01/workflows/.github/workflows/xcode-cloud.yml@af94834b59cc0a1f5155e40c36219fd75c38e8c2 # 1.3.0
+    with:
+      workflow-id: ${{ vars.XCODE_CLOUD_WORKFLOW }}
+    secrets:
+      asc-key-id: ${{ secrets.ASC_KEY_ID }}
+      asc-issuer-id: ${{ secrets.ASC_ISSUER_ID }}
+      asc-key-p8: ${{ secrets.ASC_KEY_P8_BASE64 }}
