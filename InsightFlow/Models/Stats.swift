@@ -647,8 +647,8 @@ struct UmamiRevenueStats: Codable, Sendable {
 
     /// Postgres liefert `sum`/`count` je nach Treiber als String oder Zahl.
     static func decodeNumber(_ container: KeyedDecodingContainer<CodingKeys>, _ key: CodingKeys) -> Double {
-        if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
-        if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+        if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value }
+        if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value) ?? 0 }
         return 0
     }
 }
@@ -670,8 +670,8 @@ struct UmamiRevenueStatsComparison: Codable, Sendable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         func number(_ key: CodingKeys) -> Double {
-            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
-            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value }
+            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value) ?? 0 }
             return 0
         }
         sum = number(.sum)
@@ -703,16 +703,16 @@ struct UmamiRevenueChartPoint: Codable, Sendable {
         x = try? container.decodeIfPresent(String.self, forKey: .x)
         t = try? container.decodeIfPresent(String.self, forKey: .t)
         if let value = try? container.decodeIfPresent(Double.self, forKey: .y) {
-            y = value ?? 0
+            y = value
         } else if let value = try? container.decodeIfPresent(String.self, forKey: .y) {
-            y = Double(value ?? "") ?? 0
+            y = Double(value) ?? 0
         } else {
             y = 0
         }
         if let value = try? container.decodeIfPresent(Double.self, forKey: .count) {
-            count = value ?? 0
+            count = value
         } else if let value = try? container.decodeIfPresent(String.self, forKey: .count) {
-            count = Double(value ?? "") ?? 0
+            count = Double(value) ?? 0
         } else {
             count = 0
         }
@@ -782,9 +782,9 @@ struct UmamiEventSeriesPoint: Codable, Sendable, Identifiable {
         x = try? container.decodeIfPresent(String.self, forKey: .x)
         t = try? container.decodeIfPresent(String.self, forKey: .t)
         if let value = try? container.decodeIfPresent(Double.self, forKey: .y) {
-            y = value ?? 0
+            y = value
         } else if let value = try? container.decodeIfPresent(String.self, forKey: .y) {
-            y = Double(value ?? "") ?? 0
+            y = Double(value) ?? 0
         } else {
             y = 0
         }
@@ -812,9 +812,9 @@ struct UmamiFieldValue: Codable, Sendable, Identifiable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         value = try? container.decodeIfPresent(String.self, forKey: .value)
         if let number = try? container.decodeIfPresent(Double.self, forKey: .count) {
-            count = number ?? 0
+            count = number
         } else if let text = try? container.decodeIfPresent(String.self, forKey: .count) {
-            count = Double(text ?? "") ?? 0
+            count = Double(text) ?? 0
         } else {
             count = 0
         }

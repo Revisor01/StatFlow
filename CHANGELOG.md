@@ -21,6 +21,7 @@ ersten Store-Veröffentlichung.
 
 ### Sonstiges
 
+- Der Build läuft ohne Compiler-Warnungen; das Lesen von Zahlenwerten aus Umami-Antworten ist jetzt durch Tests abgesichert.
 - Release-Builds entstehen jetzt in Xcode Cloud; der Release-Knopf auf GitHub startet sie und wartet darauf.
 - README, Vorlagen für Issues und Pull Requests sowie die Hinweise zu Sicherheit und Mitmachen gibt es jetzt auch auf Englisch.
 - Die einzige Abhängigkeit des Repos, `actions/checkout` im Release-Workflow, wurde

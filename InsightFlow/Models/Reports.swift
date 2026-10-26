@@ -177,12 +177,12 @@ struct UmamiPerformanceReport: Codable, Sendable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        chart = (try? container.decodeIfPresent([UmamiPerformanceChartPoint].self, forKey: .chart)) as? [UmamiPerformanceChartPoint] ?? []
+        chart = (try? container.decodeIfPresent([UmamiPerformanceChartPoint].self, forKey: .chart)) ?? []
         summary = try container.decode(UmamiPerformanceSummary.self, forKey: .summary)
-        pages = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .pages)) as? [UmamiPerformanceMetric] ?? []
-        pageTitles = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .pageTitles)) as? [UmamiPerformanceMetric] ?? []
-        devices = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .devices)) as? [UmamiPerformanceMetric] ?? []
-        browsers = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .browsers)) as? [UmamiPerformanceMetric] ?? []
+        pages = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .pages)) ?? []
+        pageTitles = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .pageTitles)) ?? []
+        devices = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .devices)) ?? []
+        browsers = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .browsers)) ?? []
     }
 
     /// Ab Umami 3.4 kommen diese Angaben aus getrennten Routen
@@ -229,8 +229,8 @@ struct UmamiPercentiles: Codable, Sendable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         func number(_ key: CodingKeys) -> Double {
-            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
-            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value }
+            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value) ?? 0 }
             return 0
         }
         p50 = number(.p50)
@@ -253,8 +253,8 @@ struct UmamiPerformanceChartPoint: Codable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         t = try? container.decodeIfPresent(String.self, forKey: .t)
         func number(_ key: CodingKeys) -> Double {
-            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
-            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value }
+            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value) ?? 0 }
             return 0
         }
         p50 = number(.p50)
@@ -284,9 +284,9 @@ struct UmamiPerformanceSummary: Codable, Sendable {
         fcp = try container.decode(UmamiPercentiles.self, forKey: .fcp)
         ttfb = try container.decode(UmamiPercentiles.self, forKey: .ttfb)
         if let value = try? container.decodeIfPresent(Double.self, forKey: .count) {
-            count = value ?? 0
+            count = value
         } else if let value = try? container.decodeIfPresent(String.self, forKey: .count) {
-            count = Double(value ?? "") ?? 0
+            count = Double(value) ?? 0
         } else {
             count = 0
         }
@@ -321,8 +321,8 @@ struct UmamiPerformanceMetric: Codable, Sendable, Identifiable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try? container.decodeIfPresent(String.self, forKey: .name)
         func number(_ key: CodingKeys) -> Double {
-            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value ?? 0 }
-            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value ?? "") ?? 0 }
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value }
+            if let value = try? container.decodeIfPresent(String.self, forKey: key) { return Double(value) ?? 0 }
             return 0
         }
         p50 = number(.p50)

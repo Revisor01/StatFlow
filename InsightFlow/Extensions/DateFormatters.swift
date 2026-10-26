@@ -1,10 +1,8 @@
 import Foundation
 
 /// Shared DateFormatter instances to avoid expensive repeated allocations.
-/// Thread-safe: static let ensures single initialization, DateFormatter is
-/// thread-safe for read-only access on iOS 7+.
-/// nonisolated(unsafe) suppresses Sendable warnings — these are only used for
-/// reading (date/string parsing), never mutated after initialization.
+/// DateFormatter is Sendable; ISO8601DateFormatter is not, so those two need
+/// nonisolated(unsafe). All of them are only read after initialization.
 enum DateFormatters {
     /// ISO8601 with fractional seconds — for Umami API dates like "2024-01-15T10:30:00.000Z"
     nonisolated(unsafe) static let iso8601WithFractional: ISO8601DateFormatter = {
@@ -21,7 +19,7 @@ enum DateFormatters {
     }()
 
     /// "yyyy-MM-dd" for Plausible API and date-only strings
-    nonisolated(unsafe) static let yyyyMMdd: DateFormatter = {
+    static let yyyyMMdd: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -29,14 +27,14 @@ enum DateFormatters {
     }()
 
     /// Short date style for UI display (locale-aware)
-    nonisolated(unsafe) static let shortDate: DateFormatter = {
+    static let shortDate: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .short
         return f
     }()
 
     /// "yyyy-MM-dd HH:mm:ss" for Plausible hourly data
-    nonisolated(unsafe) static let yyyyMMddHHmmss: DateFormatter = {
+    static let yyyyMMddHHmmss: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd HH:mm:ss"
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -44,7 +42,7 @@ enum DateFormatters {
     }()
 
     /// Medium date+time for UI display (locale-aware)
-    nonisolated(unsafe) static let mediumDateTime: DateFormatter = {
+    static let mediumDateTime: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .medium
         f.timeStyle = .short
@@ -52,7 +50,7 @@ enum DateFormatters {
     }()
 
     /// "MMM yyyy" for month display
-    nonisolated(unsafe) static let monthYear: DateFormatter = {
+    static let monthYear: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "MMM yyyy"
         return f
