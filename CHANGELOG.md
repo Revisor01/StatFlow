@@ -21,6 +21,7 @@ ersten Store-Veröffentlichung.
 
 ### Sonstiges
 
+- Release-Builds können jetzt auch in Xcode Cloud entstehen; der bisherige Weg bleibt erhalten.
 - README, Vorlagen für Issues und Pull Requests sowie die Hinweise zu Sicherheit und Mitmachen gibt es jetzt auch auf Englisch.
 - Die einzige Abhängigkeit des Repos, `actions/checkout` im Release-Workflow, wurde
   von v4 auf v7.0.1 gehoben und auf den Commit gepinnt. Die App selbst hat keine

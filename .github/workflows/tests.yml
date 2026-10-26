@@ -22,3 +22,26 @@ jobs:
       projekt: InsightFlow.xcodeproj
       schema: InsightFlow
       test-ziel: InsightFlowTests
+
+  xcode-cloud-skript:
+    # Das Skript laeuft sonst erst in Xcode Cloud; hier gegen eine Kopie des
+    # Projekts, damit eine Aenderung an der Signierung es nicht still bricht.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Skript gegen eine Kopie pruefen
+        run: |
+          kopie() { d=$(mktemp -d); cp -R InsightFlow.xcodeproj "$d/"; echo "$d"; }
+          neu="$(kopie)/InsightFlow.xcodeproj/project.pbxproj"
+          CI_PRIMARY_REPOSITORY_PATH="${neu%/InsightFlow.xcodeproj/*}" CI_BUILD_NUMBER=100000 ci_scripts/ci_post_clone.sh
+          geaendert=$(diff InsightFlow.xcodeproj/project.pbxproj "$neu" | grep -c '^>' || true)
+          [ "$geaendert" = 6 ] || { echo "Erwartet 6 geaenderte Zeilen, waren $geaendert."; exit 1; }
+          ! grep -qE 'CODE_SIGN_STYLE = Manual;|Apple Distribution|AppStore 2026' "$neu"
+          alt="$(kopie)/InsightFlow.xcodeproj/project.pbxproj"
+          if CI_PRIMARY_REPOSITORY_PATH="${alt%/InsightFlow.xcodeproj/*}" CI_BUILD_NUMBER=1 ci_scripts/ci_post_clone.sh; then
+            echo "Build-Nummer 1 haette abgelehnt werden muessen."; exit 1
+          fi
+          cmp InsightFlow.xcodeproj/project.pbxproj "$alt"
