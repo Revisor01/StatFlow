@@ -722,6 +722,68 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertTrue(report.pages.isEmpty)
     }
 
+    func testPerformanceReportWithoutBreakdownsDecodesEmptyLists() throws {
+        // Ohne Aufschlüsselungen bleibt der Report lesbar; nur `summary` ist Pflicht.
+        let json = """
+        {"summary": {"lcp": {"p50": 609, "p75": 1146, "p95": 3514}, "inp": {"p50": 48, "p75": 56, "p95": 111},
+         "cls": {"p50": 0.0027, "p75": 0.0245, "p95": 0.09855}, "fcp": {"p50": 290, "p75": 612, "p95": 1884},
+         "ttfb": {"p50": 41, "p75": 128, "p95": 456}, "count": "101"},
+         "chart": null,
+         "devices": [{"name": "mobile", "p50": 1094, "p75": 2286.25, "p95": 3864.45, "count": 74}]}
+        """.data(using: .utf8)!
+
+        let report = try JSONDecoder().decode(UmamiPerformanceReport.self, from: json)
+        XCTAssertEqual(report.summary.count, 101)
+        XCTAssertEqual(report.chart.count, 0)
+        XCTAssertEqual(report.pages.count, 0)
+        XCTAssertEqual(report.pageTitles.count, 0)
+        XCTAssertEqual(report.browsers.count, 0)
+        XCTAssertEqual(report.devices.count, 1)
+        XCTAssertEqual(report.devices[0].p75, 2286.25)
+    }
+
+    func testNumberFieldsAcceptNumberStringNullAndMissing() throws {
+        // Postgres liefert Summen je nach Treiber als Zahl oder String; fehlende
+        // und leere Werte werden 0, statt das Dekodieren abzubrechen.
+        let stats = try JSONDecoder().decode(UmamiRevenueStats.self, from: """
+        {"sum": "1234.5", "count": 7, "average": null, "arpu": "kein Wert",
+         "comparison": {"sum": 1000, "count": "5", "unique_count": 4}}
+        """.data(using: .utf8)!)
+        XCTAssertEqual(stats.sum, 1234.5)
+        XCTAssertEqual(stats.count, 7)
+        XCTAssertEqual(stats.average, 0)
+        XCTAssertEqual(stats.uniqueCount, 0)
+        XCTAssertEqual(stats.arpu, 0)
+        XCTAssertEqual(stats.comparison?.sum, 1000)
+        XCTAssertEqual(stats.comparison?.count, 5)
+        XCTAssertEqual(stats.comparison?.uniqueCount, 4)
+        XCTAssertEqual(stats.comparison?.average, 0)
+
+        let chart = try JSONDecoder().decode(UmamiRevenueChartResponse.self, from: """
+        {"chart": [{"x": "kauf", "t": "2026-10-01", "y": "49.9", "count": 2}, {"x": "kauf", "y": null}]}
+        """.data(using: .utf8)!).chart
+        XCTAssertEqual(chart.count, 2)
+        XCTAssertEqual(chart[0].y, 49.9)
+        XCTAssertEqual(chart[0].count, 2)
+        XCTAssertEqual(chart[1].y, 0)
+        XCTAssertEqual(chart[1].count, 0)
+        XCTAssertNil(chart[1].t)
+
+        let series = try JSONDecoder().decode([UmamiEventSeriesPoint].self, from: """
+        [{"x": "download", "t": "2026-10-01 00:00:00", "y": "3"}, {"x": "download", "t": "2026-10-02 00:00:00"}]
+        """.data(using: .utf8)!)
+        XCTAssertEqual(series[0].count, 3)
+        XCTAssertEqual(series[1].count, 0)
+
+        let values = try JSONDecoder().decode([UmamiFieldValue].self, from: """
+        [{"value": "/start", "count": "12"}, {"value": null, "count": 4}, {"value": "/leer"}]
+        """.data(using: .utf8)!)
+        XCTAssertEqual(values[0].total, 12)
+        XCTAssertEqual(values[1].id, "__null__")
+        XCTAssertEqual(values[1].total, 4)
+        XCTAssertEqual(values[2].total, 0)
+    }
+
     func testAttributionFeatureRouteKeepsResponseShape() throws {
         let json = """
         {"referrer": [{"name": "google.com", "value": 4}, {"name": "ecosia.org", "value": 1}],
