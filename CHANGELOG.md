@@ -16,6 +16,9 @@ ersten Store-Veröffentlichung.
 
 ## [Unreleased]
 
+### Geändert
+- Neue Lizenz: GNU AGPL v3.0 statt GPL-3.0: Die Pflicht, Änderungen offenzulegen, gilt jetzt auch für den Betrieb als Webdienst. Eine kommerzielle Lizenz gibt es auf Anfrage.
+
 ### Sonstiges
 
 - Die einzige Abhängigkeit des Repos, `actions/checkout` im Release-Workflow, wurde

@@ -141,7 +141,14 @@ Die vollständige Erklärung steht unter
 
 ## Lizenz
 
-StatFlow steht unter der [GNU General Public License v3.0](LICENSE).
+StatFlow steht unter der
+[GNU Affero General Public License v3.0](LICENSE). Wer StatFlow verändert und
+anderen zur Verfügung stellt, auch als Webdienst, legt seinen Quelltext unter
+derselben Lizenz offen. Wer das nicht möchte, bekommt auf Anfrage eine
+kommerzielle Lizenz ([mail@simonluthe.de](mailto:mail@simonluthe.de)). Für
+Beiträge gilt [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Die Fassungen im App Store verteilt der Urheber als Rechteinhaber selbst.
 
 ## Hinweis
 
