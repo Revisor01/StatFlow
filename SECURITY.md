@@ -16,8 +16,8 @@ Auswirkung. Du bekommst innerhalb von sieben Tagen eine Antwort.
 
 ## Unterstützte Versionen
 
-Sicherheitskorrekturen gibt es für die jeweils aktuelle Version. Bei Apps ist
-das die Version, die im App Store bzw. in Google Play erhältlich ist.
+Sicherheitskorrekturen gibt es für die jeweils aktuelle Version. Das ist die
+Version, die im App Store erhältlich ist.
 
 ---
 
@@ -37,5 +37,5 @@ reply within seven days. Reports in English or German are welcome.
 
 ## Supported versions
 
-Security fixes are provided for the current version. For apps,
-that is the version available in the App Store or on Google Play.
+Security fixes are provided for the current version. That is the
+version available in the App Store.
