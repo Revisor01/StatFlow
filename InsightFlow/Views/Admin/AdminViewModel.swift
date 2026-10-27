@@ -217,7 +217,6 @@ class AdminViewModel: ObservableObject {
         do {
             // Use addSite which validates via Stats API and stores locally
             try await plausibleAPI.addSite(domain: domain)
-            // Reload the sites list
             await loadPlausibleSites()
         } catch {
             showError(error)

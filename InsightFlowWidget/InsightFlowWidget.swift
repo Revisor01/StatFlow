@@ -1,8 +1,3 @@
-//
-//  PrivacyFlowWidget.swift
-//  PrivacyFlowWidget
-//
-
 import WidgetKit
 import SwiftUI
 

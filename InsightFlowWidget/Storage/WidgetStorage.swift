@@ -1,8 +1,3 @@
-//
-//  WidgetStorage.swift
-//  InsightFlowWidget
-//
-
 import Foundation
 import CryptoKit
 import WidgetKit

@@ -15,9 +15,7 @@ struct DashboardView: View {
     @State private var isReordering = false
     @State private var showAllAccounts = false
     @State private var websiteAccountMap: [String: AnalyticsAccount] = [:]
-    // Verhindert Voll-Reload bei jedem Tab-Wechsel: der initiale Load läuft nur einmal.
-    // Aktualisierungen erfolgen weiterhin über Pull-to-Refresh, Datumswechsel,
-    // Account-Wechsel und scenePhase == .active.
+    // Der erste Load läuft nur einmal, danach Pull-to-Refresh, Datums-, Kontowechsel und scenePhase.
     @State private var hasLoadedInitially = false
 
     var body: some View {
@@ -29,7 +27,6 @@ struct DashboardView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 16) {
-                            // Offline-Banner
                             if viewModel.isOffline {
                                 offlineBanner
                             }
@@ -175,10 +172,7 @@ struct DashboardView: View {
             }
         }
         .task {
-            // Stale-while-revalidate: Beim ersten Mal voll laden (mit Spinner).
-            // Bei jedem weiteren Tab-Wechsel die vorhandenen Werte sofort zeigen
-            // und still im Hintergrund revalidieren — kein nerviger Voll-Reload,
-            // aber die Zahlen bleiben aktuell.
+            // Stale-while-revalidate: erst voll laden, danach vorhandene Werte zeigen und still nachladen.
             if !hasLoadedInitially {
                 hasLoadedInitially = true
                 await performInitialLoad(silent: false)
@@ -224,26 +218,21 @@ struct DashboardView: View {
         }
     }
 
-    /// Daten-Load. `silent` = Hintergrund-Revalidierung ohne Spinner (Stale-while-revalidate
-    /// bei Tab-Wechsel). Respektiert den "Alle Accounts"-Modus.
+    /// Lädt die Daten; `silent` ohne Spinner, im Modus „Alle Konten“.
     private func performInitialLoad(silent: Bool = false) async {
-        // Bei stiller Revalidierung ohne vorhandene Daten doch einen sichtbaren Load
-        // erzwingen — sonst stünde der Nutzer vor einem leeren Dashboard ohne Feedback.
+        // Ohne vorhandene Daten doch sichtbar laden, sonst bleibt das Dashboard ohne Rückmeldung leer.
         let effectiveSilent = silent && viewModel.hasData
         if showAllAccounts {
             let map = await viewModel.loadAllAccountsData(dateRange: selectedDateRange, accounts: accountManager.accounts, silent: effectiveSilent)
             websiteAccountMap = map
         } else {
             await viewModel.loadData(dateRange: selectedDateRange, silent: effectiveSilent)
-            // Übrige Standard-Zeiträume still vorladen, damit der Zeitraumwechsel
-            // sofort die korrekten Werte zeigt (nur Single-Account-Modus).
+            // Übrige Zeiträume still vorladen, nur bei einem Konto.
             viewModel.prefetchOtherRanges(except: selectedDateRange)
         }
     }
 
-    /// Öffnet die Detailansicht und gibt den besitzenden Account explizit mit,
-    /// damit die Detailansicht den richtigen Provider/Account konfiguriert
-    /// (verhindert eingefrorene Werte durch falschen Singleton-Account-Kontext im "Alle"-Modus).
+    /// Öffnet die Detailansicht mit dem besitzenden Konto, sonst friert sie im Modus „Alle“ ein.
     private func openDetail(for website: Website) {
         if showAllAccounts {
             // Im "Alle"-Modus den besitzenden Account aus der Map auflösen.
@@ -288,7 +277,6 @@ struct DashboardView: View {
 
     @ViewBuilder
     private var accountSwitcherMenuItems: some View {
-        // "Alle" als erste Option
         Button {
             showAllAccounts = true
             Task {
@@ -309,7 +297,6 @@ struct DashboardView: View {
 
         Divider()
 
-        // Einzelne Accounts
         ForEach(accountManager.accounts) { account in
             Button {
                 showAllAccounts = false
@@ -540,11 +527,9 @@ struct AddAccountView: View {
     @State private var serverURL = ""
     @State private var accountName = ""
 
-    // Umami
     @State private var username = ""
     @State private var password = ""
 
-    // Plausible
     @State private var apiKey = ""
 
     @State private var serverType: ServerType = .cloud
@@ -553,9 +538,7 @@ struct AddAccountView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
 
-    // Zweiter Faktor: Verlangt Umami einen Code, klappt statt der Zugangsdaten
-    // die Code-Eingabe auf. Der `partialToken` ist nur wenige Minuten gültig,
-    // die übrigen Werte brauchen wir erst beim Anlegen des Kontos.
+    // Zweiter Faktor: statt der Zugangsdaten klappt die Code-Eingabe auf.
     @State private var requiresTwoFactor = false
     @State private var twoFactorCode = ""
     @State private var useBackupCode = false
@@ -594,7 +577,6 @@ struct AddAccountView: View {
 
     private var credentialsSections: some View {
         VStack(spacing: 24) {
-            // Provider Selection
             VStack(alignment: .leading, spacing: 12) {
                 Text("account.add.provider")
                     .font(.subheadline)
@@ -615,7 +597,6 @@ struct AddAccountView: View {
                 }
             }
 
-            // Server Type Selection
             VStack(alignment: .leading, spacing: 12) {
                 Text("login.serverType")
                     .font(.subheadline)
@@ -645,7 +626,6 @@ struct AddAccountView: View {
                 }
             }
 
-            // Details Section
             VStack(alignment: .leading, spacing: 16) {
                 Text("account.add.details")
                     .font(.subheadline)
@@ -671,7 +651,6 @@ struct AddAccountView: View {
                 }
             }
 
-            // Credentials Section
             VStack(alignment: .leading, spacing: 16) {
                 Text("account.add.credentials")
                     .font(.subheadline)
@@ -738,7 +717,6 @@ struct AddAccountView: View {
                 }
             }
 
-            // Error Message
             if let error = errorMessage {
                 Text(error)
                     .foregroundStyle(.red)
@@ -749,7 +727,6 @@ struct AddAccountView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
 
-            // Add Button
             Button {
                 Task { await addAccount() }
             } label: {
@@ -855,8 +832,7 @@ struct AddAccountView: View {
     private var selfHostedMethodToggle: some View {
         Button {
             useAPIKeyForSelfHosted.toggle()
-            // Die jeweils andere Eingabe leeren, damit nichts aus dem
-            // vorherigen Versuch stehen bleibt und mitgeschickt wird.
+            // Die andere Eingabe leeren, damit nichts vom vorherigen Versuch mitgeht.
             if useAPIKeyForSelfHosted {
                 username = ""
                 password = ""
@@ -906,8 +882,7 @@ struct AddAccountView: View {
                     throw APIError.invalidURL
                 }
 
-                // Umami Cloud kennt keine Anmeldung mit Benutzername und
-                // Passwort; dort ist der API-Schlüssel das Bearer-Token.
+                // Umami Cloud: der API-Schlüssel ist das Bearer-Token.
                 if UmamiAPI.isCloudURL(normalizedURL) {
                     try await UmamiAPI.shared.authenticate(
                         serverURL: normalizedURL,
@@ -921,8 +896,7 @@ struct AddAccountView: View {
                     return
                 }
 
-                // Eigene Instanz mit API-Schlüssel: kein Anmeldevorgang nötig,
-                // der Schlüssel ist bereits das Bearer-Token.
+                // Eigene Instanz mit API-Schlüssel: der Schlüssel ist das Bearer-Token.
                 if useAPIKeyForSelfHosted {
                     try await UmamiAPI.shared.authenticate(
                         serverURL: normalizedURL,
@@ -936,9 +910,7 @@ struct AddAccountView: View {
                     return
                 }
 
-                // Verlangt der Server einen zweiten Faktor, antwortet Umami mit
-                // einem `partialToken` statt einem Token — dann übernimmt die
-                // Code-Eingabe, statt den Vorgang mit einem Fehler abzubrechen.
+                // Bei `partialToken` übernimmt die Code-Eingabe statt eines Fehlers.
                 switch try await UmamiAPI.shared.login(baseURL: url, username: username, password: password) {
                 case .token(let token):
                     await createUmamiAccount(token: token, serverURL: normalizedURL)
@@ -951,7 +923,6 @@ struct AddAccountView: View {
                     return
                 }
             } else {
-                // Authenticate with Plausible
                 try await PlausibleAPI.shared.authenticate(serverURL: normalizedURL, credentials: .plausible(apiKey: apiKey))
 
                 let account = AnalyticsAccount(

@@ -18,9 +18,7 @@ class DashboardViewModelTests: XCTestCase {
             await viewModel.loadData(dateRange: .today, clearFirst: true)
         }
 
-        // `loadData` leert die Daten in einem eigenen Task. Eine feste Wartezeit
-        // reicht dafür nicht verlässlich: unter Last kommt dieser Task später
-        // dran, und der Test prüfte dann einen Zustand von vor dem Leeren.
+        // Warten statt fester Pause, der Leeren-Task kommt unter Last später dran.
         await waitUntil("websites muss nach clearFirst leer sein") { viewModel.websites.isEmpty }
         task.cancel()
     }
@@ -51,23 +49,16 @@ class DashboardViewModelTests: XCTestCase {
             await viewModel.loadData(dateRange: .today, clearFirst: false)
         }
 
-        // clearFirst=false should NOT explicitly clear websites before load
-        // (Cache might overwrite, but not immediately clear)
+        // clearFirst=false leert die Websites nicht vor dem Laden.
         try? await Task.sleep(nanoseconds: 50_000_000)
 
         task.cancel()
-        // No assertion on websites content since cache may replace it,
-        // but we verify no crash and task completes
+        // Kein Inhaltsvergleich, der Cache darf ersetzen; geprüft wird das Ende ohne Absturz.
     }
 
     // MARK: - Helpers
 
-    /// Wartet, bis `condition` zutrifft, höchstens aber `timeout` Sekunden.
-    ///
-    /// Ersetzt feste `Task.sleep`-Pausen: die geprüften Änderungen passieren in
-    /// einem eigenen Task, dessen Zeitpunkt unter Last schwankt. Trifft die
-    /// Bedingung nicht rechtzeitig ein, schlägt der Test mit derselben Aussage
-    /// fehl wie zuvor — die Erwartung wird also nicht aufgeweicht.
+    /// Wartet höchstens `timeout` Sekunden auf `condition`, statt fester Pausen.
     private func waitUntil(
         _ message: String,
         timeout: TimeInterval = 2,

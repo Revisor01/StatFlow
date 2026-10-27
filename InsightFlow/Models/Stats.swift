@@ -103,10 +103,7 @@ struct TimeSeriesPoint: Codable, Identifiable, Sendable, Equatable {
 
     var id: String { x }
 
-    /// Umami liefert Zeitpunkte als "2026-08-06 00:00:00" (Leerzeichen, kein Z),
-    /// Plausible dagegen ISO8601 bzw. reines "yyyy-MM-dd". Ohne den passenden
-    /// Formatter fielen alle Punkte auf `Date()` zurück — das Diagramm war dann
-    /// eine flache Linie, die am Ende hochgeht.
+    /// Umami liefert "2026-08-06 00:00:00", Plausible ISO8601; ohne passenden Formatter wird das Diagramm flach.
     var date: Date {
         DateFormatters.iso8601WithFractional.date(from: x)
             ?? DateFormatters.iso8601.date(from: x)
@@ -466,9 +463,7 @@ struct StringOrInt: Codable, Sendable {
 
 // MARK: - Umami v3 Segments
 
-/// Segment bzw. Cohort einer Website (Umami v3, `api/websites/{id}/segments`).
-/// `parameters` bleibt bewusst lose typisiert — das Schema erlaubt beliebige
-/// Filter-/Action-Kombinationen, die die App nicht auswerten muss.
+/// Segment oder Cohort (Umami v3); `parameters` bleibt lose typisiert, die App wertet es nicht aus.
 struct UmamiSegment: Codable, Sendable, Identifiable {
     let id: String
     let websiteId: String?
@@ -497,14 +492,7 @@ struct UmamiSegmentsResponse: Codable, Sendable {
 
 // MARK: - Vermerke (`api/websites/{id}/annotations`, ab Umami 3.4)
 
-/// Datierte Notiz an der Zeitachse einer Website — etwa ein Versand, ein
-/// Relaunch oder ein Presseartikel. Umami führt sie ab 3.4; ältere Server
-/// kennen die Adresse nicht.
-///
-/// `date` ist der Zeitpunkt, auf den sich der Vermerk bezieht (nicht der der
-/// Erfassung). Bei `allDay` zählt nur der Tag, die Uhrzeit wird dann nicht
-/// angezeigt. `note` ist serverseitig auf 500 Zeichen begrenzt und darf nicht
-/// leer sein — beides führt sonst zu HTTP 400.
+/// Datierter Vermerk (Umami ab 3.4); `note` muss nicht leer und höchstens 500 Zeichen lang sein, sonst HTTP 400.
 struct UmamiAnnotation: Codable, Sendable, Identifiable, Equatable {
     let id: String
     let websiteId: String?
@@ -603,8 +591,7 @@ struct UmamiSessionStats: Codable, Sendable {
     var eventCount: Int { Int(events?.value ?? 0) }
 }
 
-/// `api/websites/{id}/sessions/weekly` liefert eine 7×24-Matrix roher Zahlen
-/// (Index 0 = Sonntag, innere Achse = Stunde 0…23).
+/// `sessions/weekly`: 7×24-Matrix, Index 0 = Sonntag, innen Stunde 0…23.
 struct UmamiWeeklyTraffic: Sendable {
     /// Rohmatrix wie vom Server geliefert: 7 Tage × 24 Stunden.
     let days: [[Int]]
@@ -619,9 +606,7 @@ struct UmamiWeeklyTraffic: Sendable {
 
 // MARK: - Umami v3 Revenue
 
-/// `api/websites/{id}/revenue/stats` — flache Kennzahlen plus `comparison`
-/// mit demselben Aufbau. Die SQL-Aliase sind snake_case, der Decoder nutzt
-/// aber keine Konvertierungsstrategie: CodingKeys müssen exakt passen.
+/// `revenue/stats` mit `comparison`; die CodingKeys müssen die snake_case-Aliase exakt treffen.
 struct UmamiRevenueStats: Codable, Sendable {
     let sum: Double
     let count: Double
@@ -653,8 +638,7 @@ struct UmamiRevenueStats: Codable, Sendable {
     }
 }
 
-/// Vergleichszeitraum aus `revenue/stats` — identische Felder, aber ohne
-/// weitere Verschachtelung.
+/// Vergleichszeitraum aus `revenue/stats` mit denselben Feldern.
 struct UmamiRevenueStatsComparison: Codable, Sendable {
     let sum: Double
     let count: Double
@@ -682,8 +666,7 @@ struct UmamiRevenueStatsComparison: Codable, Sendable {
     }
 }
 
-/// `api/websites/{id}/revenue/chart` → `{ "chart": [...] }`.
-/// Pro Punkt: x = Event-Name, t = Zeitbucket, y = Umsatz, count = Anzahl.
+/// `revenue/chart`: x = Event-Name, t = Zeitbucket, y = Umsatz, count = Anzahl.
 struct UmamiRevenueChartResponse: Codable, Sendable {
     let chart: [UmamiRevenueChartPoint]
 }
@@ -721,8 +704,7 @@ struct UmamiRevenueChartPoint: Codable, Sendable {
 
 // MARK: - Ereignis-Kennzahlen (`api/websites/{id}/events/stats`)
 
-/// Umhüllung des Endpunkts — die Nutzdaten liegen hier unter `data`,
-/// anders als bei den meisten anderen Umami-Endpunkten.
+/// Umhüllung des Endpunkts, die Nutzdaten liegen hier unter `data`.
 struct UmamiEventStatsResponse: Codable, Sendable {
     let data: UmamiEventStats
 }
@@ -752,8 +734,7 @@ struct UmamiEventStatsComparison: Codable, Sendable, Equatable {
 
 // MARK: - Ereignisse im Zeitverlauf (`api/websites/{id}/events/series`)
 
-/// Ein Punkt der Ereignis-Zeitreihe: x = Ereignisname, t = Zeitbucket,
-/// y = Anzahl. `t` kommt als "yyyy-MM-dd HH:mm:ss" (kein ISO-Z).
+/// Punkt der Ereignis-Zeitreihe; `t` kommt als "yyyy-MM-dd HH:mm:ss".
 struct UmamiEventSeriesPoint: Codable, Sendable, Identifiable {
     let x: String?
     let t: String?
@@ -793,8 +774,7 @@ struct UmamiEventSeriesPoint: Codable, Sendable, Identifiable {
 
 // MARK: - Werteliste je Feld (`api/websites/{id}/values`)
 
-/// Ein Wert eines Feldes mit seiner Häufigkeit — Grundlage für
-/// Filter-Vorschläge. `value` kann null sein (z. B. bei nie gesetzten Feldern).
+/// Wert eines Feldes mit Häufigkeit für Filter-Vorschläge; `value` kann null sein.
 struct UmamiFieldValue: Codable, Sendable, Identifiable {
     let value: String?
     let count: Double
@@ -821,8 +801,7 @@ struct UmamiFieldValue: Codable, Sendable, Identifiable {
     }
 }
 
-/// Felder, für die `api/websites/{id}/values` Werte liefert
-/// (entspricht `fieldsParam` im Umami-Schema).
+/// Felder, für die `api/websites/{id}/values` Werte liefert.
 enum UmamiValueField: String, CaseIterable, Sendable {
     case path
     case referrer

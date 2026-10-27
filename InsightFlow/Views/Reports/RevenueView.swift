@@ -16,8 +16,7 @@ struct RevenueView: View {
         RevenueCurrency(rawValue: storedCurrency) ?? .eur
     }
 
-    /// Revenue existiert nur in Umami v3 — bei Plausible erscheint ein Hinweis
-    /// statt eines Fehlers.
+    /// Umsatz gibt es nur in Umami v3, bei Plausible ein Hinweis.
     private var isPlausible: Bool {
         AnalyticsManager.shared.providerType == .plausible
     }
@@ -317,8 +316,7 @@ struct RevenueView: View {
         }
     }
 
-    /// Kompakte Achsenbeschriftung: volle Währungsformatierung wäre auf der
-    /// Y-Achse zu breit, deshalb die Notation-Variante.
+    /// Kompakte Notation, volle Währungsformatierung wäre für die Achse zu breit.
     private func compactAmount(_ amount: Double) -> String {
         amount.formatted(
             .currency(code: selectedCurrency.rawValue)
@@ -344,8 +342,7 @@ struct RevenueMetricCard: View {
                     .font(.title3)
                     .foregroundStyle(color)
                 Spacer()
-                // Wie bei den Hero-Karten im Dashboard: ohne Veränderung
-                // erscheint kein Pfeil, statt fälschlich „aufwärts“ zu zeigen.
+                // Ohne Veränderung kein Pfeil.
                 if let change, change != 0 {
                     changeBadge(change)
                 }

@@ -97,13 +97,11 @@ struct PageRow: View {
     var body: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
-                // Titel oben
                 Text(page.title.isEmpty ? String(localized: "website.noTitle") : page.title)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .lineLimit(2)
 
-                // Vollständige URL darunter
                 Text(fullURL)
                     .font(.caption)
                     .foregroundStyle(.secondary)

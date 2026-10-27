@@ -1,8 +1,6 @@
 import Foundation
 
-/// Shared DateFormatter instances to avoid expensive repeated allocations.
-/// DateFormatter is Sendable; ISO8601DateFormatter is not, so those two need
-/// nonisolated(unsafe). All of them are only read after initialization.
+/// Geteilte Formatter; die ISO8601-Varianten brauchen nonisolated(unsafe) und werden nur gelesen.
 enum DateFormatters {
     /// ISO8601 with fractional seconds — for Umami API dates like "2024-01-15T10:30:00.000Z"
     nonisolated(unsafe) static let iso8601WithFractional: ISO8601DateFormatter = {

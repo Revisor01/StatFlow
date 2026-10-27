@@ -14,29 +14,24 @@ class WebsiteDetailViewModelTests: XCTestCase {
             await viewModel.loadData(dateRange: .today)
         }
 
-        // Der Zwischenzustand `isLoading == true` ist ohne API nach Millisekunden
-        // vorbei; geprüft wird deshalb nur, dass nach `cancelLoading` kein
-        // Ladezustand zurückbleibt.
+        // Geprüft wird nur, dass nach `cancelLoading` kein Ladezustand bleibt.
         viewModel.cancelLoading()
 
         // Task abwarten (sollte nach Cancel schnell beenden)
         loadTask.cancel()
         await loadTask.value
 
-        // loadingTask sollte nil sein nach cancelLoading
-        // isLoading sollte false sein nach Task-Ende
+        // Nach cancelLoading: loadingTask nil, isLoading false.
         XCTAssertFalse(viewModel.isLoading, "isLoading sollte nach cancelLoading false sein")
     }
 
     func testRepeatedLoadDataCancelsPreviousTask() async throws {
         let viewModel = WebsiteDetailViewModel(websiteId: "test-id", domain: "test.com")
 
-        // Erster loadData-Aufruf
         let firstTask = Task {
             await viewModel.loadData(dateRange: .today)
         }
 
-        // Kurz warten
         try await Task.sleep(nanoseconds: 50_000_000) // 0.05s
 
         // Zweiter loadData-Aufruf sollte den ersten canceln
@@ -44,30 +39,19 @@ class WebsiteDetailViewModelTests: XCTestCase {
             await viewModel.loadData(dateRange: .thisWeek)
         }
 
-        // Beide Tasks abwarten
         firstTask.cancel()
         secondTask.cancel()
         await firstTask.value
         await secondTask.value
 
-        // Kein Crash, isLoading stabil
-        // Der zweite Aufruf hat den ersten erfolgreich gecancelt (kein assert noetig — Test prueft Stabilitaet)
+        // Der zweite Aufruf bricht den ersten ab, geprüft wird die Stabilität.
     }
 
-    /// `cancelLoading` muss den Ladezustand zurücknehmen.
-    ///
-    /// Der `defer` in `loadData` lässt `isLoading` bei Abbruch bewusst stehen,
-    /// damit ein abgelöster Ladevorgang den Spinner des nachfolgenden nicht
-    /// ausschaltet. Nach einem echten Abbruch folgt aber keiner mehr. Die
-    /// Website-Ansicht ruft `cancelLoading` bei jedem Verlassen auf
-    /// (`onDisappear`) — ohne Rücknahme blieb der Ladekreis stehen und war beim
-    /// nächsten Öffnen sofort wieder zu sehen.
+    /// `cancelLoading` nimmt den Ladezustand zurück, sonst bleibt der Ladekreis nach dem Verlassen stehen.
     func testCancelLoadingResetsLoadingState() {
         let viewModel = WebsiteDetailViewModel(websiteId: "test-id", domain: "test.com")
 
-        // Ladezustand setzen, wie ihn ein laufender Ladevorgang hinterlässt.
-        // Direkt gesetzt statt über `loadData` erzeugt, weil der echte Vorgang
-        // ohne API zu schnell durchläuft, um ihn verlässlich zu treffen.
+        // Direkt gesetzt, der echte Vorgang läuft ohne API zu schnell durch.
         viewModel.isLoading = true
 
         viewModel.cancelLoading()

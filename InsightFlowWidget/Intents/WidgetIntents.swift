@@ -1,8 +1,3 @@
-//
-//  WidgetIntents.swift
-//  InsightFlowWidget
-//
-
 import WidgetKit
 import SwiftUI
 import AppIntents
@@ -198,8 +193,7 @@ struct WebsiteQuery: EntityQuery {
                 return []
             }
 
-            // Websites aus Teams ergänzen, damit das Widget dieselbe Auswahl
-            // anbietet wie die App.
+            // Team-Websites ergänzen, damit das Widget dieselbe Auswahl bietet wie die App.
             let teamWebsites = await fetchTeamWebsites(account: account, baseURL: url)
 
             var seen = Set(websites.map(\.id))
@@ -219,17 +213,14 @@ struct WebsiteQuery: EntityQuery {
         }
     }
 
-    /// Websites aus allen Teams des Kontos. Fehler bleiben hier folgenlos: Das
-    /// Widget zeigt dann eben nur die persönlichen Websites an.
+    /// Websites aus allen Teams; Fehler lassen nur die persönlichen übrig.
     private func fetchTeamWebsites(account: WidgetAccount, baseURL: URL) async -> [WebsiteEntity] {
         struct TeamItem: Decodable { let id: String; let name: String }
         struct TeamsWrapper: Decodable { let data: [TeamItem] }
         struct WS: Decodable { let id: String; let name: String }
         struct Wrapper: Decodable { let data: [WS] }
 
-        // Das Widget hat ein knappes Zeitbudget, deshalb hier nur die erste
-        // Seite je Liste — anders als in der App, die vollständig blättert.
-        // `orderBy` sorgt dafür, dass es immer dieselbe Seite ist.
+        // Knappes Zeitbudget, daher nur die erste Seite, mit `orderBy` immer dieselbe.
         func get(_ path: String) async -> Data? {
             guard var components = URLComponents(
                 url: baseURL.appendingPathComponent(path),
@@ -253,8 +244,7 @@ struct WebsiteQuery: EntityQuery {
               !teams.isEmpty
         else { return [] }
 
-        // Teams parallel abfragen: Nacheinander summieren sich bei mehreren
-        // Teams die Zeitüberschreitungen und das Widget bekäme gar keine Liste.
+        // Parallel, nacheinander summierten sich die Zeitüberschreitungen.
         var result: [WebsiteEntity] = []
         await withTaskGroup(of: [WebsiteEntity].self) { group in
             for team in teams {

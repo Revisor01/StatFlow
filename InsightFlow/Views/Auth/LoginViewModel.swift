@@ -5,15 +5,13 @@ class LoginViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
-    /// Wird gesetzt, sobald Umami für den Login einen zweiten Faktor verlangt.
-    /// Die View blendet daraufhin die Code-Eingabe ein.
+    /// Gesetzt, sobald Umami einen zweiten Faktor verlangt; die View zeigt dann die Code-Eingabe.
     @Published var requiresTwoFactor = false
 
     private let umamiAPI: UmamiAPI
     private let plausibleAPI: PlausibleAPI
 
-    /// Zwischenstand des zweistufigen Logins: Der `partialToken` ist nur wenige
-    /// Minuten gültig, die übrigen Werte brauchen wir erst beim Anlegen des Accounts.
+    /// Zwischenstand des zweistufigen Logins; der `partialToken` gilt nur wenige Minuten.
     private var pendingTwoFactor: (partialToken: String, url: URL, serverURL: String, username: String, accountName: String)?
 
     init(umamiAPI: UmamiAPI = .shared, plausibleAPI: PlausibleAPI = .shared) {
@@ -109,10 +107,7 @@ class LoginViewModel: ObservableObject {
 
     // MARK: - Plausible Login
 
-    /// Anmeldung an Umami Cloud mit dem API-Schlüssel aus den
-    /// Kontoeinstellungen. Der Schlüssel wird als Bearer-Token abgelegt —
-    /// dieselbe Ablage wie beim self-hosted-Token, damit Widget und
-    /// Kontowechsel unverändert funktionieren.
+    /// Anmeldung an Umami Cloud; der Schlüssel liegt wie das self-hosted-Token, damit Widget und Kontowechsel gleich bleiben.
     func loginWithUmamiCloud(apiKey: String, accountName: String = "") async {
         isLoading = true
         errorMessage = nil
@@ -140,11 +135,7 @@ class LoginViewModel: ObservableObject {
         isLoading = false
     }
 
-    /// Anmeldung an einer eigenen Instanz über einen API-Schlüssel.
-    ///
-    /// Umami führt API-Schlüssel erst ab 3.4. Der Schlüssel ersetzt das
-    /// Anmelde-Token: er wird ebenso als `Authorization: Bearer …` gesendet,
-    /// verlangt keine Bestätigung in zwei Schritten und läuft nicht ab.
+    /// Anmeldung an einer eigenen Instanz per API-Schlüssel (ab 3.4), gesendet als Bearer.
     func loginWithUmamiSelfHostedKey(serverURL: String, apiKey: String, accountName: String = "") async {
         guard URL(string: serverURL) != nil else {
             errorMessage = String(localized: "error.invalidURL")
@@ -165,8 +156,7 @@ class LoginViewModel: ObservableObject {
                 name: accountName.isEmpty ? host : accountName,
                 serverURL: serverURL,
                 providerType: .umami,
-                // Wie beim Cloud-Weg: der Schlüssel liegt im Feld `token`,
-                // damit Widget-Sync und Kontowechsel unverändert bleiben.
+                // Schlüssel im Feld `token`, damit Widget-Sync und Kontowechsel gleich bleiben.
                 credentials: AccountCredentials(token: apiKey, apiKey: nil)
             )
             AccountManager.shared.addAccount(account)

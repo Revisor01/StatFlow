@@ -7,8 +7,7 @@ struct WebsiteDetailChartSection: View {
     @Binding var selectedChartPoint: TimeSeriesPoint?
     @Binding var selectedChartStyle: ChartStyle
     let selectedDateRange: DateRange
-    /// Wird mit dem Zeitpunkt des gewählten Punkts aufgerufen, wenn am Wert
-    /// das Plus angetippt wird. `nil` blendet den Knopf aus.
+    /// Wird mit dem Zeitpunkt des gewählten Punkts aufgerufen; nil blendet den Knopf aus.
     var onAddAnnotation: ((Date) -> Void)?
     /// Öffnet die Liste der Vermerke — angetippt über eine Notiz im Kopfbereich.
     var onOpenAnnotations: (() -> Void)?
@@ -38,16 +37,7 @@ struct WebsiteDetailChartSection: View {
         var id: String { annotation.id }
     }
 
-    /// Setzt jede Marke auf den Datenpunkt, zu dem der Vermerk gehört.
-    ///
-    /// Gezeichnet wird sonst am Zeitpunkt des Vermerks: ein Eintrag um 17:11
-    /// stünde in der Tagesansicht bei etwa 71 % des Tages und damit sichtbar
-    /// neben dem Tagespunkt, obwohl er zu ihm gehört.
-    ///
-    /// Zugeordnet wird über dieselbe Regel wie bei der Notiz-Anzeige: gleicher
-    /// Tag, in der Stundenansicht zusätzlich gleiche Stunde. Der zeitlich
-    /// nächste Punkt wäre falsch — 17:11 liegt näher an Mitternacht des
-    /// Folgetags als an der des eigenen.
+    /// Setzt jede Marke auf ihren Datenpunkt (gleicher Tag, bei Stunden gleiche Stunde), nicht auf den zeitlich nächsten.
     private var annotationMarks: [AnnotationMark] {
         let calendar = Calendar.current
         let components: Set<Calendar.Component> = isHourlyData
@@ -63,9 +53,7 @@ struct WebsiteDetailChartSection: View {
         }
     }
 
-    /// Vermerke am gewählten Punkt — bei Tagesauflösung alle desselben Tages,
-    /// bei Stundenauflösung die derselben Stunde. Sonst träfe ein Vermerk mit
-    /// Uhrzeit die Tagesmarke nie.
+    /// Vermerke am gewählten Punkt, nach Tag bzw. Stunde.
     private func annotations(at date: Date) -> [UmamiAnnotation] {
         let calendar = Calendar.current
         let components: Set<Calendar.Component> = isHourlyData
@@ -199,9 +187,7 @@ struct WebsiteDetailChartSection: View {
                                 .foregroundStyle(.secondary)
                         }
 
-                        // Notizen an diesem Punkt — dafür sind die Marken da.
-                        // Antippen führt zur Liste, wo sie sich bearbeiten und
-                        // löschen lassen.
+                        // Antippen führt zur Liste, wo sich die Notizen bearbeiten lassen.
                         ForEach(annotations(at: point.date)) { annotation in
                             Button {
                                 onOpenAnnotations?()
@@ -227,20 +213,16 @@ struct WebsiteDetailChartSection: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
 
-            // Vermerk anlegen — immer sichtbar, nicht erst nach Antippen eines
-            // Punkts. Zuvor hing der Knopf an der Auswahl und war deshalb im
-            // Ausgangszustand unsichtbar.
+            // Immer sichtbar, nicht erst nach Auswahl eines Punkts.
             if let onAddAnnotation {
                 Button {
-                    // Ist ein Punkt gewählt, gilt dessen Zeitpunkt; sonst der
-                    // letzte des Zeitraums — der jüngste Wert im Diagramm.
+                    // Gewählter Punkt, sonst der jüngste des Zeitraums.
                     let target = selectedChartPoint?.date
                         ?? currentChartData.last?.date
                         ?? Date()
                     onAddAnnotation(target)
                 } label: {
-                    // Größe und Form wie der Umschalter für Linie/Balken daneben, damit
-                    // beide als gleichwertige Werkzeuge der Kopfzeile lesbar sind.
+                    // Wie der Umschalter daneben, damit beide als Werkzeuge der Kopfzeile lesbar sind.
                     Image(systemName: "text.badge.plus")
                         .font(.subheadline)
                         .foregroundStyle(.teal)
@@ -315,9 +297,7 @@ struct WebsiteDetailChartSection: View {
                 }
             }
 
-            // Vermerke: dünne senkrechte Linie mit Lesezeichen am oberen Rand.
-            // Bewusst vor der Auswahl-Marke gezeichnet, damit die gestrichelte
-            // Linie des gewählten Punkts obenauf bleibt.
+            // Vor der Auswahl-Marke zeichnen, damit deren Linie obenauf bleibt.
             ForEach(annotationMarks) { mark in
                 RuleMark(x: .value("Datum", mark.markDate))
                     .foregroundStyle(.teal.opacity(0.45))
@@ -425,9 +405,7 @@ struct WebsiteDetailChartSection: View {
                 }
             }
 
-            // Vermerke: dünne senkrechte Linie mit Lesezeichen am oberen Rand.
-            // Bewusst vor der Auswahl-Marke gezeichnet, damit die gestrichelte
-            // Linie des gewählten Punkts obenauf bleibt.
+            // Vor der Auswahl-Marke zeichnen, damit deren Linie obenauf bleibt.
             ForEach(annotationMarks) { mark in
                 RuleMark(x: .value("Datum", mark.markDate))
                     .foregroundStyle(.teal.opacity(0.45))

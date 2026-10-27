@@ -1,8 +1,7 @@
 import Foundation
 
 extension Error {
-    /// Checks if this error indicates a network connectivity problem.
-    /// Centralizes network error detection — add new URLError codes here only.
+    /// true bei Netzwerkfehlern; neue URLError-Codes nur hier ergänzen.
     var isNetworkError: Bool {
         guard let urlError = self as? URLError else { return false }
         return [

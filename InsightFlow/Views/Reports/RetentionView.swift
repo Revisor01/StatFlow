@@ -222,7 +222,6 @@ struct RetentionView: View {
                 }
 
                 VStack(spacing: 0) {
-                    // Header
                     HStack {
                         Text(String(localized: "retention.firstVisit"))
                             .font(.caption)

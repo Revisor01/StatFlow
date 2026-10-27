@@ -200,7 +200,6 @@ class AnalyticsCacheServiceTests: XCTestCase {
             try! content.write(to: fileURL)
         }
 
-        // Get current size
         let totalSize = sut.cacheSize()
         guard totalSize > 0 else {
             XCTFail("Expected non-zero cache size after writing files")
@@ -210,8 +209,7 @@ class AnalyticsCacheServiceTests: XCTestCase {
         // Evict with maxSize = 1 byte (forces eviction of almost all files)
         sut.evictOldestEntries(maxSize: 1)
 
-        // After eviction, cache size should be less (some files deleted)
-        // Note: the newest file should remain if possible
+        // Nach der Verdrängung ist der Cache kleiner.
         XCTAssertLessThanOrEqual(sut.cacheSize(), totalSize)
     }
 
@@ -227,7 +225,6 @@ class AnalyticsCacheServiceTests: XCTestCase {
     }
 
     func testCacheSizeAfterEviction() {
-        // Save multiple entries
         for i in 1...5 {
             sut.saveWebsites([makeCachedWebsite(id: "\(i)", domain: "site\(i).com")], accountId: "size-test-\(i)")
         }
@@ -235,7 +232,6 @@ class AnalyticsCacheServiceTests: XCTestCase {
         let sizeBefore = sut.cacheSize()
         XCTAssertGreaterThan(sizeBefore, 0)
 
-        // Evict everything
         sut.evictOldestEntries(maxSize: 1)
 
         let sizeAfter = sut.cacheSize()

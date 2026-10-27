@@ -33,8 +33,7 @@ enum WebVitalRating {
     }
 }
 
-/// Offizielle Core-Web-Vitals-Schwellwerte je Kennzahl.
-/// LCP/INP/FCP/TTFB in Millisekunden, CLS einheitenlos.
+/// Core-Web-Vitals-Schwellwerte; LCP/INP/FCP/TTFB in Millisekunden, CLS ohne Einheit.
 extension UmamiWebVitalMetric {
     /// Obergrenze für „gut“ (Wert ≤ goodThreshold).
     var goodThreshold: Double {
@@ -93,8 +92,7 @@ extension UmamiWebVitalMetric {
         return .needsImprovement
     }
 
-    /// Formatiert einen Rohwert passend zur Kennzahl:
-    /// Zeiten als „340 ms“ bzw. „1,2 s“, CLS mit drei Nachkommastellen ohne Einheit.
+    /// Zeiten als „340 ms“ bzw. „1,2 s“, CLS mit drei Nachkommastellen.
     func formattedValue(_ value: Double) -> String {
         guard isDuration else {
             return value.formatted(
@@ -190,8 +188,7 @@ final class WebVitalsViewModel: ObservableObject {
         .sorted { $0.date < $1.date }
     }
 
-    /// Obergrenze der Y-Achse: mindestens bis zur „schlecht“-Schwelle, damit die
-    /// eingezeichneten Schwellwert-Linien immer sichtbar bleiben.
+    /// Y-Achse mindestens bis zur „schlecht“-Schwelle, damit die Linien sichtbar bleiben.
     var chartUpperBound: Double {
         let dataMax = chartPoints.map(\.p95).max() ?? 0
         let threshold = selectedMetric.poorThreshold

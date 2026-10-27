@@ -106,9 +106,7 @@ class PagesViewModel: ObservableObject {
 
     // Versuche einen sinnvollen Titel aus dem Pfad zu extrahieren
     private func extractTitleFromPath(_ path: String) -> String {
-        // Für /details?postId=123 -> "Details"
-        // Für /kontakt -> "Kontakt"
-        // Für / -> "Startseite"
+        // /details?postId=123 -> "Details", /kontakt -> "Kontakt", / -> "Startseite"
 
         if path == "/" {
             return String(localized: "pages.homepage")

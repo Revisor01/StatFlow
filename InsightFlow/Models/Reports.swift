@@ -164,9 +164,7 @@ struct AttributionItem: Identifiable, Sendable {
 
 // MARK: - Umami v3 Performance / Web Vitals
 
-/// Antwort von POST `api/reports/performance`.
-/// `chart` zeigt die Perzentile der über `metric` gewählten Kennzahl im
-/// Zeitverlauf, `summary` alle fünf Web Vitals über den ganzen Zeitraum.
+/// Antwort von POST `api/reports/performance`: Perzentile der gewählten Kennzahl und alle fünf Web Vitals.
 struct UmamiPerformanceReport: Codable, Sendable {
     let chart: [UmamiPerformanceChartPoint]
     let summary: UmamiPerformanceSummary
@@ -185,10 +183,7 @@ struct UmamiPerformanceReport: Codable, Sendable {
         browsers = (try? container.decodeIfPresent([UmamiPerformanceMetric].self, forKey: .browsers)) ?? []
     }
 
-    /// Ab Umami 3.4 kommen diese Angaben aus getrennten Routen
-    /// (`performance/stats`, `performance/chart`, `performance/metrics`) und
-    /// werden hier zu derselben Form zusammengesetzt, die die Ansichten schon
-    /// erwarten.
+    /// Ab Umami 3.4 aus `performance/stats`, `chart` und `metrics` zur selben Form zusammengesetzt.
     init(
         chart: [UmamiPerformanceChartPoint],
         summary: UmamiPerformanceSummary,
@@ -206,8 +201,7 @@ struct UmamiPerformanceReport: Codable, Sendable {
     }
 }
 
-/// Web-Vital-Kennzahl, die der Performance-Report als Zeitreihe ausgibt.
-/// FID gibt es in v3 nicht mehr — der Nachfolger heißt INP.
+/// Web-Vital-Kennzahl der Zeitreihe; FID gibt es in v3 nicht mehr, der Nachfolger ist INP.
 enum UmamiWebVitalMetric: String, Sendable, CaseIterable {
     case lcp
     case inp
@@ -334,9 +328,7 @@ struct UmamiPerformanceMetric: Codable, Sendable, Identifiable {
 
 // MARK: - Verfügbarer Datenzeitraum (`api/websites/{id}/daterange`)
 
-/// Zeitraum, für den die Website überhaupt Daten hat. Damit lassen sich in der
-/// Datumsauswahl Zeiträume ohne Daten kennzeichnen.
-/// Der Server liefert ISO-Zeitstempel, z. B. "2025-11-01T01:57:01.000Z".
+/// Zeitraum mit Daten (ISO-Zeitstempel), um leere Zeiträume in der Auswahl zu kennzeichnen.
 struct UmamiDataDateRange: Sendable, Equatable {
     let startDate: Date?
     let endDate: Date?

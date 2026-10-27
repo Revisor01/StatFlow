@@ -1,8 +1,3 @@
-//
-//  WidgetNetworking.swift
-//  InsightFlowWidget
-//
-
 import WidgetKit
 import SwiftUI
 import Foundation
@@ -47,8 +42,7 @@ struct Provider: AppIntentTimelineProvider {
         // Versuche zuerst aus dem Cache zu laden (für Offline-Support)
         let cachedData = WidgetCache.load(websiteId: website.id, timeRange: config.timeRange)
 
-        // Try to get credentials - prioritize website's associated account
-        // The widget should work independently of the app's currently active account
+        // Zuerst das Konto der Website, unabhängig vom aktiven Konto der App.
         let accounts = WidgetAccountsStorage.loadAccounts()
         var creds: WidgetCredentials.Credentials?
 
@@ -82,8 +76,7 @@ struct Provider: AppIntentTimelineProvider {
         }
         // Third priority: Try to find matching account by website ID
         else {
-            // For Plausible: website.id is the domain, check if any account has this site
-            // For Umami: website.id is UUID, need to find which account owns it
+            // Plausible: id ist die Domain; Umami: id ist eine UUID, Konto suchen.
             for account in accounts {
                 if account.providerType == .plausible {
                     if let sites = account.sites, sites.contains(website.id) {
@@ -112,16 +105,14 @@ struct Provider: AppIntentTimelineProvider {
             return .notConfigured
         }
 
-        // Validate website ID matches provider type
-        // Plausible uses domains (contains "."), Umami uses UUIDs
+        // Plausible nutzt Domains (mit "."), Umami UUIDs.
         let websiteIdLooksLikeDomain = website.id.contains(".")
         let isPlausible = credentials.providerType == .plausible
 
         var effectiveWebsite = website
 
         if isPlausible && !websiteIdLooksLikeDomain {
-            // Widget configured with Umami website but provider is Plausible
-            // Try to use first available Plausible site
+            // Umami-Website, aber Plausible-Provider: erste Plausible-Site nehmen.
             widgetLog("fetchStats: website ID '\(website.id)' doesn't match Plausible provider (expected domain)")
             if let sites = credentials.sites, let firstSite = sites.first {
                 widgetLog("fetchStats: falling back to first Plausible site: \(firstSite)")
@@ -146,7 +137,6 @@ struct Provider: AppIntentTimelineProvider {
             result = await fetchUmamiStats(creds: credentials, website: effectiveWebsite, timeRange: config.timeRange)
         }
 
-        // Bei Erfolg: Cache speichern
         if result.errorMessage == nil {
             WidgetCache.save(result, websiteId: effectiveWebsite.id, timeRange: config.timeRange)
             return result
@@ -196,7 +186,6 @@ struct Provider: AppIntentTimelineProvider {
         let timezone = TimeZone.current.identifier
 
         do {
-            // Stats
             guard var statsURL = URLComponents(url: baseURL.appendingPathComponent("api/websites/\(website.id)/stats"), resolvingAgainstBaseURL: false) else {
                 return .error(String(localized: "widget.error.invalidURL"))
             }
@@ -252,7 +241,6 @@ struct Provider: AppIntentTimelineProvider {
                 pageviewsChange = Int(round(Double(pageviewsChangeAbs) / Double(compPageviews) * 100))
             }
 
-            // Sparkline
             guard var pvURL = URLComponents(url: baseURL.appendingPathComponent("api/websites/\(website.id)/pageviews"), resolvingAgainstBaseURL: false) else {
                 return .error(String(localized: "widget.error.invalidURL"))
             }
@@ -332,12 +320,10 @@ struct Provider: AppIntentTimelineProvider {
                 }
             }
 
-            // Active
             let activeURL = baseURL.appendingPathComponent("api/websites/\(website.id)/active")
             var activeReq = URLRequest(url: activeURL)
             activeReq.setValue("Bearer \(creds.token)", forHTTPHeaderField: "Authorization")
-            // Umami liefert {"visitors": n} — sowohl in v2 als auch in v3.
-            // "x" ist ein Altformat und bleibt nur als Rückfall stehen.
+            // Umami liefert {"visitors": n}, "x" bleibt als Rückfall für das Altformat.
             var active = 0
             if let (activeData, _) = try? await URLSession.shared.data(for: activeReq),
                let activeJson = try? JSONSerialization.jsonObject(with: activeData) as? [String: Any] {
@@ -419,7 +405,6 @@ struct Provider: AppIntentTimelineProvider {
         do {
             let apiURL = baseURL.appendingPathComponent("api/v2/query")
 
-            // Fetch current period stats
             var request = URLRequest(url: apiURL)
             request.httpMethod = "POST"
             request.setValue("Bearer \(creds.token)", forHTTPHeaderField: "Authorization")
@@ -456,7 +441,6 @@ struct Provider: AppIntentTimelineProvider {
                 else if let v = metrics[1] as? Double { pageviews = Int(v) }
             }
 
-            // Fetch comparison period stats
             var compVisitors = 0, compPageviews = 0
             let compBody: [String: Any] = [
                 "site_id": siteId,
@@ -486,7 +470,6 @@ struct Provider: AppIntentTimelineProvider {
                 }
             }
 
-            // Calculate percentage change
             var visitorsChange = 0, pageviewsChange = 0
             if compVisitors > 0 {
                 visitorsChange = Int(round(Double(visitors - compVisitors) / Double(compVisitors) * 100))
@@ -495,7 +478,6 @@ struct Provider: AppIntentTimelineProvider {
                 pageviewsChange = Int(round(Double(pageviews - compPageviews) / Double(compPageviews) * 100))
             }
 
-            // Fetch timeseries for sparkline
             var sparkline: [Int] = []
             let isShortRange = timeRange == .today || timeRange == .yesterday
             let timeDimension = isShortRange ? "time:hour" : "time:day"

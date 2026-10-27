@@ -113,9 +113,7 @@ struct WebsiteCard: View {
             // Website löschen für beide Provider
             if onRemoveSite != nil {
                 Button(role: .destructive) {
-                    // Umami delete is a permanent server-side wipe → require the
-                    // user to type the website name. Plausible only removes the
-                    // site locally, so a simple confirmation alert is enough.
+                    // Umami löscht endgültig auf dem Server, daher Namen eintippen; Plausible entfernt nur lokal.
                     if isUmamiProvider {
                         showDeleteSheet = true
                     } else {
@@ -609,10 +607,8 @@ struct DashboardShareLinkSheet: View {
                                 do {
                                     let updated: Website
                                     if newValue {
-                                        // Enable share link
                                         updated = try await api.updateWebsite(websiteId: website.id, shareId: shareId)
                                     } else {
-                                        // Disable share link
                                         updated = try await api.updateWebsite(websiteId: website.id, clearShareId: true)
                                     }
                                     onUpdated?(updated)
@@ -687,8 +683,7 @@ struct DashboardShareLinkSheet: View {
 
 // MARK: - Delete Confirmation Sheet (type-to-confirm)
 
-/// Destructive-delete confirmation that requires typing the website name.
-/// Used for Umami sites, where deletion permanently wipes all server-side data.
+/// Löschbestätigung mit eingetipptem Namen, für das endgültige Löschen bei Umami.
 struct DeleteWebsiteConfirmSheet: View {
     let websiteName: String
     let onConfirm: () -> Void

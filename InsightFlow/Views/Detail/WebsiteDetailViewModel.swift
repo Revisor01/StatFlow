@@ -5,10 +5,7 @@ import os
 class WebsiteDetailViewModel: ObservableObject {
     let websiteId: String
     let domain: String
-    /// Besitzender Account dieser Website. Wird (falls gesetzt) vor jedem Load als
-    /// Provider konfiguriert, damit die Detailansicht im "Alle Accounts"-Modus nicht
-    /// versehentlich gegen den falschen (zuletzt aktiven) Account abfragt und
-    /// dadurch eingefrorene Werte anzeigt.
+    /// Besitzendes Konto, vor jedem Load konfiguriert, damit „Alle Konten“ nicht gegen das falsche fragt.
     let account: AnalyticsAccount?
 
     @Published var stats: WebsiteStats?
@@ -30,14 +27,12 @@ class WebsiteDetailViewModel: ObservableObject {
     @Published var screens: [MetricItem] = []
     @Published var events: [MetricItem] = []
     @Published var goals: [GoalConversion] = []
-    /// Vermerke im gewählten Zeitraum (Umami ab 3.4). Leer, wenn der
-    /// Server sie nicht kennt — im Diagramm erscheinen dann keine Marken.
+    /// Vermerke im Zeitraum (Umami ab 3.4), leer ohne Serverunterstützung.
     @Published var annotations: [UmamiAnnotation] = []
     @Published var totalVisitors: Int = 0
     @Published var activeFilters: [PlausibleQueryFilter] = []
     @Published var isLoading = false
-    /// True, solange für den aktuellen Zeitraum noch KEINE Chart-Daten vorliegen
-    /// (weder aus Cache noch vom Netzwerk). Steuert das Lade-Skeleton des Graphen.
+    /// true, solange noch keine Chart-Daten vorliegen; steuert das Skeleton.
     @Published var isChartLoading = false
     @Published var isOffline = false
     @Published var error: String?
@@ -51,10 +46,9 @@ class WebsiteDetailViewModel: ObservableObject {
         self.cache = cache
     }
 
-    /// `silent`: lädt im Hintergrund neu, ohne den Lade-Spinner zu zeigen
-    /// (für periodisches Auto-Refresh der Tages-Stats, solange die Ansicht offen ist).
+    /// `silent`: lädt ohne Spinner neu, für das Auto-Refresh.
     func loadData(dateRange: DateRange, silent: Bool = false) async {
-        // Cancel vorherigen Load — verhindert Background-Battery-Drain (FIX-02)
+        // Vorherigen Load abbrechen, sonst läuft er im Hintergrund weiter und kostet Akku
         loadingTask?.cancel()
         let task = Task {
             if !silent { isLoading = true }
@@ -65,9 +59,7 @@ class WebsiteDetailViewModel: ObservableObject {
                 }
             }
 
-            // Provider für den besitzenden Account konfigurieren, BEVOR Daten geladen
-            // werden. Stellt sicher, dass alle nachfolgenden API-Calls (auch nach
-            // Datumswechsel) gegen den korrekten Account/Server laufen.
+            // Provider vor dem Laden auf das besitzende Konto stellen.
             await ensureProviderConfigured()
             guard !Task.isCancelled else { return }
 
@@ -97,8 +89,7 @@ class WebsiteDetailViewModel: ObservableObject {
         await task.value
     }
 
-    /// Konfiguriert den Provider für den besitzenden Account, falls dieser nicht
-    /// bereits aktiv ist. No-op, wenn kein Account übergeben wurde (Single-Account-Flow).
+    /// Konfiguriert den Provider für das besitzende Konto, falls nötig.
     private func ensureProviderConfigured() async {
         guard let account else { return }
         if AccountManager.shared.activeAccount?.id != account.id {
@@ -110,21 +101,16 @@ class WebsiteDetailViewModel: ObservableObject {
         loadingTask?.cancel()
         loadingTask = nil
 
-        // `loadData` setzt `isLoading` bei Abbruch bewusst nicht zurück, weil sonst
-        // ein abgelöster Lauf den Spinner des nächsten ausschaltet. Hier folgt kein
-        // Lauf mehr, also muss der Ladekreis an dieser Stelle aus.
+        // Hier folgt kein Lauf mehr, daher `isLoading` zurücksetzen.
         isLoading = false
     }
 
-    /// Zeiträume, die im Hintergrund vorgeladen und gecacht werden, damit beim
-    /// Umschalten der Chips sofort der korrekte Wert steht (kein sichtbares Springen).
+    /// Zeiträume, die still vorgeladen werden, damit die Chips sofort stimmen.
     private static let prefetchPresets: [DateRangePreset] = [.today, .yesterday, .thisWeek, .last7Days]
 
     private var prefetchTask: Task<Void, Never>?
 
-    /// Lädt still die Hero-Stats für die übrigen Standard-Zeiträume in den Cache.
-    /// Aktualisiert KEINE @Published-Werte — befüllt nur den Cache, damit `loadStats`
-    /// (cache-first) beim Zeitraumwechsel sofort den richtigen Wert anzeigen kann.
+    /// Lädt die Hero-Stats der übrigen Zeiträume still in den Cache.
     func prefetchOtherRanges(except current: DateRange) {
         prefetchTask?.cancel()
         prefetchTask = Task { [weak self] in
@@ -155,9 +141,7 @@ class WebsiteDetailViewModel: ObservableObject {
     private var autoRefreshTask: Task<Void, Never>?
     private let autoRefreshInterval: Duration = .seconds(45)
 
-    /// Startet ein stilles periodisches Nachladen der Tages-Stats, solange die
-    /// Detailansicht offen ist. Der erste Load läuft hier NICHT — den übernimmt
-    /// `.task(id: selectedDateRange)` in der View. Hält nur die Werte aktuell.
+    /// Hält die Tages-Stats aktuell, solange die Ansicht offen ist; den ersten Load macht die View.
     func startAutoRefresh(dateRange: DateRange) {
         autoRefreshTask?.cancel()
         autoRefreshTask = Task { [weak self] in
@@ -178,9 +162,7 @@ class WebsiteDetailViewModel: ObservableObject {
         guard let provider = AnalyticsManager.shared.currentProvider else { return }
         let dateRangeId = dateRange.preset.rawValue
 
-        // Cache-first: gecachten Wert für genau diesen Zeitraum sofort anzeigen,
-        // damit beim Öffnen / Zeitraumwechsel direkt die korrekte Zahl steht statt
-        // eines leeren oder fremden Werts. Danach wird still revalidiert.
+        // Cache-first, danach still revalidieren.
         if let cached = cache.loadStats(websiteId: websiteId, dateRangeId: dateRangeId) {
             let cachedStats = cached.data.toAnalyticsStats().toWebsiteStats()
             if stats != cachedStats {
@@ -193,8 +175,7 @@ class WebsiteDetailViewModel: ObservableObject {
             let analyticsStats = try await provider.getAnalyticsStats(websiteId: websiteId, dateRange: dateRange)
             guard !Task.isCancelled else { return }
             let websiteStats = analyticsStats.toWebsiteStats()
-            // Nur überschreiben, wenn sich der Wert wirklich geändert hat — verhindert
-            // sichtbares Springen der Zahl beim stillen Hintergrund-Refresh.
+            // Nur bei echter Änderung überschreiben, gegen Springen.
             if stats != websiteStats {
                 stats = websiteStats
                 totalVisitors = websiteStats.visitors.value
@@ -225,9 +206,7 @@ class WebsiteDetailViewModel: ObservableObject {
         guard let provider = AnalyticsManager.shared.currentProvider else { return }
         let dateRangeId = dateRange.preset.rawValue
 
-        // Cache-first: zuletzt gerenderten Graphen für genau diesen Zeitraum sofort
-        // anzeigen (analog zu loadStats), damit beim Öffnen / Zeitraumwechsel kein
-        // leerer Platz entsteht. Danach wird still revalidiert.
+        // Cache-first wie bei loadStats, danach still revalidieren.
         if let cached = cache.loadChart(websiteId: websiteId, dateRangeId: dateRangeId) {
             if pageviewsData != cached.data.pageviews { pageviewsData = cached.data.pageviews }
             if sessionsData != cached.data.visitors { sessionsData = cached.data.visitors }
@@ -237,7 +216,6 @@ class WebsiteDetailViewModel: ObservableObject {
         isChartLoading = pageviewsData.isEmpty
 
         do {
-            // Load both in parallel
             async let pageviewTask = provider.getPageviewsData(websiteId: websiteId, dateRange: dateRange)
             async let visitorTask = provider.getVisitorsData(websiteId: websiteId, dateRange: dateRange)
             let (pageviewData, visitorData) = try await (pageviewTask, visitorTask)
@@ -251,8 +229,7 @@ class WebsiteDetailViewModel: ObservableObject {
                 dateRange: dateRange
             )
             guard !Task.isCancelled else { return }
-            // Update both at once to avoid partial render — nur bei echter Änderung,
-            // damit der stille Refresh den Graphen nicht unnötig neu zeichnet.
+            // Beide zugleich und nur bei Änderung, damit der Graph nicht unnötig neu zeichnet.
             if pageviewsData != filledPageviews { pageviewsData = filledPageviews }
             if sessionsData != filledSessions { sessionsData = filledSessions }
             isChartLoading = false
@@ -272,10 +249,7 @@ class WebsiteDetailViewModel: ObservableObject {
         let now = Date()
         let isHourly = dateRange.unit == "hour"
 
-        // Die Anfragen senden die Geräte-Zeitzone mit, die Messwerte kommen also
-        // bereits lokal zurück. Deshalb wird durchgehend im lokalen Kalender
-        // geschlüsselt — eine Umrechnung nach UTC würde die Punkte um den
-        // Zeitzonen-Versatz verschieben und Randstunden ganz herausfallen lassen.
+        // Werte kommen schon lokal zurück, eine Umrechnung nach UTC verschöbe die Punkte.
         var dataByComponent: [String: Int] = [:]
         for point in data {
             let date = point.date
@@ -293,8 +267,7 @@ class WebsiteDetailViewModel: ObservableObject {
         // Slots im selben (lokalen) Kalender erzeugen, in dem auch geschlüsselt wird.
         let slotCalendar = calendar
 
-        // Spätester Datenpunkt — im `today`-Zweig als Untergrenze für das
-        // Auffüllen, damit kein bereits gemeldeter Wert abgeschnitten wird.
+        // Spätester Punkt als Untergrenze fürs Auffüllen.
         let latestDataDate = data.map(\.date).max()
 
         if isHourly {
@@ -307,11 +280,9 @@ class WebsiteDetailViewModel: ObservableObject {
             switch dateRange.preset {
             case .today:
                 startOfDay = nowStartOfDay
-                // Nur bis zur aktuellen Stunde auffüllen — künftige Stunden des
-                // Tages sollen nicht als Nullwerte im Graphen erscheinen.
+                // Nur bis zur aktuellen Stunde auffüllen.
                 let currentHourOffset = slotCalendar.component(.hour, from: now)
-                // Sollte ein Datenpunkt später liegen (z.B. Uhr des Geräts geht nach),
-                // bis dorthin auffüllen, damit kein Wert verloren geht.
+                // Liegt ein Punkt später (Geräteuhr geht nach), bis dorthin auffüllen.
                 let latestDataHourOffset: Int
                 if let latest = latestDataDate, latest >= startOfDay {
                     latestDataHourOffset = Int(
@@ -533,11 +504,7 @@ class WebsiteDetailViewModel: ObservableObject {
         }
     }
 
-    /// Lädt die Vermerke des Zeitraums für die Marken im Diagramm.
-    ///
-    /// Nur bei Umami und nur ab 3.4; ältere Server und Plausible liefern
-    /// stillschweigend nichts, statt einen Fehler anzuzeigen — die Marken sind
-    /// eine Zugabe, kein Kernbestandteil der Ansicht.
+    /// Lädt die Vermerke für die Marken; ohne Unterstützung still nichts.
     private func loadAnnotations(dateRange: DateRange) async {
         guard let provider = AnalyticsManager.shared.currentProvider,
               let umami = provider as? UmamiAPI else {
@@ -560,8 +527,7 @@ class WebsiteDetailViewModel: ObservableObject {
         }
     }
 
-    /// Nimmt einen neu angelegten Vermerk sofort in die Marken auf, ohne die
-    /// ganze Ansicht neu zu laden.
+    /// Nimmt einen neuen Vermerk sofort in die Marken auf.
     func addAnnotationLocally(_ annotation: UmamiAnnotation) {
         annotations.append(annotation)
         annotations.sort { $0.date > $1.date }

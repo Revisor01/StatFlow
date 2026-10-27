@@ -1,8 +1,7 @@
 import Foundation
 import os
 
-/// Caching-Service für Analytics-Daten, der offline Zugriff ermöglicht
-/// Speichert Daten im App Group Container für App + Widget Zugriff
+/// Cache für Analytics-Daten im App-Group-Container, für App und Widget auch offline.
 final class AnalyticsCacheService: @unchecked Sendable {
     static let shared = AnalyticsCacheService()
 
@@ -25,7 +24,6 @@ final class AnalyticsCacheService: @unchecked Sendable {
         }
         let cacheURL = containerURL.appendingPathComponent(cacheFolder)
 
-        // Erstelle Cache-Ordner falls nicht vorhanden
         if !FileManager.default.fileExists(atPath: cacheURL.path) {
             try? FileManager.default.createDirectory(at: cacheURL, withIntermediateDirectories: true)
         }
@@ -150,8 +148,7 @@ final class AnalyticsCacheService: @unchecked Sendable {
 
     // MARK: - Detail Chart Cache (Pageviews + Visitors als Zeitreihe)
 
-    /// Speichert die beiden Chart-Zeitreihen (pageviews + visitors) für den Detail-Graphen.
-    /// Gleiche kurze TTL wie Sparklines (15 Min), da es Live-Verlaufsdaten sind.
+    /// Speichert beide Chart-Zeitreihen mit der kurzen TTL der Sparklines (15 Min).
     func saveChart(_ chart: CachedChart, websiteId: String, dateRangeId: String) {
         save(chart, forKey: chartKey(websiteId: websiteId, dateRangeId: dateRangeId), ttl: sparklineTTL)
     }
@@ -343,8 +340,7 @@ struct CachedWebsite: Codable {
     let domain: String
     let shareId: String?
     let provider: String // AnalyticsProviderType.rawValue
-    /// Optional, damit zwischengespeicherte Listen aus älteren App-Versionen
-    /// weiterhin gelesen werden können.
+    /// Optional, damit Caches älterer App-Versionen lesbar bleiben.
     let teamName: String?
 
     init(from website: AnalyticsWebsite) {
@@ -409,8 +405,7 @@ struct CachedStatValue: Codable {
     }
 }
 
-/// Gecachte Detail-Chart-Daten: beide Zeitreihen, die der Detail-Graph rendert.
-/// TimeSeriesPoint ist bereits Codable, daher direkt speicherbar.
+/// Gecachte Zeitreihen des Detail-Graphen.
 struct CachedChart: Codable {
     let pageviews: [TimeSeriesPoint]
     let visitors: [TimeSeriesPoint]

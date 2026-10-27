@@ -1,12 +1,7 @@
 import SwiftUI
 import os
 
-/// Auswahl von Umami-v3-Segmenten und -Cohorts plus den erweiterten
-/// Filteroptionen (`match`, `excludeBounce`).
-///
-/// Segmente gibt es ausschließlich bei Umami ab v3 — bei einem
-/// Plausible-Konto zeigt die Ansicht deshalb nur einen erklärenden Hinweis
-/// statt einer leeren, scheinbar kaputten Liste.
+/// Auswahl von Segmenten, Cohorts und Filteroptionen (Umami ab v3), bei Plausible ein Hinweis.
 struct SegmentPickerView: View {
     let website: Website
 

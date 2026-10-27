@@ -7,19 +7,13 @@ actor UmamiAPI: AnalyticsProvider {
     private var _baseURL: URL?
     private var _token: String?
 
-    /// Umami Cloud wird über einen API-Key statt über Benutzername/Passwort
-    /// angesprochen. Die Cloud-Basis `https://api.umami.is/v1` enthält den
-    /// Pfadbestandteil `api` bereits, deshalb entfällt dort das `api/`-Präfix,
-    /// das die self-hosted-Routen tragen.
+    /// Umami Cloud per API-Key; die Basis `…/v1` enthält `api` schon, daher kein `api/`-Präfix.
     private var _isCloud: Bool = false
 
-    /// Basisadresse der Umami-Cloud-API (Region wird serverseitig aus dem
-    /// Konto des Schlüssels abgeleitet).
+    /// Basis der Umami-Cloud-API, die Region folgt aus dem Schlüssel.
     static let cloudBaseURL = "https://api.umami.is/v1"
 
-    /// Erkennt an der eingetragenen Adresse, ob es sich um Umami Cloud handelt.
-    /// `cloud.umami.is` ist die Weboberfläche und bietet keine API-Anmeldung an;
-    /// wer sie einträgt, meint ebenfalls die Cloud.
+    /// Erkennt Umami Cloud an der Adresse, auch an der Weboberfläche `cloud.umami.is`.
     static func isCloudURL(_ urlString: String) -> Bool {
         guard let host = URL(string: urlString)?.host?.lowercased() else { return false }
         return host == "api.umami.is" || host == "cloud.umami.is"
@@ -32,8 +26,7 @@ actor UmamiAPI: AnalyticsProvider {
         activeFilters = filters
     }
 
-    /// Zeitzone des Geräts — muss mitgesendet werden, damit Umami dieselbe
-    /// Tages-/Stundeneinteilung verwendet wie das Widget.
+    /// Zeitzone des Geräts, damit Umami wie das Widget einteilt.
     private var timezoneQueryItem: URLQueryItem {
         URLQueryItem(name: "timezone", value: TimeZone.current.identifier)
     }
@@ -66,13 +59,7 @@ actor UmamiAPI: AnalyticsProvider {
         excludeBounce = exclude
     }
 
-    /// Convert active filters to Umami URL query parameters.
-    ///
-    /// Umami v3 kodiert Operator und Werte im Wert selbst: `<operator>.<value>`,
-    /// wobei `eq`/`neq` mehrere Werte kommasepariert entgegennehmen. Mehrere
-    /// Filter auf derselben Dimension bekommen einen numerischen Suffix
-    /// (`path`, `path2`, …), den Umami serverseitig wieder abschneidet.
-    /// Zusätzlich hängen wir hier segment/cohort/match/excludeBounce an.
+    /// Filter als Query-Parameter im v3-Format `<operator>.<value>`, mehrfache Dimensionen mit Suffix, dazu segment/cohort/match/excludeBounce.
     private var filterQueryItems: [URLQueryItem] {
         var items: [URLQueryItem] = []
         var seen: [String: Int] = [:]
@@ -114,7 +101,6 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     /// Erlaubte Filterspalten laut `filterParams` in Umami v3.
-    /// Alles andere verwirft der Server ohnehin, daher hier filtern.
     private static let umamiFilterNames: Set<String> = [
         "path", "referrer", "title", "query", "os", "browser", "device",
         "country", "region", "city", "tag", "hostname", "distinctId",
@@ -122,8 +108,7 @@ actor UmamiAPI: AnalyticsProvider {
         "utmContent", "utmTerm"
     ]
 
-    /// Mappt die Dimensionsnamen des geteilten PlausibleQueryFilter-Typs auf
-    /// Umami-Spalten. Bereits umami-konforme Namen kommen unverändert durch.
+    /// Mappt Plausible-Dimensionsnamen auf Umami-Spalten.
     private static func umamiFilterName(for dimension: String) -> String? {
         if umamiFilterNames.contains(dimension) { return dimension }
 
@@ -235,29 +220,13 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Routenwahl (Umami 3.4)
 
-    /// Ob der Server die Auswertungs-Routen aus Umami 3.4 kennt
-    /// (`GET api/websites/{id}/…`), oder noch die älteren Report-Routen
-    /// (`POST api/reports/…`) braucht. `nil`, solange ungeprüft.
-    ///
-    /// Beides gleichzeitig zu unterstützen ist nötig, weil 3.4 die alten Routen
-    /// über eine Kompatibilitätsschicht weiterhin beantwortet, ältere Server die
-    /// neuen aber nicht kennen — dort liefert die Anfrage die Weboberfläche
-    /// (HTTP 404, `text/html`) statt JSON.
+    /// Ob der Server die 3.4-Routen kennt (nil = ungeprüft); ältere liefern dort 404 mit HTML.
     private var _hasFeatureRoutes: Bool?
 
-    /// Verhindert, dass mehrere gleichzeitige Abfragen dieselbe Erkennung
-    /// mehrfach über das Netz schicken.
+    /// Verhindert doppelte Erkennungsanfragen.
     private var featureRouteProbe: Task<Bool, Never>?
 
-    /// Prüft einmal je Server, ob die 3.4-Routen vorhanden sind, und merkt sich
-    /// das Ergebnis für die Lebensdauer der Konfiguration.
-    ///
-    /// Geprüft wird an `performance/stats`: die Route braucht außer dem
-    /// Zeitraum keine Parameter und verändert nichts. Ein JSON-Objekt bedeutet
-    /// „vorhanden“; HTTP 404 bedeutet „älterer Server“. Andere Fehler (etwa 401
-    /// oder eine Zeitüberschreitung) sagen nichts über die Umami-Version aus,
-    /// werden deshalb nicht gemerkt und führen zum alten Weg, der auf beiden
-    /// Fassungen funktioniert.
+    /// Prüft je Server an `performance/stats`, ob die 3.4-Routen da sind; nur JSON oder 404 wird gemerkt.
     private func hasFeatureRoutes(websiteId: String) async -> Bool {
         if let known = _hasFeatureRoutes { return known }
         if let probe = featureRouteProbe { return await probe.value }
@@ -310,8 +279,7 @@ actor UmamiAPI: AnalyticsProvider {
     // MARK: - AnalyticsProvider - Authentication
 
     nonisolated func authenticate(serverURL: String, credentials: AnalyticsCredentials) async throws {
-        // Umami Cloud: Der API-Key ist bereits das Bearer-Token, es gibt keinen
-        // Anmelde-Endpunkt. `POST /api/auth/login` antwortet dort mit 404.
+        // Umami Cloud: der API-Key ist das Bearer-Token, `POST /api/auth/login` gibt 404.
         if case .umamiCloud(let apiKey) = credentials {
             let cloudURL = Self.cloudBaseURL
             guard let url = URL(string: cloudURL) else {
@@ -328,16 +296,13 @@ actor UmamiAPI: AnalyticsProvider {
             return
         }
 
-        // Eigene Instanz mit API-Schlüssel (ab Umami 3.4), gesendet wie ein Token
-        // als `Authorization: Bearer`. Keine Bestätigung in zwei Schritten, kein
-        // Ablauf der Sitzung.
+        // Eigene Instanz mit API-Schlüssel (ab 3.4) als Bearer, ohne zweiten Faktor und ohne Ablauf.
         if case .umamiSelfHostedKey(let apiKey) = credentials {
             guard let url = URL(string: serverURL) else {
                 throw APIError.invalidURL
             }
 
-            // Die Cloud hat einen eigenen Weg mit fester Basisadresse; wer sie
-            // hier einträgt, landete sonst auf einem Pfad, den es dort nicht gibt.
+            // Die Cloud hat eine feste Basis, hier landete man auf einem fehlenden Pfad.
             if Self.isCloudURL(serverURL) {
                 throw APIError.umamiCloudRequiresAPIKey
             }
@@ -360,15 +325,12 @@ actor UmamiAPI: AnalyticsProvider {
             throw APIError.invalidURL
         }
 
-        // Umami Cloud bietet keine Anmeldung mit Benutzername und Passwort an.
-        // Ohne diese Prüfung liefe der Versuch in ein generisches
-        // „Anmeldung fehlgeschlagen“, das wie ein Tippfehler aussieht.
+        // Sonst erschiene nur ein generisches „Anmeldung fehlgeschlagen“ wie bei einem Tippfehler.
         if Self.isCloudURL(serverURL) {
             throw APIError.umamiCloudRequiresAPIKey
         }
 
-        // Dieser Weg kennt keine Rückfrage beim Nutzer. Verlangt der Server einen
-        // zweiten Faktor, muss die Anmeldung über die Login-Ansicht laufen.
+        // Ohne Rückfrage: ein zweiter Faktor braucht die Login-Ansicht.
         guard case .token(let token) = try await login(
             baseURL: url,
             username: username,
@@ -377,7 +339,6 @@ actor UmamiAPI: AnalyticsProvider {
             throw APIError.twoFactorRequired
         }
 
-        // Save credentials
         try KeychainService.save(serverURL, for: .serverURL)
         try KeychainService.save(token, for: .token)
         try KeychainService.save(username, for: .username)
@@ -386,16 +347,7 @@ actor UmamiAPI: AnalyticsProvider {
         await configure(baseURL: url, token: token)
     }
 
-    /// Prüft einen Umami-Cloud-API-Key gegen `/websites`.
-    ///
-    /// Die Cloud unterscheidet sauber: ohne Schlüssel `400`, mit ungültigem
-    /// Schlüssel `401`. Beides wird hier in eine Meldung übersetzt, die dem
-    /// Nutzer sagt, was zu tun ist.
-    /// Prüft einen API-Schlüssel gegen eine echte Route, damit ein ungültiger
-    /// Schlüssel sofort auffällt und nicht erst im Dashboard.
-    ///
-    /// Die Cloud-Basis `…/v1` enthält den Pfadbestandteil `api` bereits, eine
-    /// selbst gehostete Instanz nicht — deshalb der unterschiedliche Pfad.
+    /// Prüft einen API-Schlüssel gegen eine echte Route; die Cloud antwortet ohne Schlüssel 400, mit ungültigem 401.
     private nonisolated func verifyAPIKey(baseURL: URL, apiKey: String, isCloud: Bool) async throws {
         let path = isCloud ? "websites" : "api/websites"
         var request = URLRequest(url: baseURL.appendingPathComponent(path))
@@ -567,11 +519,7 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Authentication
 
-    /// Ergebnis eines Login-Versuchs. Ab Umami 3.3 kann `api/auth/login` mit
-    /// Status 200 antworten, ohne ein Token zu liefern: Ist für den Benutzer
-    /// Zwei-Faktor-Authentifizierung aktiv, kommt stattdessen ein kurzlebiger
-    /// `partialToken`, der über `api/2fa/verify` gegen das echte Token
-    /// eingetauscht wird.
+    /// Ergebnis eines Logins; ab 3.3 kommt bei Zwei-Faktor statt Token ein `partialToken` für `api/2fa/verify`.
     enum LoginResult: Sendable {
         case token(String)
         case twoFactorRequired(partialToken: String)
@@ -585,8 +533,7 @@ actor UmamiAPI: AnalyticsProvider {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 15
 
-        // Umami Cloud expects "email" instead of "username" in the login body.
-        // Self-hosted Umami accepts both. Send both fields to be compatible with either.
+        // Die Cloud erwartet "email", self-hosted nimmt beide, also beide senden.
         let body = ["username": username, "email": username, "password": password]
         request.httpBody = try JSONEncoder().encode(body)
 
@@ -625,9 +572,7 @@ actor UmamiAPI: AnalyticsProvider {
         throw APIError.invalidResponse
     }
 
-    /// Schließt einen Login ab, für den Umami Zwei-Faktor-Authentifizierung
-    /// verlangt hat. Erwartet entweder einen sechsstelligen TOTP-Code oder
-    /// einen Backup-Code. `POST api/2fa/verify` (ab Umami 3.3).
+    /// Schließt einen Zwei-Faktor-Login mit TOTP- oder Backup-Code ab (`POST api/2fa/verify`, ab 3.3).
     nonisolated func verifyTwoFactor(
         baseURL: URL,
         partialToken: String,
@@ -652,8 +597,7 @@ actor UmamiAPI: AnalyticsProvider {
             throw APIError.invalidResponse
         }
 
-        // Umami meldet einen falschen Code mit 400 und eine Sperre nach zu
-        // vielen Fehlversuchen mit 429 — beide mit eigenem Fehlercode.
+        // Falscher Code gibt 400, Sperre nach Fehlversuchen 429.
         guard httpResponse.statusCode == 200 else {
             struct ErrorResponse: Codable {
                 struct Body: Codable {
@@ -688,29 +632,19 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Websites
 
-    /// Die eigenen Websites des Kontos. Ebenfalls paginiert: Ohne `pageSize`
-    /// antwortet Umami mit 20 Einträgen, und wer mehr Websites hat, sah bisher
-    /// nur die ersten zwanzig.
+    /// Eigene Websites, paginiert, weil Umami ohne `pageSize` nur 20 liefert.
     func getWebsites() async throws -> [Website] {
         try await fetchAllPages(endpoint: "api/websites") { data in
             try self.decoder.decode(WebsiteResponse.self, from: data).websites
         }
     }
 
-    /// Alle Websites, auf die das Konto Zugriff hat: eigene und solche aus
-    /// Teams, in denen es Mitglied ist.
-    ///
-    /// Teams sind erst ab Umami 3.0 abrufbar. Schlägt der Team-Abruf fehl —
-    /// ältere Instanz, fehlende Berechtigung, Netzwerkfehler —, liefert die
-    /// Methode die persönlichen Websites zurück, statt die Übersicht ganz
-    /// leer zu lassen.
+    /// Eigene und Team-Websites (Teams ab 3.0); scheitert der Team-Abruf, bleiben die eigenen.
     func getAllAccessibleWebsites() async throws -> [Website] {
         try await getAllAccessibleWebsitesResult().websites
     }
 
-    /// Ergebnis von `getAllAccessibleWebsitesResult`. `teamsComplete` ist
-    /// `false`, wenn Team-Websites fehlen könnten — dann sollte die Liste
-    /// nicht als vollständiger Stand zwischengespeichert werden.
+    /// `teamsComplete` ist false, wenn Team-Websites fehlen könnten, dann nicht cachen.
     struct AccessibleWebsites: Sendable {
         let websites: [Website]
         let teamsComplete: Bool
@@ -723,9 +657,7 @@ actor UmamiAPI: AnalyticsProvider {
         do {
             teams = try await getMyTeams()
         } catch {
-            // Bei Umami 2.x gibt es die Route nicht — das ist der Normalfall
-            // und kein Fehler. Andere Ursachen (Netzwerk, Rechte) bleiben so
-            // aber wenigstens im Protokoll sichtbar.
+            // Bei Umami 2.x fehlt die Route, das ist kein Fehler; andere Ursachen bleiben im Log.
             Logger.api.debug("Teams nicht abrufbar, nutze nur eigene Websites: \(String(describing: error))")
             return AccessibleWebsites(websites: personal, teamsComplete: false)
         }
@@ -734,8 +666,7 @@ actor UmamiAPI: AnalyticsProvider {
             return AccessibleWebsites(websites: personal, teamsComplete: true)
         }
 
-        // Websites der Teams parallel laden; ein einzelnes fehlschlagendes Team
-        // darf die übrigen nicht mitreißen.
+        // Teams parallel, ein fehlschlagendes reißt die übrigen nicht mit.
         var teamWebsites: [Website] = []
         var complete = true
 
@@ -768,10 +699,7 @@ actor UmamiAPI: AnalyticsProvider {
         )
     }
 
-    /// Führt persönliche und Team-Websites zusammen. Eigene haben Vorrang:
-    /// Taucht dieselbe ID doppelt auf, bleibt die persönliche Fassung ohne
-    /// Team-Kennzeichnung stehen. Auch innerhalb der Team-Liste kann eine
-    /// Website mehrfach vorkommen, wenn man in mehreren Teams ist.
+    /// Führt eigene und Team-Websites zusammen, bei doppelter ID gewinnt die eigene.
     static func merge(personal: [Website], teamWebsites: [Website]) -> [Website] {
         var seen = Set(personal.map(\.id))
         var combined = personal
@@ -791,31 +719,21 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Teams
 
-    /// Teams, in denen das angemeldete Konto Mitglied ist. `api/admin/teams`
-    /// bleibt Administratoren vorbehalten; für gewöhnliche Konten ist
-    /// `api/me/teams` der richtige Weg (ab Umami 3.0).
+    /// Teams des Kontos über `api/me/teams`, `api/admin/teams` ist Administratoren vorbehalten.
     func getMyTeams() async throws -> [Team] {
         try await fetchAllPages(endpoint: "api/me/teams") { data in
             try self.decoder.decode(TeamsResponse.self, from: data).data
         }
     }
 
-    /// Websites eines Teams. Anders als `api/me/websites?includeTeams=1` — das
-    /// nur Websites von Teams liefert, in denen man Eigentümer oder Verwalter
-    /// ist — genügt hier jede Mitgliedschaft, auch „nur lesen".
+    /// Websites eines Teams; anders als `includeTeams=1` genügt jede Mitgliedschaft.
     func getTeamWebsites(teamId: String) async throws -> [Website] {
         try await fetchAllPages(endpoint: "api/teams/\(teamId)/websites") { data in
             try self.decoder.decode(WebsiteResponse.self, from: data).websites
         }
     }
 
-    /// Holt alle Seiten einer paginierten Liste. Ohne `pageSize` liefert Umami
-    /// nur 20 Einträge — bei größeren Teams fehlten sonst Websites.
-    ///
-    /// `orderBy` wird immer mitgeschickt: Bei Team-Listen setzt der Server
-    /// keine Standardsortierung, und ohne feste Reihenfolge kann sich die
-    /// Aufteilung zwischen zwei Seitenabrufen verschieben — einzelne Einträge
-    /// kämen dann doppelt oder gar nicht.
+    /// Holt alle Seiten einer Liste, immer mit `orderBy`, sonst verschieben sich Team-Listen zwischen den Seiten.
     private func fetchAllPages<T>(
         endpoint: String,
         pageSize: Int = 100,
@@ -825,8 +743,7 @@ actor UmamiAPI: AnalyticsProvider {
         var all: [T] = []
         var page = 1
 
-        // Obergrenze als Reißleine: Ein Server, der immer volle Seiten liefert,
-        // darf die App nicht endlos beschäftigen.
+        // Obergrenze, falls ein Server immer volle Seiten liefert.
         while page <= 50 {
             let data = try await request(
                 endpoint: endpoint,
@@ -902,22 +819,11 @@ actor UmamiAPI: AnalyticsProvider {
     struct BatchCharts: Sendable {
         /// Verlaufsdaten je Website-ID.
         let charts: [String: [AnalyticsChartPoint]]
-        /// `true`, wenn der Server die angefragte Auflösung geliefert hat.
-        /// Server ohne `unit`-Unterstützung antworten weiterhin mit
-        /// 12-Stunden-Blöcken; dann sind die Werte für Stunden- oder
-        /// Tagesauflösung nicht verwendbar.
+        /// true, wenn der Server die angefragte Auflösung statt 12-Stunden-Blöcken geliefert hat.
         let honoredUnit: Bool
     }
 
-    /// Holt die Verlaufsdaten mehrerer Websites in einer einzigen Anfrage.
-    /// `GET api/websites/charts` (ab Umami 3.3).
-    ///
-    /// Ohne `unit` bucketiert der Server fest in 12-Stunden-Blöcken. Umami
-    /// wertet `unit` an dieser Route bislang nicht aus; Server, die den
-    /// Parameter kennen, liefern die angefragte Auflösung. Ob das der Fall ist,
-    /// lässt sich nur an der Anzahl der Werte erkennen — deshalb `honoredUnit`.
-    ///
-    /// Gezählt werden Sitzungen, nicht Seitenaufrufe.
+    /// Verlauf mehrerer Websites in einer Anfrage (`api/websites/charts`, ab 3.3), Sitzungen statt Aufrufe.
     func getWebsiteListCharts(
         websiteIds: [String],
         dateRange: DateRange
@@ -929,8 +835,7 @@ actor UmamiAPI: AnalyticsProvider {
         let endAt = Int(dates.end.timeIntervalSince1970 * 1000)
         let unit = dateRange.unit
 
-        // Sekunden je Bucket der angefragten Auflösung. Monate sind ungleich
-        // lang; dort wird der Startzeitpunkt kalendarisch bestimmt.
+        // Sekunden je Bucket; Monate sind ungleich lang und werden kalendarisch bestimmt.
         let stepSeconds: Double = unit == "hour" ? 3600 : 86400
 
         // So viele Werte müssen zurückkommen, damit die Auflösung stimmt.
@@ -939,8 +844,7 @@ actor UmamiAPI: AnalyticsProvider {
         var result: [String: [AnalyticsChartPoint]] = [:]
         var honored = true
 
-        // Der Server nimmt höchstens 20 IDs entgegen; größere Listen werden
-        // in Blöcken abgefragt.
+        // Höchstens 20 IDs je Anfrage, größere Listen in Blöcken.
         for chunk in stride(from: 0, to: websiteIds.count, by: Self.batchChartsLimit).map({
             Array(websiteIds[$0..<min($0 + Self.batchChartsLimit, websiteIds.count)])
         }) {
@@ -966,8 +870,7 @@ actor UmamiAPI: AnalyticsProvider {
             let response = try decoder.decode(ChartsResponse.self, from: data)
 
             for (websiteId, entry) in response.data {
-                // Weicht die Anzahl deutlich ab, hat der Server `unit` ignoriert
-                // und in 12-Stunden-Blöcken geantwortet.
+                // Weicht die Anzahl ab, hat der Server `unit` ignoriert.
                 if let expected, abs(entry.values.count - expected) > 1 {
                     honored = false
                 }
@@ -989,8 +892,7 @@ actor UmamiAPI: AnalyticsProvider {
         return BatchCharts(charts: result, honoredUnit: honored)
     }
 
-    /// Erwartete Anzahl Buckets für die Auflösung des Zeitraums, oder `nil`,
-    /// wenn sie sich nicht sinnvoll vorhersagen lässt (Monatsauflösung).
+    /// Erwartete Bucket-Anzahl, nil bei Monatsauflösung.
     static func expectedBucketCount(dateRange: DateRange) -> Int? {
         let dates = dateRange.dates
         let span = dates.end.timeIntervalSince(dates.start)
@@ -1039,8 +941,7 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode(EventStatsResponse.self, from: data)
     }
 
-    /// Ereignis-Kennzahlen mit Vorperiodenvergleich.
-    /// Achtung: Die Nutzdaten liegen bei diesem Endpunkt unter `data`.
+    /// Ereignis-Kennzahlen mit Vorperiode; die Nutzdaten liegen unter `data`.
     func getEventMetricStats(websiteId: String, dateRange: DateRange) async throws -> UmamiEventStats {
         let dates = dateRange.dates
         let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
@@ -1057,8 +958,7 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode(UmamiEventStatsResponse.self, from: data).data
     }
 
-    /// Ereignisse im Zeitverlauf. `timezone` ist hier Pflicht — ohne den
-    /// Parameter antwortet der Server mit 400. `unit` ist optional.
+    /// Ereignisse im Zeitverlauf; ohne `timezone` antwortet der Server 400.
     func getEventSeries(websiteId: String, dateRange: DateRange, unit: String? = nil) async throws -> [UmamiEventSeriesPoint] {
         let dates = dateRange.dates
         let startAt = Int(dates.start.timeIntervalSince1970 * 1000)
@@ -1101,8 +1001,7 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Verfügbarer Datenzeitraum
 
-    /// Zeitraum, für den überhaupt Daten vorliegen. Kennt keine Zeitraum-
-    /// oder Filterparameter.
+    /// Zeitraum mit Daten, ohne Zeitraum- oder Filterparameter.
     func getDataDateRange(websiteId: String) async throws -> UmamiDataDateRange {
         let data = try await request(endpoint: "api/websites/\(websiteId)/daterange")
         let response = try decoder.decode(DateRangeResponse.self, from: data)
@@ -1120,8 +1019,7 @@ actor UmamiAPI: AnalyticsProvider {
             URLQueryItem(name: "startAt", value: String(startAt)),
             URLQueryItem(name: "endAt", value: String(endAt))
         ]
-        // Scope to a single event so only that event's properties come back.
-        // Umami's route expects the query param `event`.
+        // Auf ein Ereignis begrenzen, die Route erwartet den Parameter `event`.
         if let eventName {
             queryItems.append(URLQueryItem(name: "event", value: eventName))
         }
@@ -1257,7 +1155,6 @@ actor UmamiAPI: AnalyticsProvider {
             )
         }
 
-        // Try to decode as single object
         if let teamResponse = try? decoder.decode(TeamCreateResponse.self, from: data) {
             return Team(
                 id: teamResponse.id,
@@ -1268,7 +1165,6 @@ actor UmamiAPI: AnalyticsProvider {
             )
         }
 
-        // Debug output for troubleshooting
         if let jsonString = String(data: data, encoding: .utf8) {
             Logger.api.debug("Team create response: \(jsonString)")
         }
@@ -1328,8 +1224,7 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     func getJourneyReport(websiteId: String, dateRange: DateRange, steps: Int = 5) async throws -> [JourneyPath] {
-        // Ab Umami 3.4: `GET api/websites/{id}/journeys`. `steps` ist hier eine
-        // einfache Zahl, keine JSON-Liste wie bei den Trichtern.
+        // Ab 3.4 `GET …/journeys`; `steps` ist hier eine Zahl, keine JSON-Liste.
         if await hasFeatureRoutes(websiteId: websiteId) {
             let data = try await request(
                 endpoint: "api/websites/\(websiteId)/journeys",
@@ -1360,9 +1255,7 @@ actor UmamiAPI: AnalyticsProvider {
     // MARK: - Reports
 
     func getRetention(websiteId: String, dateRange: DateRange) async throws -> [RetentionRow] {
-        // Ab Umami 3.4 per `GET …/retention`. Die Route schneidet die Tage nach der
-        // Zeitzone des Geräts statt nach UTC; abweichende Zahlen gegenüber früher
-        // kommen von der Tagesgrenze, nicht von der Zählweise.
+        // Ab 3.4 `GET …/retention`, Tagesgrenzen nach Gerätezeitzone statt UTC.
         if await hasFeatureRoutes(websiteId: websiteId) {
             let data = try await request(
                 endpoint: "api/websites/\(websiteId)/retention",
@@ -1400,9 +1293,7 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     func getFunnelReport(websiteId: String, dateRange: DateRange, steps: [[String: String]], window: Int = 60) async throws -> [FunnelStep] {
-        // Ab Umami 3.4: `GET api/websites/{id}/funnels/stats`. Die Schritte
-        // reist der Server als JSON-Zeichenkette im Abfrageparameter an;
-        // URLComponents kodiert sie beim Bauen der Adresse.
+        // Ab 3.4 `GET …/funnels/stats`, die Schritte als JSON-Zeichenkette im Parameter.
         if await hasFeatureRoutes(websiteId: websiteId),
            let stepsData = try? JSONSerialization.data(withJSONObject: steps),
            let stepsJSON = String(data: stepsData, encoding: .utf8) {
@@ -1441,9 +1332,7 @@ actor UmamiAPI: AnalyticsProvider {
         // Umami stores UTM data in query metrics — parse utm_ params from query strings
         let queryMetrics = try await getMetrics(websiteId: websiteId, dateRange: dateRange, type: .query, limit: 100)
 
-        // Umami liefert je Query-String eine Zeile; URLs mit gleichen UTM-Werten,
-        // aber anderen Parametern (etwa gclid) kämen sonst als scheinbar doppelte
-        // Kampagnen an. Deshalb nach dem UTM-Tupel zusammenfassen.
+        // Nach dem UTM-Tupel zusammenfassen, sonst erscheinen Kampagnen mit anderen Parametern doppelt.
         var aggregated: [String: UTMReportItem] = [:]
         for metric in queryMetrics {
             let query = metric.name
@@ -1491,8 +1380,7 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     func getGoalReport(websiteId: String, dateRange: DateRange, goalType: String, goalValue: String) async throws -> GoalReportResult {
-        // Ab Umami 3.4: `GET api/websites/{id}/goals/stats`. Gegen 3.4.0
-        // gemessen liefert die Route dieselben Werte wie der Report-Weg.
+        // Ab 3.4 `GET …/goals/stats`, gegen 3.4.0 gleiche Werte wie der Report.
         if await hasFeatureRoutes(websiteId: websiteId) {
             let data = try await request(
                 endpoint: "api/websites/\(websiteId)/goals/stats",
@@ -1528,8 +1416,7 @@ actor UmamiAPI: AnalyticsProvider {
     func getAttributionReport(websiteId: String, dateRange: DateRange, model: String = "last-click", type: String = "path", step: String = "/") async throws -> [AttributionItem] {
         let data: Data
 
-        // Ab Umami 3.4: `GET api/websites/{id}/attribution`. Die Antwortform
-        // (referrer, paidAds, utm_*) bleibt dieselbe.
+        // Ab 3.4 `GET …/attribution`, Antwortform unverändert.
         if await hasFeatureRoutes(websiteId: websiteId) {
             data = try await request(
                 endpoint: "api/websites/\(websiteId)/attribution",
@@ -1560,9 +1447,7 @@ actor UmamiAPI: AnalyticsProvider {
 
         let response = try decoder.decode(AttributionResponse.self, from: data)
 
-        // Attribution covers referrers, paid ads and all UTM dimensions the
-        // server returns. Previously only referrer/paidAds were mapped, so sites
-        // driven mainly by UTM-tagged campaigns showed an empty report.
+        // Referrer, Paid Ads und alle UTM-Dimensionen, sonst bleibt der Report bei UTM-Kampagnen leer.
         var items: [AttributionItem] = []
         func append(_ entries: [AttributionEntry]?, category: String, kind: AttributionItem.Kind) {
             for entry in entries ?? [] {
@@ -1604,17 +1489,12 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Vermerke (Annotations, ab Umami 3.4)
 
-    /// Ob dieser Server Vermerke führen kann. Sie kamen mit denselben
-    /// Auswertungs-Routen in Umami 3.4, deshalb genügt dieselbe Erkennung.
+    /// Ob der Server Vermerke kennt, erkannt wie die 3.4-Routen.
     func supportsAnnotations(websiteId: String) async -> Bool {
         await hasFeatureRoutes(websiteId: websiteId)
     }
 
-    /// Vermerke einer Website, optional auf einen Zeitraum begrenzt.
-    ///
-    /// Ohne Zeitraum liefert der Server die neuesten zuerst. Die Liste kommt im
-    /// Paged-Envelope; ältere Zwischenstände gaben ein nacktes Array zurück,
-    /// deshalb beide Formen lesen.
+    /// Vermerke einer Website, neueste zuerst; liest Paged-Envelope und nacktes Array.
     func getAnnotations(
         websiteId: String,
         dateRange: DateRange? = nil,
@@ -1640,8 +1520,7 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode([UmamiAnnotation].self, from: data)
     }
 
-    /// Legt einen Vermerk an. Der Server verlangt eine nicht-leere Notiz von
-    /// höchstens 500 Zeichen und antwortet sonst mit HTTP 400.
+    /// Legt einen Vermerk an; leer oder über 500 Zeichen gibt HTTP 400.
     @discardableResult
     func createAnnotation(
         websiteId: String,
@@ -1660,8 +1539,7 @@ actor UmamiAPI: AnalyticsProvider {
         return try decoder.decode(UmamiAnnotation.self, from: data)
     }
 
-    /// Ändert einen Vermerk. Umami nimmt dafür POST auf die Adresse mit ID —
-    /// nicht PUT oder PATCH — und erwartet alle drei Felder.
+    /// Ändert einen Vermerk per POST auf die ID-Adresse, mit allen drei Feldern.
     @discardableResult
     func updateAnnotation(
         websiteId: String,
@@ -1711,17 +1589,13 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Performance / Web Vitals (v3)
 
-    /// POST `api/reports/performance`. Das Schema verlangt startDate/endDate als
-    /// ISO-Zeitstempel; `metric` steuert nur die Zeitreihe, `summary` enthält
-    /// immer alle fünf Vitals.
+    /// POST `api/reports/performance` mit ISO-Zeitstempeln; `metric` steuert nur die Zeitreihe.
     func getPerformanceReport(
         websiteId: String,
         dateRange: DateRange,
         metric: UmamiWebVitalMetric = .lcp
     ) async throws -> UmamiPerformanceReport {
-        // Ab Umami 3.4 ist der Report auf drei Routen verteilt; die vier
-        // Aufschlüsselungen laufen parallel statt als Kette von sechs Anfragen.
-        // Gegen 3.4.0 gemessen stimmen die Perzentile mit dem alten Report überein.
+        // Ab 3.4 auf drei Routen verteilt, die Aufschlüsselungen laufen parallel.
         if await hasFeatureRoutes(websiteId: websiteId) {
             return try await featureRoutePerformanceReport(
                 websiteId: websiteId,
@@ -1787,8 +1661,7 @@ actor UmamiAPI: AnalyticsProvider {
                 )
                 return try decoder.decode([UmamiPerformanceMetric].self, from: data)
             } catch {
-                // Eine fehlende Aufschlüsselung soll den Report nicht kippen —
-                // die Kennzahlen oben stehen dann trotzdem.
+                // Eine fehlende Aufschlüsselung kippt den Report nicht.
                 Logger.api.debug("performance/metrics type=\(type) fehlgeschlagen: \(error.localizedDescription)")
                 return []
             }
@@ -1811,8 +1684,7 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Revenue (v3)
 
-    /// GET `api/websites/{id}/revenue/stats` — inkl. Vergleichszeitraum.
-    /// `currency` ist Pflicht und wird serverseitig auf Großschreibung normalisiert.
+    /// `revenue/stats` mit Vergleich; `currency` ist Pflicht.
     func getRevenueStats(
         websiteId: String,
         dateRange: DateRange,
@@ -1876,8 +1748,7 @@ actor UmamiAPI: AnalyticsProvider {
             queryItems: [
                 URLQueryItem(name: "startAt", value: String(startAt)),
                 URLQueryItem(name: "endAt", value: String(endAt)),
-                // Ohne Zeitzone rechnet Umami in UTC — die Kennzahlen würden
-                // dann nicht zur Heatmap derselben Ansicht passen.
+                // Ohne Zeitzone rechnet Umami in UTC und die Zahlen passen nicht zur Heatmap.
                 timezoneQueryItem
             ] + filterQueryItems
         )
@@ -1903,12 +1774,7 @@ actor UmamiAPI: AnalyticsProvider {
 
     // MARK: - Private
 
-    /// Filter-Objekt für POST-Reports. Report-Endpunkte erwarten die Filter im
-    /// Body statt in der Query, das Wertformat ist aber dasselbe.
-    /// - Parameter dateRange: Umami löst den Filter serverseitig über
-    ///   `getQueryFilters` auf und liest den Zeitraum dabei aus dem Filter-Objekt
-    ///   selbst. Ohne `startAt`/`endAt` bleibt er dort undefiniert, wodurch
-    ///   Segment- und Cohort-Filter nicht zuverlässig greifen.
+    /// Filter-Objekt für POST-Reports mit `startAt`/`endAt`, sonst greifen Segment- und Cohort-Filter nicht.
     private func umamiFilterBody(dateRange: DateRange? = nil) -> [String: Any] {
         var body: [String: Any] = [:]
         for item in filterQueryItems {
@@ -1923,11 +1789,7 @@ actor UmamiAPI: AnalyticsProvider {
         return body
     }
 
-    /// Passt einen self-hosted-Pfad an die aktive Basisadresse an.
-    ///
-    /// Die Aufrufer im Rest der Datei sind auf self-hosted zugeschnitten und
-    /// beginnen mit `api/`. Die Cloud-Basis `…/v1` enthält diesen Bestandteil
-    /// bereits, dort würde daraus sonst `/v1/api/websites`.
+    /// Passt einen self-hosted-Pfad an die Basis an, sonst entstünde `/v1/api/websites`.
     private func normalized(_ endpoint: String) -> String {
         guard _isCloud, endpoint.hasPrefix("api/") else { return endpoint }
         return String(endpoint.dropFirst("api/".count))

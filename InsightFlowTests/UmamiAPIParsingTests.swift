@@ -73,9 +73,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(response.count, 42)
     }
 
-    /// Das Widget parst `/active` per JSONSerialization statt per Codable.
-    /// Frühere Fassungen lasen nur das Altfeld "x" und zeigten deshalb dauerhaft 0 an —
-    /// Umami liefert sowohl in v2 als auch in v3 `{"visitors": n}`.
+    /// Das Widget liest `/active` per JSONSerialization; Umami liefert v2 und v3 `{"visitors": n}`.
     func testWidgetActiveVisitorsParsing() throws {
         func parseActive(_ raw: String) -> Int {
             guard let json = try? JSONSerialization.jsonObject(
@@ -159,10 +157,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(data.sessions[0].x, "2025-01-15T00:00:00.000Z")
     }
 
-    /// Umami liefert Zeitpunkte als "2026-08-06 00:00:00" — mit Leerzeichen und
-    /// ohne Zeitzonenkennung. Wurde das nicht geparst, fiel `date` auf `Date()`
-    /// zurück und alle Punkte lagen auf demselben Zeitpunkt: Das Diagramm war
-    /// eine flache Linie, die am Ende hochgeht.
+    /// "2026-08-06 00:00:00" ohne Zeitzone muss parsen, sonst wird das Diagramm flach.
     func testPageviewsUmamiDateFormatIsParsed() throws {
         let json = """
         {
@@ -190,12 +185,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(parts.day, 6)
     }
 
-    /// Die Diagramm-Auffüllung ordnet die Messwerte über Kalender-Komponenten
-    /// ihren Stunden-Slots zu. Da die Anfragen die Geräte-Zeitzone mitsenden,
-    /// kommen die Werte bereits lokal zurück und müssen auch lokal geschlüsselt
-    /// werden. Wurde stattdessen nach UTC umgerechnet, verschoben sich alle
-    /// Punkte um den Zeitzonen-Versatz und Randstunden fielen ganz heraus —
-    /// bei „Gestern" zog der Graph deshalb erst am Ende hoch.
+    /// Werte kommen lokal zurück und werden lokal geschlüsselt, sonst verschieben sich die Punkte.
     func testHourlyPointsKeepTheirLocalHour() throws {
         let json = """
         {
@@ -316,8 +306,7 @@ final class UmamiAPIParsingTests: XCTestCase {
 
     // MARK: - Batch-Charts (Umami 3.3, api/websites/charts)
 
-    /// Spiegelt das Antwortformat von `api/websites/charts`: ein Objekt, das je
-    /// Website-ID `values` (12-Stunden-Buckets) und `total` enthält.
+    /// Antwortform von `api/websites/charts`: je Website `values` (12-Stunden-Buckets) und `total`.
     private struct BatchChartsResponse: Codable {
         struct Entry: Codable {
             let values: [Int]
@@ -351,9 +340,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(first.values.count, 14)
     }
 
-    /// Server, die `unit` auswerten, liefern genau so viele Werte, wie der
-    /// Zeitraum Buckets hat. Weicht die Anzahl stark ab, hat der Server den
-    /// Parameter ignoriert und in 12-Stunden-Blöcken geantwortet.
+    /// Weicht die Werteanzahl stark ab, hat der Server `unit` ignoriert.
     func testBucketCountRevealsWhetherServerHonoredUnit() {
         // Ein voller Tag in Stundenauflösung: 24 Werte erwartet.
         let expectedHourly = 24
@@ -367,10 +354,7 @@ final class UmamiAPIParsingTests: XCTestCase {
                              "2 Werte verraten die 12-Stunden-Blöcke")
     }
 
-    /// Bei ignoriertem `unit` dürfen die Werte nicht zu Tageswerten summiert
-    /// werden: Sitzungen über die Blockgrenze zählen sonst doppelt. Beleg aus
-    /// der Praxis (Umami 3.3.0, echte Daten): Die 12-Stunden-Blöcke ergeben
-    /// summiert 5, die Datenbank zählt für denselben Tag 4 eindeutige Sitzungen.
+    /// Bei ignoriertem `unit` nicht summieren: 12-Stunden-Blöcke ergaben 5, die Datenbank 4 Sitzungen (Umami 3.3.0).
     func testSummingTwelveHourBucketsOvercountsSessions() {
         let twelveHourBuckets = [3, 2]
         let summed = twelveHourBuckets.reduce(0, +)
@@ -381,8 +365,7 @@ final class UmamiAPIParsingTests: XCTestCase {
                           "Aufsummierte Blöcke zählen Sitzungen über die Grenze doppelt")
     }
 
-    /// Die Zeitpunkte der Werte ergeben sich aus der Auflösung: bei Stunden
-    /// je 3600 Sekunden, bei Tagen je 86400.
+    /// Zeitpunkte je 3600 s bei Stunden, je 86400 s bei Tagen.
     func testChartPointDatesFollowRequestedUnit() {
         let start = Date(timeIntervalSince1970: 1_786_226_400)
         let values = [1, 2, 3]
@@ -460,8 +443,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertNil(response.websites.first?.teamName)
     }
 
-    /// Der Teamname wird nachträglich gesetzt und muss die Kodierung überstehen
-    /// — sonst ginge die Kennzeichnung im Cache verloren.
+    /// Der nachträglich gesetzte Teamname übersteht die Kodierung.
     func testTeamNameSurvivesEncoding() throws {
         var website = Website(
             id: "abc",
@@ -507,8 +489,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(merged[1].teamName, "Redaktion")
     }
 
-    /// Wer eine Website besitzt und zugleich im Team ist, sieht sie einmal —
-    /// und zwar als eigene, ohne Team-Kennzeichnung.
+    /// Eigene Website, die auch im Team ist, erscheint einmal und ohne Teamname.
     func testMergePrefersPersonalOverTeamOnDuplicateId() {
         let merged = UmamiAPI.merge(
             personal: [makeWebsite("a")],
@@ -533,8 +514,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(merged[0].teamName, "Redaktion", "Das erste Team gewinnt")
     }
 
-    /// Die Zusammenführung darf keine doppelten IDs liefern — SwiftUI-Listen
-    /// verlangen eindeutige Kennungen.
+    /// Keine doppelten IDs, SwiftUI-Listen verlangen eindeutige Kennungen.
     func testMergeProducesUniqueIds() {
         let merged = UmamiAPI.merge(
             personal: [makeWebsite("a"), makeWebsite("b")],
@@ -556,8 +536,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(merged.map(\.id), ["a", "b"])
     }
 
-    /// Ältere Cache-Einträge kennen `teamName` nicht — sie müssen weiterhin
-    /// lesbar bleiben.
+    /// Alte Cache-Einträge ohne `teamName` bleiben lesbar.
     func testWebsiteDecodesWithoutTeamName() throws {
         let json = """
         { "id": "abc", "name": "Beispiel", "domain": "example.com",
@@ -572,14 +551,10 @@ final class UmamiAPIParsingTests: XCTestCase {
 
     // MARK: - Auswertungs-Routen aus Umami 3.4
 
-    /// Die JSON-Beispiele in diesem Abschnitt stammen aus echten Antworten
-    /// einer Umami-3.4.0-Instanz (gemessen am 18.09.2026 gegen eine Kopie der
-    /// eigenen Datenbank). IDs und Domains sind belassen, wo sie unkritisch
-    /// sind, Werte unverändert.
+    /// Echte Antworten von Umami 3.4.0, abgefragt am 18.09.2026.
 
     func testGoalStatsFeatureRouteMatchesReportShape() throws {
-        // `GET api/websites/{id}/goals/stats` antwortet mit derselben Form wie
-        // der frühere `POST api/reports/goal` — deshalb dasselbe Modell.
+        // Gleiche Form wie der frühere `POST api/reports/goal`.
         let json = """
         {"num": 72, "total": 276}
         """.data(using: .utf8)!
@@ -607,8 +582,7 @@ final class UmamiAPIParsingTests: XCTestCase {
     }
 
     func testJourneyFeatureRouteDecoding() throws {
-        // Die neue Route liefert `items` mit null-Einträgen für ungenutzte
-        // Schritte — genau wie der frühere Report.
+        // `items` mit null-Einträgen für ungenutzte Schritte, wie im alten Report.
         let json = """
         [
           {"items": ["/", "sektion-gesehen", "app-oeffnen", null], "count": 92},
@@ -637,9 +611,7 @@ final class UmamiAPIParsingTests: XCTestCase {
     }
 
     func testPerformanceStatsFeatureRouteDecodesAsSummary() throws {
-        // `performance/stats` liefert das, was im alten Report unter `summary`
-        // stand — ohne Umschlag. Die Perzentile stimmten in der Messung mit
-        // dem alten Weg überein.
+        // `performance/stats` entspricht dem früheren `summary`, ohne Umschlag.
         let json = """
         {
           "lcp": {"p50": 609, "p75": 1146, "p95": 3514.3499999999967},
@@ -660,8 +632,7 @@ final class UmamiAPIParsingTests: XCTestCase {
     }
 
     func testPerformanceMetricsFeatureRouteToleratesNullPercentiles() throws {
-        // Seiten ohne Messwerte liefern null statt einer Zahl; das darf die
-        // Liste nicht kippen, sonst fehlt die ganze Aufschlüsselung.
+        // Seiten ohne Messwerte liefern null, das darf die Liste nicht kippen.
         let json = """
         [
           {"name": "/datenschutz/", "p50": null, "p75": null, "p95": null, "count": 3},
@@ -693,8 +664,7 @@ final class UmamiAPIParsingTests: XCTestCase {
     }
 
     func testPerformanceReportComposesFromSeparateRoutes() throws {
-        // Aus den Einzelrouten muss dieselbe Form entstehen, die die Ansichten
-        // erwarten — sonst bliebe die Ladezeiten-Auswertung leer.
+        // Aus den Einzelrouten entsteht die Form, die die Ansichten erwarten.
         let summaryJSON = """
         {"lcp": {"p50": 609, "p75": 1146, "p95": 3514}, "inp": {"p50": 48, "p75": 56, "p95": 111},
          "cls": {"p50": 0.0027, "p75": 0.0245, "p95": 0.09855}, "fcp": {"p50": 290, "p75": 612, "p95": 1884},
@@ -743,8 +713,7 @@ final class UmamiAPIParsingTests: XCTestCase {
     }
 
     func testNumberFieldsAcceptNumberStringNullAndMissing() throws {
-        // Postgres liefert Summen je nach Treiber als Zahl oder String; fehlende
-        // und leere Werte werden 0, statt das Dekodieren abzubrechen.
+        // Summen als Zahl oder String, fehlende und leere werden 0.
         let stats = try JSONDecoder().decode(UmamiRevenueStats.self, from: """
         {"sum": "1234.5", "count": 7, "average": null, "arpu": "kein Wert",
          "comparison": {"sum": 1000, "count": "5", "unique_count": 4}}
@@ -799,12 +768,10 @@ final class UmamiAPIParsingTests: XCTestCase {
 
     // MARK: - Vermerke (Annotations, ab Umami 3.4)
 
-    /// Die Beispiele stammen aus echten Antworten einer 3.4.0-Instanz
-    /// (gemessen am 18.09.2026), inklusive des Paged-Envelopes der Liste.
+    /// Echte Antworten von Umami 3.4.0, abgefragt am 18.09.2026, mit Paged-Envelope.
 
     private func annotationDecoder() -> JSONDecoder {
-        // Dieselbe Datumsbehandlung wie im API-Layer: Umami schickt ISO-8601
-        // mit Sekundenbruchteilen.
+        // ISO-8601 mit Sekundenbruchteilen, wie im API-Layer.
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
@@ -869,8 +836,7 @@ final class UmamiAPIParsingTests: XCTestCase {
     }
 
     func testAnnotationToleratesMissingUser() throws {
-        // `userId` ist in der Datenbank optional — ein Vermerk ohne Urheber
-        // darf die Liste nicht kippen.
+        // `userId` ist optional, ein Vermerk ohne Urheber darf die Liste nicht kippen.
         let json = """
         {"id": "x", "websiteId": "w", "userId": null, "date": "2026-09-18T10:00:00.000Z",
          "allDay": true, "note": "Ohne Urheber", "createdAt": null, "updatedAt": null}
@@ -883,14 +849,12 @@ final class UmamiAPIParsingTests: XCTestCase {
     }
 
     func testAnnotationNoteLimitMatchesServerSchema() {
-        // Der Server lehnt mehr als 500 Zeichen mit HTTP 400 ab (gemessen:
-        // 500 -> 200, 501 -> 400). Die Eingabe prüft dagegen.
+        // Gemessen: 500 Zeichen gibt 200, 501 gibt 400.
         XCTAssertEqual(UmamiAnnotation.noteLimit, 500)
     }
 
     func testAnnotationDateTextHidesTimeForAllDay() throws {
-        // Bei ganztägigen Vermerken ist die gespeicherte Uhrzeit bedeutungslos
-        // und darf keine Genauigkeit vortäuschen.
+        // Bei ganztägigen Vermerken ist die Uhrzeit bedeutungslos.
         let json = """
         [
           {"id": "1", "websiteId": "w", "userId": null, "date": "2026-09-18T10:00:00.000Z",
@@ -909,12 +873,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertTrue(timedText.contains(":"), "Vermerk mit Uhrzeit zeigt sie auch")
     }
 
-    /// Ein Vermerk mit „krummer" Uhrzeit muss dem richtigen Datenpunkt
-    /// zugeordnet werden — sonst steht die Marke sichtbar neben dem Wert,
-    /// zu dem sie gehört.
-    ///
-    /// Beispiel 17:11: in der Tagesansicht liegt das bei rund 71 % des Tages.
-    /// Die Marke gehört trotzdem an den Tagespunkt (00:00), nicht dorthin.
+    /// Ein Vermerk um 17:11 gehört in der Tagesansicht an den Tagespunkt, nicht auf 71 % des Tages.
     func testAnnotationSnapsToNearestDataPoint() throws {
         let calendar = Calendar(identifier: .gregorian)
         var components = DateComponents()
@@ -934,8 +893,7 @@ final class UmamiAPIParsingTests: XCTestCase {
             "17:11 liegt näher an Mitternacht des Folgetags als an der des eigenen Tages"
         )
 
-        // Deshalb genügt reines Einrasten auf den nächsten Punkt nicht — die
-        // Zuordnung muss den Kalendertag vergleichen.
+        // Einrasten auf den nächsten Punkt genügt nicht, der Kalendertag zählt.
         let sameDay = dayPoints.filter {
             calendar.dateComponents([.year, .month, .day], from: $0)
                 == calendar.dateComponents([.year, .month, .day], from: annotationDate)
@@ -944,11 +902,7 @@ final class UmamiAPIParsingTests: XCTestCase {
         XCTAssertEqual(calendar.component(.day, from: sameDay[0]), 18)
     }
 
-    /// Die in den Vermerk-Ansichten verwendeten Systemsymbole müssen existieren.
-    ///
-    /// `bookmark.badge.plus` gibt es nicht — der Knopf zum Anlegen blieb
-    /// dadurch leer und war im Diagramm unsichtbar. SwiftUI meldet einen
-    /// unbekannten Namen nicht, es wird schlicht nichts gezeichnet.
+    /// Die Systemsymbole der Vermerk-Ansichten müssen existieren, SwiftUI zeichnet unbekannte still nicht.
     func testAnnotationSymbolsExist() throws {
         let symbols = ["text.badge.plus", "bookmark.fill", "bookmark",
                        "chevron.right", "calendar.badge.exclamationmark"]

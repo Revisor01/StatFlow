@@ -1,10 +1,6 @@
 name: iOS Release Build
 
-# Baut das Release in Xcode Cloud (Workflow „StatFlow TestFlight“) und wartet
-# darauf; der Build landet in TestFlight und kann von dort in den App Store.
-# Xcode Cloud vergibt die Build-Nummer selbst und signiert selbst, siehe
-# ci_scripts/ci_post_clone.sh. Die Workflow-ID steht in der Repo-Variable
-# XCODE_CLOUD_WORKFLOW.
+# Baut das Release in Xcode Cloud (Workflow-ID in XCODE_CLOUD_WORKFLOW) und wartet auf TestFlight.
 
 on:
   workflow_dispatch:

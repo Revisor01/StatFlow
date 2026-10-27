@@ -1,10 +1,3 @@
-//
-//  PrivacyFlowWidgetBundle.swift
-//  PrivacyFlowWidget
-//
-//  Created by Simon Luthe on 10.12.25.
-//
-
 import WidgetKit
 import SwiftUI
 

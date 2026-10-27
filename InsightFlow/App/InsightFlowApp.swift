@@ -12,10 +12,9 @@ struct PrivacyFlowApp: App {
 
     init() {
         registerBackgroundTasks()
-        // Initial BGTask einplanen — ohne dies wird nie ein Task in die Queue gestellt
-        // und der Handler läuft nie. Re-Submit erfolgt zusätzlich bei scenePhase == .background.
+        // Ohne erstes Einplanen kommt nie ein BGTask in die Queue.
         Self.scheduleAppRefresh()
-        // Cache-Cleanup im Hintergrund beim App-Start (FIX-03)
+        // Cache-Cleanup im Hintergrund beim App-Start
         Task.detached(priority: .background) {
             AnalyticsCacheService.shared.clearStaleEntries(olderThan: 7)
             let maxCacheSize: Int64 = 50 * 1024 * 1024 // 50MB
@@ -34,17 +33,13 @@ struct PrivacyFlowApp: App {
                     handleDeepLink(url)
                 }
                 .onChange(of: scenePhase) { _, newPhase in
-                    // Re-Submit BGTask, sobald die App in den Hintergrund geht — sonst kann iOS
-                    // den nächsten Refresh nicht planen und der Notification-Body bleibt eingefroren.
+                    // Beim Wechsel in den Hintergrund neu einplanen, sonst friert der Mitteilungstext ein.
                     if newPhase == .background {
                         Self.scheduleAppRefresh()
                     }
                 }
                 .task {
-                    // Beim ersten Vordergrund-Start alle noch pending (ggf. aus einem alten
-                    // Build eingefrorenen) Notification-Requests löschen und mit frischen
-                    // Stats neu planen. Verhindert, dass alte Bodies (z. B. die entfernte
-                    // 4-Werte-Summary) per repeats:true weiter gefeuert werden.
+                    // Alte, eingefrorene Mitteilungen löschen und mit frischen Stats neu planen.
                     await UmamiAPI.shared.setFilters([])
                     await notificationManager.scheduleAllNotifications()
                 }
@@ -69,7 +64,6 @@ struct PrivacyFlowApp: App {
 
             // Wenn Provider gewechselt werden muss, wechsle Account und navigiere mit Delay
             if currentProvider != targetProvider {
-                // Find matching account and switch to it
                 if let targetAccount = AccountManager.shared.accounts.first(where: { $0.providerType == targetProvider }) {
                     Task {
                         await AccountManager.shared.setActiveAccount(targetAccount)
@@ -86,9 +80,7 @@ struct PrivacyFlowApp: App {
     }
 
     private func registerBackgroundTasks() {
-        // BGTaskScheduler ruft den Block auf seiner eigenen Queue auf. Ein vom
-        // MainActor geerbtes Closure löst dort beim Eintritt einen EXC_BREAKPOINT
-        // aus; der Block ist deshalb @Sendable und nicht isoliert.
+        // @Sendable und nicht isoliert: ein MainActor-Closure löst auf der Scheduler-Queue EXC_BREAKPOINT aus.
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: "de.godsapp.statflow.refresh",
             using: nil
@@ -102,16 +94,12 @@ struct PrivacyFlowApp: App {
     }
 
     private nonisolated static func handleAppRefresh(task: BGAppRefreshTask) {
-        // Nächsten Refresh-Task sofort wieder einplanen, sonst läuft die Kette nach einem
-        // Hintergrund-Lauf nicht weiter.
+        // Sofort neu einplanen, sonst reißt die Kette nach einem Lauf ab.
         scheduleAppRefresh()
 
-        // BGAppRefreshTask ist nicht Sendable und bleibt im nicht isolierten Kontext;
-        // nur die Arbeit wechselt auf den MainActor. Neu planen statt senden, weil
-        // wiederholende Trigger den Benachrichtigungstext beim Planen einfrieren.
+        // Neu planen statt senden, weil wiederholende Trigger den Text beim Planen einfrieren.
         let work = Task { @MainActor in
-            // UmamiAPI-Aktor-Filter clearen, sonst leaken in der Detail-View gesetzte
-            // Filter in den Background-Refresh und reduzieren Stats auf 0.
+            // Filter leeren, sonst drücken Detail-Filter die Stats im Hintergrund auf 0.
             await UmamiAPI.shared.setFilters([])
             let manager = NotificationManager()
             await manager.scheduleAllNotifications()
@@ -122,9 +110,7 @@ struct PrivacyFlowApp: App {
             work.cancel()
         }
 
-        // BGAppRefreshTask ist nicht Sendable, seine Methoden sind aber thread-safe. Über
-        // eine @unchecked-Sendable-Box dürfen wir die Referenz sicher in den await-Task
-        // reichen, um nach Abschluss setTaskCompleted aufzurufen.
+        // Die Methoden von BGAppRefreshTask sind thread-safe, daher darf die Box ihn weiterreichen.
         let box = UncheckedSendableBox(task)
         Task {
             _ = await work.result
@@ -135,7 +121,6 @@ struct PrivacyFlowApp: App {
     nonisolated static func scheduleAppRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: "de.godsapp.statflow.refresh")
 
-        // Lade konfigurierte Zeit oder Standard 9:00 Uhr
         let savedTime = UserDefaults.standard.object(forKey: "notificationTime") as? Date
         let hour: Int
         let minute: Int
@@ -152,8 +137,7 @@ struct PrivacyFlowApp: App {
         components.hour = hour
         components.minute = minute
 
-        // Lead time: 30 Minuten vor der eigentlichen Notification-Zeit refreshen, damit das
-        // System einen Puffer hat um den BGTask zu feuern bevor der Calendar-Trigger zuschlägt.
+        // 30 Minuten vor der Mitteilung auffrischen, als Puffer für den BGTask.
         let leadTime: TimeInterval = -30 * 60 // 30 Minuten früher
         if let scheduledDate = Calendar.current.date(from: components) {
             let target = scheduledDate.addingTimeInterval(leadTime)
@@ -177,8 +161,7 @@ struct PrivacyFlowApp: App {
 
 // MARK: - Sendable Box für nicht-Sendable, aber thread-safe Apple-Typen
 
-/// Reicht eine nicht-Sendable Referenz (z. B. BGAppRefreshTask) sicher über eine
-/// Concurrency-Boundary, wenn deren Methoden dokumentiert thread-safe sind.
+/// Reicht eine nicht-Sendable Referenz mit thread-sicheren Methoden über eine Concurrency-Grenze.
 private struct UncheckedSendableBox<Value>: @unchecked Sendable {
     let value: Value
     init(_ value: Value) { self.value = value }

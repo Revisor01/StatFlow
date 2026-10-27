@@ -19,7 +19,6 @@ enum KeychainService: Sendable {
             throw KeychainError.encodingFailed
         }
 
-        // Delete existing item first
         let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

@@ -1,8 +1,3 @@
-//
-//  WidgetModels.swift
-//  InsightFlowWidget
-//
-
 import WidgetKit
 import SwiftUI
 import Foundation

@@ -90,8 +90,7 @@ struct DateRange: Equatable, Sendable {
         case .thisWeek:
             // Start of current week (Monday)
             let weekday = calendar.component(.weekday, from: now)
-            // In Germany/Europe, week starts on Monday (weekday 2)
-            // Sunday = 1, Monday = 2, ... Saturday = 7
+            // Woche beginnt am Montag (weekday 2, Sonntag = 1).
             let daysFromMonday = (weekday + 5) % 7  // Convert to days since Monday
             let startOfWeek = calendar.date(byAdding: .day, value: -daysFromMonday, to: calendar.startOfDay(for: now))!
             return (startOfWeek, endOfToday)

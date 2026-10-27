@@ -36,16 +36,13 @@ actor PlausibleAPI: AnalyticsProvider {
             throw PlausibleError.invalidCredentials
         }
 
-        // Normalize server URL
         let normalizedURL = normalizeServerURL(serverURL)
 
         guard let queryURL = URL(string: "\(normalizedURL)/api/v2/query") else {
             throw PlausibleError.invalidResponse
         }
 
-        // Validate the API key by checking if the server responds correctly
-        // We use a simple query that will return 401 if the key is invalid
-        // or 400 if there's no site_id (which is fine - means the key is valid)
+        // 401 heißt ungültiger Schlüssel, 400 ohne site_id heißt gültig.
         var request = URLRequest(url: queryURL)
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -62,8 +59,7 @@ actor PlausibleAPI: AnalyticsProvider {
             throw PlausibleError.invalidResponse
         }
 
-        // 400 means key is valid but request is malformed (expected)
-        // 401 means key is invalid
+        // 400: Schlüssel gültig, Anfrage absichtlich unvollständig; 401: ungültig.
         guard httpResponse.statusCode == 400 || httpResponse.statusCode == 200 else {
             if httpResponse.statusCode == 401 {
                 throw PlausibleError.unauthorized
@@ -71,7 +67,6 @@ actor PlausibleAPI: AnalyticsProvider {
             throw PlausibleError.serverError(httpResponse.statusCode)
         }
 
-        // Save credentials with normalized URL
         try KeychainService.save(normalizedURL, for: .serverURL)
         try KeychainService.save(apiKey, for: .apiKey)
         await MainActor.run { AnalyticsManager.shared.saveProviderType(.plausible) }
@@ -81,12 +76,10 @@ actor PlausibleAPI: AnalyticsProvider {
     private func normalizeServerURL(_ url: String) -> String {
         var normalized = url.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Remove trailing slashes
         while normalized.hasSuffix("/") {
             normalized.removeLast()
         }
 
-        // Add https:// if no scheme present
         if !normalized.lowercased().hasPrefix("http://") && !normalized.lowercased().hasPrefix("https://") {
             normalized = "https://" + normalized
         }
@@ -126,7 +119,6 @@ actor PlausibleAPI: AnalyticsProvider {
         // If we get here without error, the site is valid
         _ = try decoder.decode(PlausibleAPIResponse.self, from: data)
 
-        // Save to local storage
         await MainActor.run { PlausibleSitesManager.shared.addSite(normalizedDomain) }
     }
 
@@ -134,16 +126,13 @@ actor PlausibleAPI: AnalyticsProvider {
     private func normalizeDomain(_ domain: String) -> String {
         var normalized = domain.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Remove protocol
         normalized = normalized.replacingOccurrences(of: "https://", with: "")
         normalized = normalized.replacingOccurrences(of: "http://", with: "")
 
-        // Remove trailing slashes
         while normalized.hasSuffix("/") {
             normalized.removeLast()
         }
 
-        // Remove www. prefix if present
         if normalized.hasPrefix("www.") {
             normalized = String(normalized.dropFirst(4))
         }
@@ -172,8 +161,7 @@ actor PlausibleAPI: AnalyticsProvider {
 
     // MARK: - Date Range Helper
 
-    /// Converts DateRange to Plausible API date_range format
-    /// Uses native shortcuts where available for consistency with Plausible web dashboard
+    /// DateRange ins Plausible-Format, mit den nativen Kurzformen wie im Web-Dashboard.
     private func plausibleDateRange(for dateRange: DateRange) -> Any {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -200,14 +188,7 @@ actor PlausibleAPI: AnalyticsProvider {
         }
     }
 
-    /// Native date_range-Kurzformen der Plausible Query API v2.
-    /// Belegt in priv/json-schemas/query-api-schema.json → definitions.date_range_shorthand
-    /// (Tag v3.2.1). "28d", "91d" und "3mo" sind seit CE 3.x nutzbar:
-    /// "28d"/"91d" sind dort explizit gelistet, "3mo" trifft das Muster ^\d+mo$.
-    ///
-    /// Hinweis: DateRange ist ein providerübergreifendes Modell und wurde bewusst
-    /// NICHT erweitert. Diese Kurzperioden gibt es deshalb nicht über DateRange.preset,
-    /// sondern nur über die Methoden mit `shorthand:`-Parameter (siehe unten).
+    /// Native date_range-Kurzformen (28d, 91d, 3mo, ab CE 3.x), bewusst nicht in DateRange, nur über `shorthand:`.
     enum PlausibleDateShorthand: String, Sendable {
         case day = "day"
         case last7Days = "7d"
@@ -221,8 +202,7 @@ actor PlausibleAPI: AnalyticsProvider {
         case year = "year"
         case all = "all"
 
-        /// Nur day/month/year lassen sich laut Schema sinnvoll trimmen
-        /// (include.trim_relative_date_range).
+        /// Nur day/month/year lassen sich laut Schema trimmen.
         var supportsTrimRelativeDateRange: Bool {
             switch self {
             case .day, .month, .year: return true
@@ -251,7 +231,6 @@ actor PlausibleAPI: AnalyticsProvider {
         let data = try await postRequest(endpoint: "api/v2/query", body: body)
         let response = try decoder.decode(PlausibleAPIResponse.self, from: data)
 
-        // Calculate previous period for comparison
         let previousBody: [String: Any] = [
             "site_id": websiteId,
             "metrics": ["visitors", "pageviews", "visits", "bounce_rate", "visit_duration"],
@@ -264,13 +243,11 @@ actor PlausibleAPI: AnalyticsProvider {
         let current = response.results.first.map { PlausibleStatsResult(from: $0) } ?? PlausibleStatsResult()
         let previous = previousResponse.results.first.map { PlausibleStatsResult(from: $0) } ?? PlausibleStatsResult()
 
-        // Plausible returns visit_duration as average per visit (in seconds)
-        // To match Umami's totaltime (total time / visits = average), we multiply by visits
+        // Plausible liefert Durchschnitt je Besuch, Umami Gesamtzeit, daher mal Besuche.
         let currentTotalTime = current.visitDuration * current.visits
         let previousTotalTime = previous.visitDuration * previous.visits
 
-        // Plausible returns bounce_rate as percentage (e.g., 31 for 31%)
-        // Umami expects absolute bounce count, so we calculate: bounces = bounce_rate * visits / 100
+        // Plausible liefert Prozent, Umami erwartet absolute Bounces.
         let currentBounces = Int(round(current.bounceRate * Double(current.visits) / 100))
         let previousBounces = Int(round(previous.bounceRate * Double(previous.visits) / 100))
 
@@ -374,8 +351,7 @@ actor PlausibleAPI: AnalyticsProvider {
     }
 
     func getRealtimeTopPages(websiteId: String, limit: Int = 10) async throws -> [AnalyticsMetricItem] {
-        // Note: Plausible "realtime" only supports visitors metric, not pageviews
-        // Use "day" for breakdown with pages since realtime doesn't support dimensions
+        // Realtime kennt nur visitors und keine Dimensionen, daher "day" für die Seiten.
         let body: [String: Any] = [
             "site_id": websiteId,
             "metrics": ["visitors"],
@@ -529,13 +505,7 @@ actor PlausibleAPI: AnalyticsProvider {
 
     // MARK: - Engagement Metrics (Plausible CE 3.x)
 
-    /// Durchschnittliche Scroll-Tiefe pro Seite.
-    /// scroll_depth verlangt laut JSON-Schema einen event:page-Filter ODER
-    /// eine event:page-Dimension — deshalb fest auf ["event:page"] gebrochen.
-    /// Der Wert kann null sein (metrics.ex: default_value(:scroll_depth, …) -> nil),
-    /// wenn keine Engagement-Daten vorliegen; dann bleibt scrollDepth hier nil.
-    ///
-    /// Metrik-Reihenfolge im Response: [0] = scroll_depth, [1] = visitors
+    /// Scroll-Tiefe pro Seite (braucht event:page, kann nil sein); Metriken [0] scroll_depth, [1] visitors.
     func getScrollDepth(
         websiteId: String,
         dateRange: DateRange,
@@ -563,12 +533,7 @@ actor PlausibleAPI: AnalyticsProvider {
         }
     }
 
-    /// Engagement-Kennzahlen pro Seite.
-    /// time_on_page und scroll_depth verlangen beide eine event:page-Dimension
-    /// oder einen event:page-Filter (JSON-Schema, metric-Definition).
-    ///
-    /// Metrik-Reihenfolge im Response:
-    /// [0] visitors, [1] pageviews, [2] time_on_page, [3] scroll_depth
+    /// Engagement pro Seite (braucht event:page); Metriken [0] visitors, [1] pageviews, [2] time_on_page, [3] scroll_depth.
     func getPageEngagement(
         websiteId: String,
         dateRange: DateRange,
@@ -598,17 +563,9 @@ actor PlausibleAPI: AnalyticsProvider {
         }
     }
 
-    // exit_rate fehlt im Schema der öffentlichen Query-API und ist nur
-    // dashboard-intern abfragbar; deshalb gibt es keine Methode dafür.
-    // Ersatz: getExitPages() liefert die Ausstiegsseiten nach Besuchern.
+    // exit_rate fehlt in der öffentlichen Query-API, Ersatz ist getExitPages().
 
-    /// Aggregierte Engagement-Kennzahlen fürs ganze Site (ohne Dimensionen).
-    /// Hier NUR Metriken, die ohne event:page-Kontext erlaubt sind —
-    /// time_on_page und scroll_depth gehören nicht dazu (siehe getPageEngagement).
-    ///
-    /// Metrik-Reihenfolge im Response:
-    /// [0] visitors, [1] visits, [2] pageviews, [3] views_per_visit,
-    /// [4] bounce_rate, [5] visit_duration
+    /// Engagement der ganzen Site; Metriken [0] visitors, [1] visits, [2] pageviews, [3] views_per_visit, [4] bounce_rate, [5] visit_duration.
     func getEngagementSummary(
         websiteId: String,
         dateRange: DateRange,
@@ -628,8 +585,7 @@ actor PlausibleAPI: AnalyticsProvider {
         return PlausibleEngagementSummary(from: result)
     }
 
-    /// Wie getEngagementSummary, aber mit nativer Kurzperiode (28d/91d/3mo …),
-    /// die DateRange nicht abbilden kann.
+    /// Wie getEngagementSummary, mit nativer Kurzperiode.
     func getEngagementSummary(
         websiteId: String,
         shorthand: PlausibleDateShorthand,
@@ -651,8 +607,7 @@ actor PlausibleAPI: AnalyticsProvider {
         return PlausibleEngagementSummary(from: result)
     }
 
-    /// Breakdown mit nativer Kurzperiode (28d/91d/3mo …).
-    /// Metrik-Reihenfolge: [0] visitors
+    /// Breakdown mit nativer Kurzperiode; Metrik [0] visitors.
     func getBreakdown(
         websiteId: String,
         shorthand: PlausibleDateShorthand,
@@ -680,9 +635,7 @@ actor PlausibleAPI: AnalyticsProvider {
 
     // MARK: - Behavioral Filters (Plausible CE 3.x)
 
-    /// Breakdown, eingeschränkt auf Besucher, die ein bestimmtes Goal
-    /// ausgelöst (bzw. NICHT ausgelöst) haben.
-    /// Serialisiert als ["has_done", ["is", "event:goal", ["Signup"]]].
+    /// Breakdown für Besucher, die ein Goal (nicht) ausgelöst haben, als has_done-Filter.
     func getBreakdownForVisitorsWhoDid(
         websiteId: String,
         dateRange: DateRange,
@@ -716,11 +669,7 @@ actor PlausibleAPI: AnalyticsProvider {
 
     // MARK: - Akquisekanäle & Hostnames (Plausible CE 3.x)
 
-    /// Akquisekanäle (Direct, Organic Search, Social, Referral, Paid Search …).
-    /// visit:channel fasst Quelle und Medium zu Plausibles Kanal-Gruppierung
-    /// zusammen — dieselbe Einteilung wie "Acquisition Channel" im Dashboard.
-    ///
-    /// Metrik-Reihenfolge im Response: [0] visitors
+    /// Akquisekanäle nach visit:channel wie im Dashboard; Metrik [0] visitors.
     func getChannels(
         websiteId: String,
         dateRange: DateRange,
@@ -734,10 +683,7 @@ actor PlausibleAPI: AnalyticsProvider {
         )
     }
 
-    /// Aufteilung nach Hostname — nützlich, wenn ein Site mehrere Domains
-    /// bzw. Subdomains mit demselben Tracking-Snippet bedient.
-    ///
-    /// Metrik-Reihenfolge im Response: [0] visitors
+    /// Aufteilung nach Hostname; Metrik [0] visitors.
     func getHostnames(
         websiteId: String,
         dateRange: DateRange,
@@ -753,12 +699,7 @@ actor PlausibleAPI: AnalyticsProvider {
 
     // MARK: - Breakdown mit Anteil (percentage)
 
-    /// Breakdown inklusive prozentualem Anteil der Zeile am Gesamtwert.
-    /// Bewusst eine EIGENE Methode statt einer Erweiterung von getBreakdown:
-    /// das Metrik-Array wird positionsbasiert gelesen, eine zusätzliche Metrik
-    /// in den Bestandsmethoden würde dort alle Indizes verschieben.
-    ///
-    /// Metrik-Reihenfolge im Response: [0] visitors, [1] percentage
+    /// Breakdown mit Anteil, als eigene Methode, weil eine Zusatzmetrik die Indizes verschöbe; Metriken [0] visitors, [1] percentage.
     func getBreakdownWithPercentage(
         websiteId: String,
         dateRange: DateRange,
@@ -789,13 +730,7 @@ actor PlausibleAPI: AnalyticsProvider {
 
     // MARK: - Breakdown mit Gesamtzeilenzahl (include.total_rows)
 
-    /// Breakdown mit Gesamtzahl der Zeilen — für Paginierung bzw. "und N weitere".
-    /// total_rows kommt NICHT auf oberster Ebene, sondern im meta-Objekt der
-    /// Response zurück (verifiziert gegen CE 3.2.1: {"results":[…],"meta":
-    /// {"total_rows":1},…}). Bestehendes Parsing bleibt unberührt, weil meta
-    /// optional dekodiert wird.
-    ///
-    /// Metrik-Reihenfolge im Response: [0] visitors
+    /// Breakdown mit total_rows aus dem meta-Objekt (geprüft gegen CE 3.2.1); Metrik [0] visitors.
     func getBreakdownPaged(
         websiteId: String,
         dateRange: DateRange,
@@ -812,9 +747,7 @@ actor PlausibleAPI: AnalyticsProvider {
             filters: filters
         )
         body["include"] = ["total_rows": true]
-        // Paginierung gehört laut Schema in das verschachtelte pagination-Objekt;
-        // ein flacher "limit"-Key wird mit "Schema does not allow additional
-        // properties" abgelehnt.
+        // Paginierung nur im pagination-Objekt, ein flacher "limit"-Key wird abgelehnt.
         var pagination: [String: Any] = [:]
         if let limit = limit { pagination["limit"] = limit }
         if let offset = offset { pagination["offset"] = offset }
@@ -832,13 +765,7 @@ actor PlausibleAPI: AnalyticsProvider {
 
     // MARK: - Zeitreihe mit lückenloser Zeitachse (include.time_labels)
 
-    /// Zeitreihe samt vollständiger Zeitachse. Plausible liefert in results nur
-    /// Intervalle MIT Daten; time_labels enthält dagegen jedes Label des
-    /// Zeitraums. Fehlende Intervalle werden hier mit 0 aufgefüllt, damit
-    /// Diagramme keine Lücken zeigen.
-    /// time_labels steht wie total_rows im meta-Objekt der Response.
-    ///
-    /// Metrik-Reihenfolge im Response: [0] die übergebene Metrik
+    /// Zeitreihe, mit time_labels aus meta auf Lücken mit 0 aufgefüllt; Metrik [0] die übergebene.
     func getTimeseriesWithLabels(
         websiteId: String,
         dateRange: DateRange,
@@ -1021,13 +948,7 @@ actor PlausibleAPI: AnalyticsProvider {
         return response.goals
     }
 
-    /// Goal-Auswertung inklusive Conversion-Rate.
-    /// conversion_rate und group_conversion_rate sind laut API nur zusammen mit
-    /// event:goal als Dimension ODER einem event:goal-Filter erlaubt — die
-    /// Dimension ist hier fest gesetzt, damit die Bedingung immer erfüllt ist.
-    ///
-    /// Metrik-Reihenfolge im Response:
-    /// [0] visitors, [1] events, [2] conversion_rate, [3] group_conversion_rate
+    /// Goals mit Conversion-Rate, event:goal fest als Dimension; Metriken [0] visitors, [1] events, [2] conversion_rate, [3] group_conversion_rate.
     func getGoalConversions(websiteId: String, dateRange: DateRange, filters: [PlausibleQueryFilter] = []) async throws -> [GoalConversion] {
         let body = buildQueryBody(
             siteId: websiteId,
@@ -1153,14 +1074,12 @@ actor PlausibleAPI: AnalyticsProvider {
         ]
         if !dimensions.isEmpty { body["dimensions"] = dimensions }
         if !filters.isEmpty { body["filters"] = filters.map { $0.toQueryParam() } }
-        // Die Query-API kennt nur pagination.limit; ein flacher "limit"-Key wird
-        // mit "Schema does not allow additional properties" abgelehnt.
+        // Nur pagination.limit, ein flacher "limit"-Key wird abgelehnt.
         if let limit = limit { body["pagination"] = ["limit": limit] }
         return body
     }
 
-    /// Wie buildQueryBody, aber mit nativer date_range-Kurzform statt DateRange.
-    /// Nötig für 28d/91d/3mo, die DateRange nicht abbilden kann.
+    /// Wie buildQueryBody, mit nativer date_range-Kurzform.
     private func buildQueryBody(
         siteId: String,
         metrics: [String],
@@ -1240,7 +1159,6 @@ actor PlausibleAPI: AnalyticsProvider {
         }
 
         guard httpResponse.statusCode == 200 else {
-            // Try to extract error message from response
             if let errorResponse = try? JSONDecoder().decode(PlausibleErrorResponse.self, from: data) {
                 throw PlausibleError.apiError(errorResponse.error)
             }
@@ -1305,8 +1223,7 @@ struct PlausibleSharedLink: Codable, Identifiable {
 
 struct PlausibleAPIResponse: Codable {
     let results: [PlausibleAPIResult]
-    /// Zusatzfelder aus include.* — nur befüllt, wenn angefordert.
-    /// Optional dekodiert, damit alle bestehenden Abfragen unverändert parsen.
+    /// Zusatzfelder aus include.*, optional dekodiert.
     let meta: PlausibleResponseMeta?
 
     enum CodingKeys: String, CodingKey {
@@ -1320,11 +1237,7 @@ struct PlausibleAPIResponse: Codable {
     }
 }
 
-/// meta-Objekt der v2-Query-Response. Plausible liefert es immer mit,
-/// bei Abfragen ohne include.* aber leer ({}).
-/// Verifiziert gegen CE 3.2.1:
-///   include.total_rows  → meta.total_rows (Int)
-///   include.time_labels → meta.time_labels ([String])
+/// meta-Objekt der v2-Antwort mit total_rows und time_labels, ohne include.* leer.
 struct PlausibleResponseMeta: Codable {
     /// Gesamtzahl der Zeilen ohne Paginierung (include.total_rows).
     let totalRows: Int?
@@ -1332,24 +1245,13 @@ struct PlausibleResponseMeta: Codable {
     let timeLabels: [String]?
 }
 
-/// Eine Ergebniszeile der v2-Query-API.
-///
-/// WICHTIG: Metriken werden POSITIONSBASIERT gelesen — die Reihenfolge
-/// entspricht exakt dem "metrics"-Array im Request. Bei jeder neuen Abfrage
-/// muss die Reihenfolge am Aufrufer dokumentiert sein.
-///
-/// Einzelne Werte können `null` sein: metrics.ex (v3.2.1) definiert
-/// default_value(…) -> nil für visit_duration, exit_rate, scroll_depth und
-/// time_on_page. Deshalb:
-///   - `rawMetrics` behält null als nil (für Engagement-Metriken)
-///   - `metrics` bildet null auf 0 ab (Bestandsverhalten für Zählmetriken)
+/// Ergebniszeile der v2-API; Metriken positionsbasiert wie im Request, `rawMetrics` behält null, `metrics` macht 0 daraus.
 struct PlausibleAPIResult: Codable {
     /// Nullable Rohwerte — nil bedeutet "kein Wert", nicht "0".
     let rawMetrics: [Double?]
     let dimensions: [String]
 
-    /// Kompatibilitäts-Sicht: null wird zu 0. Für Zählmetriken
-    /// (visitors, pageviews, visits, events) unverändert korrekt.
+    /// null wird zu 0, richtig für Zählmetriken.
     var metrics: [Double] { rawMetrics.map { $0 ?? 0 } }
 
     enum CodingKeys: String, CodingKey {
@@ -1382,8 +1284,7 @@ struct PlausibleAPIResult: Codable {
 
 // MARK: - Engagement Result Models
 
-/// Engagement-Werte pro Seite. Alle Engagement-Metriken sind optional,
-/// weil Plausible ohne passende Daten null liefert.
+/// Engagement pro Seite, optional, weil Plausible ohne Daten null liefert.
 struct PlausiblePageEngagement: Identifiable, Sendable {
     let id = UUID()
     let page: String
@@ -1409,10 +1310,7 @@ struct PlausiblePageEngagement: Identifiable, Sendable {
     }
 }
 
-/// Aggregierte Engagement-Kennzahlen ohne Dimension.
-/// Reihenfolge wie im Request:
-/// [0] visitors, [1] visits, [2] pageviews, [3] views_per_visit,
-/// [4] bounce_rate, [5] visit_duration
+/// Engagement ohne Dimension; Reihenfolge [0] visitors, [1] visits, [2] pageviews, [3] views_per_visit, [4] bounce_rate, [5] visit_duration.
 struct PlausibleEngagementSummary: Sendable {
     var visitors: Int = 0
     var visits: Int = 0
@@ -1478,8 +1376,7 @@ struct PlausibleBreakdownResult {
 
 // MARK: - Breakdown-Zusatzmodelle
 
-/// Breakdown-Zeile mit Anteil am Gesamtwert.
-/// Reihenfolge wie im Request: [0] visitors, [1] percentage
+/// Breakdown-Zeile mit Anteil; Reihenfolge [0] visitors, [1] percentage.
 struct PlausibleBreakdownShare: Identifiable, Sendable {
     let id = UUID()
     let name: String
@@ -1488,14 +1385,12 @@ struct PlausibleBreakdownShare: Identifiable, Sendable {
     let percentage: Double?
 }
 
-/// Breakdown mit Gesamtzeilenzahl aus include.total_rows.
-/// totalRows ist nil, wenn der Server das meta-Feld nicht mitliefert.
+/// Breakdown mit Gesamtzeilen; totalRows ist nil ohne meta-Feld.
 struct PlausiblePagedBreakdown: Sendable {
     let items: [AnalyticsMetricItem]
     let totalRows: Int?
 
-    /// Zeilen, die wegen der Paginierung nicht in items stecken
-    /// ("und N weitere"). 0, wenn nichts fehlt oder totalRows unbekannt ist.
+    /// Zeilen jenseits der Seite ("und N weitere"), 0 wenn nichts fehlt.
     var remainingRows: Int {
         guard let totalRows else { return 0 }
         return max(0, totalRows - items.count)
@@ -1516,8 +1411,7 @@ enum PlausibleError: LocalizedError {
     case unauthorized
     case serverError(Int)
     case apiError(String)
-    /// Die Sites-API (Sites, Goals, Shared Links) gibt es nur in Plausible
-    /// Cloud/Enterprise — auf Community-Edition-Servern ist sie nicht vorhanden.
+    /// Die Sites-API gibt es nur in Cloud/Enterprise, nicht in der Community Edition.
     case sitesAPIUnavailable
 
     var errorDescription: String? {
@@ -1619,9 +1513,7 @@ class PlausibleSitesManager: ObservableObject {
         if let data = try? JSONEncoder().encode(sites) {
             UserDefaults.standard.set(data, forKey: sitesKey)
         }
-        // Update SharedCredentials for widget
         updateWidgetCredentials()
-        // Update active account with sites
         updateActiveAccountSites()
     }
 
@@ -1647,7 +1539,6 @@ class PlausibleSitesManager: ObservableObject {
             providerType: .plausible,
             sites: sites
         )
-        // Refresh widget
         WidgetCenter.shared.reloadAllTimelines()
     }
 }

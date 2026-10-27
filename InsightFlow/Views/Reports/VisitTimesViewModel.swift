@@ -2,16 +2,7 @@ import Foundation
 import SwiftUI
 import os
 
-/// Eine Zeile der Heatmap: ein Wochentag mit seinen 24 Stundenwerten.
-///
-/// WICHTIG — Annahme zur Reihenfolge der API-Matrix:
-/// `api/websites/{id}/sessions/weekly` liefert eine 7×24-Matrix, deren äußerer
-/// Index dem SQL-Wochentag von Umami entspricht: **Index 0 = Sonntag**,
-/// Index 6 = Samstag (so dokumentiert in `UmamiWeeklyTraffic` und identisch zu
-/// `UmamiSessionsByDay.day` in Models/Stats.swift, „0=Sunday .. 6=Saturday“).
-/// Die Anzeige-Reihenfolge stammt dagegen aus `Calendar.current.firstWeekday`
-/// (in DE Montag, in US Sonntag) — deshalb wird der API-Index beim Aufbau der
-/// Zeilen umgerechnet und nie direkt als Anzeigeposition verwendet.
+/// Heatmap-Zeile; der API-Index ist der Umami-Wochentag (0 = Sonntag) und wird für die Anzeige nach firstWeekday umgerechnet.
 struct VisitTimesRow: Identifiable, Sendable {
     /// Index in der API-Matrix (0 = Sonntag).
     let apiDayIndex: Int
@@ -132,8 +123,7 @@ final class VisitTimesViewModel: ObservableObject {
 
     // MARK: - Helfer
 
-    /// Lokalisierte Stundenbeschriftung (z. B. „14 Uhr“ / „2 PM“) — leitet das
-    /// Format aus der Locale ab, damit 12-/24-Stunden-Regionen korrekt sind.
+    /// Stundenbeschriftung aus der Locale, für 12- und 24-Stunden-Regionen.
     static func hourLabel(_ hour: Int) -> String {
         let calendar = Calendar.current
         guard let date = calendar.date(from: DateComponents(
