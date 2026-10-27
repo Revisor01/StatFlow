@@ -30,6 +30,7 @@ ersten Store-Veröffentlichung.
 - Die Kompatibilitätsübersicht nennt den Stand von Oktober 2026: Umami 3.4.1 ist ein
   reiner Sicherheits-Hotfix ohne API-Änderung, Plausible CE 3.2.1 bleibt die aktuelle
   Fassung.
+- Die englischen Hinweise für Beiträge sind jetzt so vollständig wie die deutschen.
 
 ## [2.2.0] – 2026-09-18
 
