@@ -1,14 +1,11 @@
 #!/bin/bash
-# Xcode Cloud, nach dem Klonen: Signieren auf automatisch stellen und die
-# Build-Nummer pruefen. Das Projekt signiert Release fest mit eigenen
-# Profilen, die es in der Cloud nicht gibt; umgestellt wird nur der Klon.
+# Xcode Cloud: Signieren im Klon auf automatisch stellen und die Build-Nummer prüfen.
 set -euo pipefail
 
 REPO="${CI_PRIMARY_REPOSITORY_PATH:?Nur fuer Xcode Cloud gedacht.}"
 PBXPROJ="$REPO/InsightFlow.xcodeproj/project.pbxproj"
 
-# Xcode Cloud ersetzt die Build-Nummer durch die eigene. Liegt sie nicht ueber
-# der im Projekt, lehnt App Store Connect den Upload erst nach dem Build ab.
+# Liegt die Cloud-Build-Nummer nicht über der im Projekt, lehnt App Store Connect erst nach dem Build ab.
 PROJEKT_NUMMER=$(grep -m1 -oE 'CURRENT_PROJECT_VERSION = [0-9]+' "$PBXPROJ" | grep -oE '[0-9]+$')
 if [ "${CI_BUILD_NUMBER:?}" -le "$PROJEKT_NUMMER" ]; then
   echo "FEHLER: Xcode-Cloud-Build $CI_BUILD_NUMBER liegt nicht ueber $PROJEKT_NUMMER aus dem Projekt. In App Store Connect unter Xcode Cloud > Settings > Build Number die naechste Nummer hoeher setzen."

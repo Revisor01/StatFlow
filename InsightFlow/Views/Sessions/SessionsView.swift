@@ -214,7 +214,6 @@ struct SessionRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Country Flag
             Text(countryFlag(session.country ?? ""))
                 .font(.title2)
 
@@ -507,7 +506,6 @@ struct JourneyCard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(Array(journey.paths.enumerated()), id: \.offset) { index, path in
                         HStack(spacing: 8) {
-                            // Step number
                             Text("\(index + 1)")
                                 .font(.caption2)
                                 .fontWeight(.bold)
@@ -516,7 +514,6 @@ struct JourneyCard: View {
                                 .background(stepColor(for: index, total: journey.stepCount))
                                 .clipShape(Circle())
 
-                            // Path
                             Text(path)
                                 .font(.subheadline)
                                 .lineLimit(1)
@@ -524,7 +521,6 @@ struct JourneyCard: View {
                             Spacer()
                         }
 
-                        // Connector line
                         if index < journey.paths.count - 1 {
                             Rectangle()
                                 .fill(Color.secondary.opacity(0.3))

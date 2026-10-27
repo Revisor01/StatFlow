@@ -100,7 +100,6 @@ class AccountManager: ObservableObject {
         if let existingIndex = accounts.firstIndex(where: {
             $0.serverURL == account.serverURL && $0.providerType == account.providerType
         }) {
-            // Update existing account
             accounts[existingIndex] = account
         } else {
             accounts.append(account)
@@ -146,8 +145,7 @@ class AccountManager: ObservableObject {
             if activeAccount?.id == account.id {
                 activeAccount = updated
                 Logger.auth.debug("updated activeAccount.sites = \(updated.sites ?? [])")
-                // Nur Daten schreiben — kein reloadAllTimelines (FIX-01)
-                // Widget-Reload passiert ausschliesslich ueber applyAccountCredentials
+                // Nur Daten schreiben, Widget-Reload nur über applyAccountCredentials.
                 syncWidgetData(for: updated)
             }
         } else {
@@ -163,11 +161,7 @@ class AccountManager: ObservableObject {
         await applyAccountCredentials(account)
     }
 
-    /// Meldet von allen Konten ab und entfernt sie samt Zugangsdaten.
-    ///
-    /// Die Zugangsdaten liegen zweifach in der Keychain: einmal global für die
-    /// aktive Sitzung und einmal je Konto. Nur die globalen zu löschen ließ die
-    /// Kontenliste bestehen — nach einem Neustart waren alle Konten wieder da.
+    /// Meldet von allen Konten ab und löscht globale und kontobezogene Zugangsdaten.
     func logoutAll() {
         for account in accounts {
             KeychainService.deleteCredentials(for: account.id.uuidString)
@@ -187,8 +181,7 @@ class AccountManager: ObservableObject {
         NotificationCenter.default.post(name: .allAccountsRemoved, object: nil)
     }
 
-    /// Räumt alles ab, was zur laufenden Sitzung gehört — ohne die Kontenliste
-    /// anzutasten.
+    /// Räumt die laufende Sitzung ab, ohne die Kontenliste anzutasten.
     private func clearSession() {
         activeAccount = nil
         UserDefaults.standard.removeObject(forKey: activeAccountKey)
@@ -211,7 +204,6 @@ class AccountManager: ObservableObject {
             accounts = decoded.map { hydrateWithKeychainCredentials($0) }
         }
 
-        // Load active account
         if let activeIdString = UserDefaults.standard.string(forKey: activeAccountKey),
            let activeId = UUID(uuidString: activeIdString),
            let account = accounts.first(where: { $0.id == activeId }) {
@@ -271,24 +263,13 @@ class AccountManager: ObservableObject {
         )
     }
 
-    /// Entfernt die Zugangsdaten der laufenden Sitzung aus der Keychain.
-    ///
-    /// Anders als `clearSession()` bleiben Kontenliste, aktives Konto und die
-    /// konfigurierten Dienste unangetastet — hier geht es nur darum, dass beim
-    /// Konfigurieren eines Kontos kein Feld des vorherigen überlebt. `token`
-    /// und `apiKey` gehören zusammen zur Adresse in `serverURL`; wird die
-    /// ersetzt, müssen es beide ebenfalls.
+    /// Entfernt die Zugangsdaten der laufenden Sitzung; `token` und `apiKey` gehören zur `serverURL`.
     private func clearSessionCredentials() {
         KeychainService.delete(for: .token)
         KeychainService.delete(for: .apiKey)
     }
 
-    /// Schreibt die Zugangsdaten des aktiven Kontos zurück in die Keychain.
-    ///
-    /// Gedacht für Abläufe, die nacheinander über mehrere Konten gehen — etwa
-    /// die Benachrichtigungen im Hintergrund. Sie setzen dabei die globalen
-    /// Felder auf das jeweils bearbeitete Konto; ohne diesen Abschluss bliebe
-    /// das zuletzt bearbeitete stehen, obwohl die App ein anderes anzeigt.
+    /// Schreibt die Zugangsdaten des aktiven Kontos zurück, nach Läufen über mehrere Konten.
     func restoreActiveAccountCredentials() async {
         guard let account = activeAccount else { return }
         await configureProviderForAccount(account)
@@ -296,17 +277,13 @@ class AccountManager: ObservableObject {
 
     // MARK: - Lightweight Provider Configuration (no side effects)
 
-    /// Configures API provider for a specific account WITHOUT changing global state.
-    /// Does NOT: update activeAccount, post notifications, reload widgets.
-    /// Used by loadAllAccountsData to iterate accounts without side effects.
+    /// Konfiguriert den Provider für ein Konto ohne globale Nebenwirkungen.
     func configureProviderForAccount(_ account: AnalyticsAccount) async {
         // Write credentials to Keychain so API actors can read them
         try? KeychainService.save(account.serverURL, for: .serverURL)
         try? KeychainService.save(account.providerType.rawValue, for: .providerType)
 
-        // Wie in `applyAccountCredentials`: erst die Zugangsdaten des zuvor
-        // konfigurierten Kontos entfernen. Diese Schleife läuft über alle
-        // Konten, dort fällt ein übernommenes Token sonst besonders leicht an.
+        // Erst die Zugangsdaten des vorherigen Kontos entfernen, sonst wird ein Token übernommen.
         clearSessionCredentials()
 
         switch account.providerType {
@@ -340,10 +317,7 @@ class AccountManager: ObservableObject {
         try? KeychainService.save(account.serverURL, for: .serverURL)
         try? KeychainService.save(account.providerType.rawValue, for: .providerType)
 
-        // Die Zugangsdaten des vorherigen Kontos müssen weichen, bevor die des
-        // neuen geschrieben werden. Sonst bleibt bei einem Konto ohne eigenes
-        // Token das fremde stehen, während die Serveradresse bereits zum neuen
-        // Konto gehört — der Server antwortet dann auf allen Routen mit 401.
+        // Vorherige Zugangsdaten zuerst entfernen, sonst bleibt ein fremdes Token stehen und alle Routen antworten 401.
         clearSessionCredentials()
 
         switch account.providerType {
@@ -375,7 +349,7 @@ class AccountManager: ObservableObject {
             AnalyticsManager.shared.setProvider(PlausibleAPI.shared)
         }
 
-        // Erst Views benachrichtigen, dann Widget-Reload (alle Writes sind abgeschlossen, FIX-01)
+        // Erst Views benachrichtigen, dann Widget-Reload, wenn alle Writes abgeschlossen sind
         NotificationCenter.default.post(name: .accountDidChange, object: nil)
 
         // Widget-Reload NACH allen async-Operationen und Filesystem-Writes
@@ -405,8 +379,7 @@ class AccountManager: ObservableObject {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
-    /// Schreibt Widget-Credentials und Account-Daten ohne Timeline-Reload (FIX-01)
-    /// Nur fuer updateAccountSites — reloadAllTimelines passiert ausschliesslich in updateWidgetCredentials
+    /// Schreibt Widget- und Kontodaten ohne Timeline-Reload, nur für updateAccountSites.
     private func syncWidgetData(for account: AnalyticsAccount) {
         let token: String
         switch account.providerType {
@@ -443,9 +416,7 @@ class AccountManager: ObservableObject {
             let token: String
             switch account.providerType {
             case .umami:
-                // Gilt für beide Umami-Varianten: self-hosted legt das
-                // erhaltene Bearer-Token ab, Cloud den API-Schlüssel — beide
-                // im Feld `token`, beide als Bearer verwendet.
+                // Self-hosted-Token und Cloud-Schlüssel liegen beide in `token` und gehen als Bearer.
                 token = account.credentials.token ?? ""
             case .plausible:
                 token = account.credentials.apiKey ?? ""

@@ -319,9 +319,7 @@ struct CustomDateRangePicker: View {
 
 // MARK: - Chart Loading Skeleton
 
-/// Dezenter Platzhalter für den Detail-Graphen, solange noch keine Chart-Daten
-/// (weder aus Cache noch vom Netzwerk) vorliegen. Verhindert die leere Stelle,
-/// die zuvor wie ein „Hängen" der Graph-Generierung wirkte.
+/// Platzhalter des Detail-Graphen, bis Daten vorliegen, damit es nicht nach Hängen aussieht.
 struct ChartLoadingSkeleton: View {
     @State private var pulse = false
 
@@ -331,7 +329,6 @@ struct ChartLoadingSkeleton: View {
     var body: some View {
         GlassCard {
             VStack(alignment: .leading, spacing: 16) {
-                // Header-Platzhalter
                 HStack(spacing: 6) {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color(.tertiarySystemGroupedBackground))
@@ -342,7 +339,6 @@ struct ChartLoadingSkeleton: View {
                     Spacer()
                 }
 
-                // Balken-Silhouette
                 HStack(alignment: .bottom, spacing: 6) {
                     ForEach(barHeights.indices, id: \.self) { i in
                         RoundedRectangle(cornerRadius: 4)

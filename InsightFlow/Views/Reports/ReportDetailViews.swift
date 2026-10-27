@@ -298,7 +298,6 @@ struct FunnelReportView: View {
                             }
                         }
 
-                        // Bar
                         GeometryReader { geo in
                             let width = maxVisitors > 0
                                 ? geo.size.width * CGFloat(step.visitors) / CGFloat(maxVisitors)

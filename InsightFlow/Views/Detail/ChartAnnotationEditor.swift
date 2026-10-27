@@ -10,11 +10,7 @@ struct AnnotationDraft: Identifiable {
     }
 }
 
-/// Vermerk für einen im Diagramm gewählten Zeitpunkt anlegen.
-///
-/// Bewusst schmaler als die Eingabe in der Vermerke-Liste: Datum und Uhrzeit
-/// stehen bereits fest — sie kommen aus dem angetippten Punkt. Zu ändern bleibt
-/// nur die Notiz, und ob der Vermerk für den ganzen Tag gilt.
+/// Vermerk für einen im Diagramm gewählten Zeitpunkt, nur Notiz und Ganztägig sind offen.
 struct ChartAnnotationEditor: View {
     let websiteId: String
     let date: Date
@@ -25,8 +21,7 @@ struct ChartAnnotationEditor: View {
 
     @State private var note = ""
     @State private var isAllDay: Bool
-    /// Der aus dem Diagramm übernommene Zeitpunkt — änderbar, damit sich auch
-    /// eine krumme Uhrzeit eintragen lässt, die kein Datenpunkt trifft.
+    /// Übernommener Zeitpunkt, änderbar für Uhrzeiten zwischen den Datenpunkten.
     @State private var selectedDate: Date
     @State private var isSaving = false
     @State private var errorMessage: String?
@@ -67,9 +62,7 @@ struct ChartAnnotationEditor: View {
 
                 Section {
                     Toggle(String(localized: "annotations.allday"), isOn: $isAllDay)
-                    // Vorbelegt mit dem angetippten Punkt, aber änderbar: wer
-                    // eine genaue Uhrzeit festhalten will, ist sonst an das
-                    // Raster der Datenpunkte gebunden.
+                    // Vorbelegt, aber änderbar, sonst bindet das Raster der Datenpunkte.
                     DatePicker(
                         String(localized: "annotations.date"),
                         selection: $selectedDate,

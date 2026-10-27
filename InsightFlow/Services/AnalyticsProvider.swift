@@ -27,8 +27,7 @@ enum AnalyticsProviderType: String, Codable, CaseIterable {
         }
     }
 
-    /// Für Umami die API-Basis — `cloud.umami.is` ist die Weboberfläche und
-    /// beantwortet keine API-Anfragen.
+    /// API-Basis für Umami; `cloud.umami.is` ist nur die Weboberfläche.
     var cloudURL: String {
         switch self {
         case .umami: return UmamiAPI.cloudBaseURL
@@ -66,8 +65,7 @@ struct AnalyticsWebsite: Identifiable, Codable {
     let domain: String
     let shareId: String?
     let provider: AnalyticsProviderType
-    /// Name des Teams, dem die Website gehört — nil bei persönlichen Websites.
-    /// Dient nur der Kennzeichnung in der Übersicht.
+    /// Teamname der Website, nil bei persönlichen; nur zur Kennzeichnung.
     var teamName: String?
 
     var displayDomain: String {
@@ -137,22 +135,17 @@ protocol AnalyticsProvider: Sendable {
     nonisolated var serverURL: String { get }
     nonisolated var isAuthenticated: Bool { get }
 
-    // Authentication
     func authenticate(serverURL: String, credentials: AnalyticsCredentials) async throws
 
-    // Websites
     func getAnalyticsWebsites() async throws -> [AnalyticsWebsite]
 
-    // Stats
     func getAnalyticsStats(websiteId: String, dateRange: DateRange) async throws -> AnalyticsStats
     func getPageviewsData(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsChartPoint]
     func getVisitorsData(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsChartPoint]
 
-    // Realtime
     func getActiveVisitors(websiteId: String) async throws -> Int
     func getRealtimeData(websiteId: String) async throws -> AnalyticsRealtimeData
 
-    // Pages & Metrics
     func getPages(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
     func getReferrers(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
     func getCountries(websiteId: String, dateRange: DateRange) async throws -> [AnalyticsMetricItem]
@@ -189,12 +182,9 @@ struct AnalyticsMetricItem: Identifiable {
 
 enum AnalyticsCredentials {
     case umami(username: String, password: String)
-    /// Umami Cloud kennt keine Anmeldung mit Benutzername und Passwort —
-    /// der API-Schlüssel aus den Kontoeinstellungen ist das Bearer-Token.
+    /// Umami Cloud: der API-Schlüssel ist das Bearer-Token, eine Passwort-Anmeldung gibt es nicht.
     case umamiCloud(apiKey: String)
-    /// Eigene Instanz, angebunden über einen API-Schlüssel statt über
-    /// Benutzername und Passwort. Umami führt Schlüssel erst ab 3.4; sie
-    /// umgehen die Bestätigung in zwei Schritten und laufen nicht ab.
+    /// Eigene Instanz mit API-Schlüssel (ab Umami 3.4), ohne zweiten Faktor und ohne Ablauf.
     case umamiSelfHostedKey(apiKey: String)
     case plausible(apiKey: String)
 }

@@ -68,7 +68,6 @@ struct OnboardingView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Page Content
                 TabView(selection: $currentPage) {
                     ForEach(Array(pages.enumerated()), id: \.offset) { index, page in
                         OnboardingPageView(page: page)
@@ -77,9 +76,7 @@ struct OnboardingView: View {
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
 
-                // Bottom Section
                 VStack(spacing: 20) {
-                    // Page Indicator
                     HStack(spacing: 8) {
                         ForEach(0..<pages.count, id: \.self) { index in
                             Circle()
@@ -89,7 +86,6 @@ struct OnboardingView: View {
                         }
                     }
 
-                    // Buttons
                     HStack(spacing: 16) {
                         if currentPage > 0 {
                             Button {
@@ -113,7 +109,6 @@ struct OnboardingView: View {
                                     currentPage += 1
                                 }
                             } else {
-                                // Fertig
                                 UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
                                 isPresented = false
                             }
@@ -128,7 +123,6 @@ struct OnboardingView: View {
                         }
                     }
 
-                    // Skip Button
                     if currentPage < pages.count - 1 {
                         Button {
                             UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
@@ -169,7 +163,6 @@ struct OnboardingPageView: View {
         VStack(spacing: 20) {
             Spacer()
 
-            // Icon
             Image(systemName: page.icon)
                 .font(.system(size: 50))
                 .foregroundStyle(page.iconColor)
@@ -177,20 +170,17 @@ struct OnboardingPageView: View {
                 .background(page.iconColor.opacity(0.15))
                 .clipShape(Circle())
 
-            // Title
             Text(page.title)
                 .font(.title2)
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
 
-            // Description
             Text(page.description)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 8)
 
-            // Details
             if !page.details.isEmpty {
                 VStack(spacing: 10) {
                     ForEach(Array(page.details.enumerated()), id: \.offset) { _, detail in

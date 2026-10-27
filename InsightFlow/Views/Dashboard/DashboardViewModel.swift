@@ -47,10 +47,7 @@ class DashboardViewModel: ObservableObject {
         loadingTask?.cancel()
         loadingTask = nil
 
-        // Wie in der Website-Ansicht: der `defer` in `loadData` lässt
-        // `isLoading` bei Abbruch stehen, damit ein abgelöster Ladevorgang den
-        // Spinner des nachfolgenden nicht ausschaltet. Nach einem echten
-        // Abbruch folgt keiner mehr — ohne dies bliebe der Ladekreis stehen.
+        // `isLoading` hier zurücksetzen, der `defer` in `loadData` lässt es bei Abbruch stehen.
         isLoading = false
     }
 
@@ -82,8 +79,7 @@ class DashboardViewModel: ObservableObject {
         AccountManager.shared.activeAccount?.id.uuidString ?? "default"
     }
 
-    /// Loads websites from all accounts into a flat list, returns a map of website-id -> account
-    /// `silent`: Hintergrund-Revalidierung ohne Lade-Spinner (vorhandene Werte bleiben sichtbar).
+    /// Lädt die Websites aller Konten; `silent` ohne Spinner.
     func loadAllAccountsData(dateRange: DateRange, accounts: [AnalyticsAccount], silent: Bool = false) async -> [String: AnalyticsAccount] {
         if !silent { isLoading = true }
         currentDateRange = dateRange
@@ -95,7 +91,7 @@ class DashboardViewModel: ObservableObject {
 
         for account in accounts {
             do {
-                // Configure API for this account WITHOUT switching global state (BUG-03 fix)
+                // API für dieses Konto konfigurieren, ohne den globalen Zustand zu wechseln
                 await AccountManager.shared.configureProviderForAccount(account)
 
                 var accountWebsites: [Website] = []
@@ -108,23 +104,19 @@ class DashboardViewModel: ObservableObject {
                     accountWebsites = try await umamiAPI.getAllAccessibleWebsites()
                 }
 
-                // Dieselbe Website kann über mehrere Konten desselben Servers
-                // hereinkommen — etwa einmal als eigene und einmal über ein
-                // Team. Doppelte IDs würde die Liste nicht verkraften, also
-                // gewinnt das zuerst geladene Konto.
+                // Dieselbe Website kann über mehrere Konten kommen, das zuerst geladene gewinnt.
                 for website in accountWebsites where accountMap[website.id] == nil {
                     accountMap[website.id] = account
                     allWebsites.append(website)
                 }
             } catch {
                 Logger.ui.error("loadAllAccountsData: failed for account \(account.displayName): \(error.localizedDescription)")
-                // Continue loading other accounts
             }
         }
 
         websites = allWebsites
 
-        // Load stats for all websites concurrently per account (BUG-03: no global account switch)
+        // Stats je Konto parallel laden, ohne globalen Kontowechsel
         for account in accounts {
             let accountWebsites = allWebsites.filter { accountMap[$0.id]?.id == account.id }
             guard !accountWebsites.isEmpty else { continue }
@@ -146,13 +138,10 @@ class DashboardViewModel: ObservableObject {
         return accountMap
     }
 
-    /// True sobald mindestens einmal Daten im Speicher liegen — erlaubt der View,
-    /// beim Tab-Wechsel die vorhandenen Werte zu zeigen und still nachzuladen.
+    /// true, sobald Daten im Speicher liegen, für stilles Nachladen beim Tab-Wechsel.
     var hasData: Bool { !websites.isEmpty }
 
-    /// `silent`: lädt im Hintergrund neu, ohne den Lade-Spinner zu zeigen
-    /// (stale-while-revalidate). Vorhandene Werte bleiben sichtbar und werden
-    /// erst überschrieben, wenn frische Daten eintreffen.
+    /// `silent`: lädt ohne Spinner neu, vorhandene Werte bleiben sichtbar.
     func loadData(dateRange: DateRange, clearFirst: Bool = false, silent: Bool = false) async {
         loadingTask?.cancel()
         let task = Task {
@@ -179,15 +168,12 @@ class DashboardViewModel: ObservableObject {
                     websites = analyticsWebsites.map { site in
                         Website(id: site.id, name: site.name, domain: site.domain, shareId: nil, teamId: nil, resetAt: nil, createdAt: nil)
                     }
-                    // Cache die Websites
                     cache.saveWebsites(analyticsWebsites.toCached(), accountId: currentAccountId)
                 } else {
                     let result = try await umamiAPI.getAllAccessibleWebsitesResult()
                     guard !Task.isCancelled else { return }
                     websites = result.websites
-                    // Nur einen vollständigen Stand zwischenspeichern: Fehlen
-                    // Team-Websites wegen eines Fehlers, würde der Cache sie
-                    // sonst dauerhaft verlieren und offline zu wenig anzeigen.
+                    // Nur einen vollständigen Stand cachen, sonst fehlen Team-Websites offline dauerhaft.
                     if result.teamsComplete {
                         let analyticsWebsites = result.websites.map { site in
                             AnalyticsWebsite(id: site.id, name: site.name, domain: site.domain ?? site.name, shareId: site.shareId, provider: .umami, teamName: site.teamName)
@@ -198,10 +184,7 @@ class DashboardViewModel: ObservableObject {
 
                 guard !Task.isCancelled else { return }
 
-                // Ab Umami 3.3 lassen sich die Verlaufsdaten aller Websites in
-                // einer Anfrage holen. Das spart bei vielen Websites je einen
-                // Request pro Kachel. Nur für Tagesauflösung — siehe
-                // `loadSparklinesBatched`.
+                // Ab 3.3 alle Verläufe in einer Anfrage, nur für Tagesauflösung (siehe `loadSparklinesBatched`).
                 let usedBatch = await loadSparklinesBatched(dateRange: dateRange)
 
                 await withTaskGroup(of: Void.self) { group in
@@ -249,12 +232,10 @@ class DashboardViewModel: ObservableObject {
         for website in websites {
             let dateRangeId = dateRange.preset.rawValue
 
-            // Stats laden
             if let cachedStats = cache.loadStats(websiteId: website.id, dateRangeId: dateRangeId) {
                 stats[website.id] = cachedStats.data.toAnalyticsStats().toWebsiteStats()
             }
 
-            // Sparkline laden
             if let cachedSparkline = cache.loadSparkline(websiteId: website.id, dateRangeId: dateRangeId) {
                 let points = cachedSparkline.data.toAnalyticsChartPoints()
                 sparklineData[website.id] = points.map { point in
@@ -268,16 +249,12 @@ class DashboardViewModel: ObservableObject {
         await loadData(dateRange: dateRange)
     }
 
-    /// Zeiträume, die im Hintergrund vorgeladen und gecacht werden, damit beim
-    /// Umschalten des globalen Zeitraums sofort die korrekten Werte stehen.
+    /// Zeiträume, die still vorgeladen werden, damit der Wechsel sofort stimmt.
     private static let prefetchPresets: [DateRangePreset] = [.today, .yesterday, .thisWeek, .last7Days]
 
     private var prefetchTask: Task<Void, Never>?
 
-    /// Lädt still die Stats der übrigen Standard-Zeiträume für alle Websites in den
-    /// Cache. Aktualisiert KEINE @Published-Werte — befüllt nur den Cache, damit
-    /// `loadStats` (cache-first) beim Zeitraumwechsel sofort den Wert zeigen kann.
-    /// Nur im Single-Account-Modus, wo der Provider stabil konfiguriert ist.
+    /// Lädt die übrigen Zeiträume still in den Cache, ohne @Published-Werte, nur bei einem Konto.
     func prefetchOtherRanges(except current: DateRange) {
         prefetchTask?.cancel()
         let websiteIds = websites.map { $0.id }
@@ -357,18 +334,7 @@ class DashboardViewModel: ObservableObject {
         }
     }
 
-    /// Holt die Sparkline-Daten aller Websites in einer einzigen Anfrage
-    /// (`api/websites/charts`, ab Umami 3.3) und gibt zurück, ob das geklappt hat.
-    ///
-    /// Der Server liefert die Werte nur dann in der angefragten Auflösung, wenn
-    /// er den `unit`-Parameter auswertet. Tut er das nicht, kommen
-    /// 12-Stunden-Blöcke zurück: für „Heute" wären das zwei Punkte statt 24.
-    /// Aus einem Block lassen sich die Stunden nicht zurückrechnen, und beim
-    /// Aufsummieren zu Tageswerten zählen Sitzungen über die Blockgrenze
-    /// doppelt. In dem Fall wird deshalb auf den Einzelabruf zurückgefallen.
-    ///
-    /// Dasselbe gilt, wenn der Aufruf scheitert — etwa auf Servern vor 3.3,
-    /// die die Route mit 404 beantworten.
+    /// Sparklines aller Websites in einer Anfrage (ab 3.3); bei ignoriertem `unit` oder Fehler Einzelabruf.
     private func loadSparklinesBatched(dateRange: DateRange) async -> Bool {
         guard !isPlausible, !websites.isEmpty else { return false }
 
@@ -412,9 +378,7 @@ class DashboardViewModel: ObservableObject {
     private func loadStats(for websiteId: String, dateRange: DateRange) async {
         let dateRangeId = dateRange.preset.rawValue
 
-        // Cache-first: gecachten Wert für genau diesen Zeitraum sofort anzeigen,
-        // damit beim Zeitraumwechsel direkt der korrekte (vorgeladene) Wert steht
-        // statt der alten Zahl, die dann sichtbar springt.
+        // Cache-first, damit der Wert beim Zeitraumwechsel nicht springt.
         if let cached = cache.loadStats(websiteId: websiteId, dateRangeId: dateRangeId) {
             let cachedStats = cached.data.toAnalyticsStats().toWebsiteStats()
             if stats[websiteId] != cachedStats {
@@ -438,14 +402,12 @@ class DashboardViewModel: ObservableObject {
             }
 
             guard !Task.isCancelled else { return }
-            // Nur überschreiben, wenn sich der Wert wirklich geändert hat — verhindert
-            // sichtbares Springen der Zahl beim stillen Hintergrund-Refresh.
+            // Nur bei echter Änderung überschreiben, gegen Springen.
             let newStats = analyticsStats.toWebsiteStats()
             if stats[websiteId] != newStats {
                 stats[websiteId] = newStats
             }
 
-            // Cache die Stats
             cache.saveStats(CachedStats(from: analyticsStats), websiteId: websiteId, dateRangeId: dateRangeId)
         } catch {
             if !Task.isCancelled { Logger.ui.error("Failed to load stats for \(websiteId): \(error.localizedDescription)") }
@@ -490,7 +452,6 @@ class DashboardViewModel: ObservableObject {
                 sparklineData[websiteId] = filled
             }
 
-            // Cache die Sparkline-Daten
             cache.saveSparkline(chartPoints.toCached(), websiteId: websiteId, dateRangeId: dateRangeId)
         } catch {
             if !Task.isCancelled { Logger.ui.error("Failed to load sparkline for \(websiteId): \(error.localizedDescription)") }
@@ -503,9 +464,7 @@ class DashboardViewModel: ObservableObject {
         let now = Date()
         let isHourly = dateRange.unit == "hour"
 
-        // Die Anfragen senden die Geräte-Zeitzone mit, die Messwerte kommen also
-        // bereits lokal zurück. Durchgehend lokal schlüsseln — eine Umrechnung
-        // nach UTC verschiebt die Punkte und lässt Randstunden herausfallen.
+        // Werte kommen schon lokal zurück, eine Umrechnung nach UTC verschöbe die Punkte.
         let slotCalendar = calendar
 
         var dataByKey: [String: Int] = [:]

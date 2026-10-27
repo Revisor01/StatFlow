@@ -34,9 +34,7 @@ enum LoginProvider: CaseIterable {
         }
     }
 
-    /// Adresse, die beim Wechsel auf „Cloud“ eingetragen wird. Für Umami ist
-    /// das die API-Basis, nicht die Weboberfläche `cloud.umami.is` — dort gibt
-    /// es keine API-Anmeldung.
+    /// Adresse beim Wechsel auf „Cloud“, für Umami die API-Basis statt `cloud.umami.is`.
     var cloudURL: String {
         switch self {
         case .umami: return UmamiAPI.cloudBaseURL
@@ -95,8 +93,7 @@ struct LoginView: View {
     @State private var accountName = ""
     @State private var twoFactorCode = ""
     @State private var useBackupCode = false
-    /// Eigene Instanz: Anmeldung über API-Schlüssel statt Benutzername
-    /// und Passwort. Umami kennt Schlüssel erst ab 3.4.
+    /// Eigene Instanz mit API-Schlüssel statt Passwort, ab Umami 3.4.
     @State private var useAPIKeyForSelfHosted = false
 
     @FocusState private var focusedField: Field?
@@ -140,8 +137,7 @@ struct LoginView: View {
                         Button {
                             withAnimation {
                                 if step == .twoFactor {
-                                    // Zurück zur Anmeldemaske: Der partialToken wird
-                                    // verworfen, der Login startet neu.
+                                    // Zurück zur Anmeldemaske, der partialToken wird verworfen.
                                     viewModel.cancelTwoFactor()
                                     twoFactorCode = ""
                                     useBackupCode = false
@@ -207,7 +203,6 @@ struct LoginView: View {
                 }
             }
 
-            // Server Type Selector
             VStack(alignment: .leading, spacing: 12) {
                 Text("login.serverType")
                     .font(.subheadline)
@@ -235,7 +230,6 @@ struct LoginView: View {
                 }
             }
 
-            // Continue Button
             Button {
                 withAnimation {
                     step = .credentials
@@ -259,7 +253,6 @@ struct LoginView: View {
 
     private var credentialsSection: some View {
         VStack(spacing: 20) {
-            // Provider Badge
             HStack(spacing: 12) {
                 Image(systemName: selectedProvider.icon)
                     .font(.title2)
@@ -290,11 +283,8 @@ struct LoginView: View {
                 .autocorrectionDisabled()
             }
 
-            // Credentials
             if selectedProvider == .umami {
-                // Umami Cloud kennt keine Anmeldung mit Benutzername und
-                // Passwort, sondern nur den API-Schlüssel aus den
-                // Kontoeinstellungen.
+                // Umami Cloud kennt nur den API-Schlüssel, keine Passwort-Anmeldung.
                 if serverType == .cloud {
                     umamiCloudCredentialsFields
                 } else if useAPIKeyForSelfHosted {
@@ -306,7 +296,6 @@ struct LoginView: View {
                 plausibleCredentialsFields
             }
 
-            // Login Button
             loginButton
         }
     }
@@ -414,8 +403,7 @@ struct LoginView: View {
     private var umamiSelfHostedMethodToggle: some View {
         Button {
             useAPIKeyForSelfHosted.toggle()
-            // Die jeweils andere Eingabe leeren, damit nichts aus dem vorherigen
-            // Versuch stehen bleibt und mitgeschickt wird.
+            // Die andere Eingabe leeren, damit nichts vom vorherigen Versuch mitgeht.
             if useAPIKeyForSelfHosted {
                 username = ""
                 password = ""
@@ -593,9 +581,7 @@ struct LoginView: View {
         let hasValidServer = serverType == .cloud || !serverURL.isEmpty
 
         if selectedProvider == .umami {
-            // Cloud und die Schlüssel-Anmeldung an eigenen Instanzen brauchen
-            // keinen Benutzernamen — zuvor verlangte die Prüfung ihn auch dort
-            // und ließ den Knopf bei Umami Cloud dauerhaft grau.
+            // Cloud und Schlüssel-Anmeldung brauchen keinen Benutzernamen.
             if serverType == .cloud || useAPIKeyForSelfHosted {
                 return hasValidServer && !apiKey.isEmpty
             }

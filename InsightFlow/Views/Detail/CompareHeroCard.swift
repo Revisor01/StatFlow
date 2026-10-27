@@ -51,7 +51,6 @@ struct CompareHeroCard: View {
                 }
             }
 
-            // Periode A Wert
             HStack(spacing: 4) {
                 Circle()
                     .fill(.blue)
@@ -61,7 +60,6 @@ struct CompareHeroCard: View {
                     .fontWeight(.bold)
             }
 
-            // Periode B Wert
             HStack(spacing: 4) {
                 Circle()
                     .fill(.orange)

@@ -1,8 +1,3 @@
-//
-//  WidgetSizeViews.swift
-//  InsightFlowWidget
-//
-
 import SwiftUI
 import WidgetKit
 
@@ -68,7 +63,6 @@ struct SmallWidgetView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             VStack(alignment: .leading, spacing: 0) {
-                // Header
                 HStack(spacing: 4) {
                     if data.activeVisitors > 0 {
                         Circle().fill(.green).frame(width: 6, height: 6)
@@ -85,7 +79,6 @@ struct SmallWidgetView: View {
 
                 Spacer()
 
-                // Besucher:innen
                 HStack(spacing: 4) {
                     Image(systemName: "person.fill")
                         .font(.system(size: 11))
@@ -107,7 +100,6 @@ struct SmallWidgetView: View {
 
                 Spacer()
 
-                // Pageviews
                 HStack(spacing: 4) {
                     Image(systemName: "eye.fill")
                         .font(.system(size: 11))
@@ -166,7 +158,6 @@ struct MediumWidgetView: View {
                 .frame(maxWidth: .infinity)
                 Spacer()
             } else {
-                // Header
                 HStack(spacing: 5) {
                     Text(data.websiteName)
                         .font(.system(size: 12, weight: .semibold))
@@ -186,7 +177,6 @@ struct MediumWidgetView: View {
 
                 // Stats mit Icons und Prozenten
                 HStack(spacing: 16) {
-                    // Visitors
                     HStack(spacing: 5) {
                         Image(systemName: "person.fill")
                             .font(.system(size: 14))
@@ -206,7 +196,6 @@ struct MediumWidgetView: View {
                         }
                     }
 
-                    // Pageviews
                     HStack(spacing: 5) {
                         Image(systemName: "eye.fill")
                             .font(.system(size: 14))

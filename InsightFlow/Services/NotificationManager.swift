@@ -127,7 +127,6 @@ class NotificationManager: ObservableObject {
     func updateSetting(for websiteId: String, setting: NotificationSetting) {
         notificationSettings[websiteId] = setting
         saveSettings()
-        // Notifications neu planen
         Task {
             await scheduleAllNotifications()
         }
@@ -139,31 +138,24 @@ class NotificationManager: ObservableObject {
     func scheduleAllNotifications() async {
         let center = UNUserNotificationCenter.current()
 
-        // Erst alle alten scheduled notifications löschen
         center.removeAllPendingNotificationRequests()
 
         // Prüfe ob überhaupt Websites aktiviert sind
         let enabledWebsites = notificationSettings.filter { $0.value != .disabled }
         guard !enabledWebsites.isEmpty else { return }
 
-        // Berechtigung prüfen
         let settings = await center.notificationSettings()
         guard settings.authorizationStatus == .authorized else { return }
 
-        // Hole alle Accounts und plane für jeden
         let accounts = AccountManager.shared.accounts
 
         for account in accounts {
             await scheduleNotificationsForAccount(account, center: center)
         }
 
-        // Die Schleife hat die Zugangsdaten jedes Kontos nacheinander in die
-        // Keychain geschrieben. Ohne Wiederherstellung bliebe dort das zuletzt
-        // bearbeitete Konto stehen, während die App ein anderes anzeigt — die
-        // Auswertungen liefen dann gegen fremde Zugangsdaten ins Leere.
+        // Aktives Konto zurückschreiben, sonst laufen die Auswertungen gegen das zuletzt bearbeitete.
         await AccountManager.shared.restoreActiveAccountCredentials()
 
-        // Debug: Zeige geplante Notifications
         let pending = await center.pendingNotificationRequests()
         Logger.ui.debug("Geplante Notifications: \(pending.count)")
         for req in pending {
@@ -189,8 +181,7 @@ class NotificationManager: ObservableObject {
 
             let api = UmamiAPI.shared
             await api.configure(baseURL: url, token: token)
-            // Filter clearen, damit in der Detail-View gesetzte activeFilters nicht
-            // den Notification-Refresh kontaminieren und Stats fälschlich auf 0 reduzieren.
+            // Filter leeren, sonst drücken Detail-Filter die Stats auf 0.
             await api.setFilters([])
             let umamiWebsites = (try? await api.getAllAccessibleWebsites()) ?? []
             websites = umamiWebsites.map { WebsiteInfo(id: $0.id, name: $0.name) }
@@ -201,7 +192,6 @@ class NotificationManager: ObservableObject {
             websites = sites.map { WebsiteInfo(id: $0, name: $0) }
         }
 
-        // Einzel-Notifications pro Website
         for website in websites {
                 guard let setting = notificationSettings[website.id], setting != .disabled else { continue }
 
@@ -263,7 +253,6 @@ class NotificationManager: ObservableObject {
 
                 let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
 
-                // Eindeutige ID: account + website
                 let request = UNNotificationRequest(
                     identifier: "scheduled-\(account.id.uuidString)-\(website.id)",
                     content: content,
@@ -295,15 +284,12 @@ class NotificationManager: ObservableObject {
         let settingsData = UserDefaults.standard.data(forKey: "notificationSettings")
         let settings = settingsData.flatMap { try? JSONDecoder().decode([String: NotificationSetting].self, from: $0) } ?? [:]
 
-        // Lade Datenquelle aus UserDefaults
         let dataSourceString = UserDefaults.standard.string(forKey: "notificationDataSource")
         let dataSource = dataSourceString.flatMap { NotificationDataSource(rawValue: $0) } ?? .auto
 
-        // Lade Uhrzeit für Auto-Modus
         let savedTime = UserDefaults.standard.object(forKey: "notificationTime") as? Date ?? Date()
         let notificationHour = Calendar.current.component(.hour, from: savedTime)
 
-        // Lade alle Accounts
         let accountsData = UserDefaults.standard.data(forKey: "analytics_accounts")
         let accounts = accountsData.flatMap { try? JSONDecoder().decode([AnalyticsAccount].self, from: $0) } ?? []
 
@@ -311,8 +297,7 @@ class NotificationManager: ObservableObject {
             await sendNotificationsForAccount(account, settings: settings, dataSource: dataSource, notificationHour: notificationHour)
         }
 
-        // Wie oben: die Zugangsdaten des aktiven Kontos zurückschreiben, damit
-        // nach dem Hintergrundlauf nicht die des zuletzt bearbeiteten gelten.
+        // Aktives Konto zurückschreiben, wie oben.
         await AccountManager.shared.restoreActiveAccountCredentials()
     }
 
@@ -340,7 +325,6 @@ class NotificationManager: ObservableObject {
             websites = sites.map { WebsiteInfo(id: $0, name: $0) }
         }
 
-        // Einzel-Notifications pro Website
         for website in websites {
                 guard let setting = settings[website.id], setting != .disabled else { continue }
 

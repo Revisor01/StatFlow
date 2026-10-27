@@ -96,7 +96,6 @@ struct WebsiteDetailView: View {
                     ChartLoadingSkeleton()
                 }
 
-                // Schnellzugriff
                 quickActionsSection
 
                 if !viewModel.topPages.isEmpty {
@@ -174,11 +173,9 @@ struct WebsiteDetailView: View {
         }
         .task(id: selectedDateRange) {
             await viewModel.loadData(dateRange: selectedDateRange)
-            // Übrige Standard-Zeiträume still in den Cache vorladen, damit beim
-            // Umschalten der Chips sofort der korrekte Wert steht.
+            // Übrige Zeiträume still vorladen, damit die Chips sofort stimmen.
             viewModel.prefetchOtherRanges(except: selectedDateRange)
-            // Periodisches stilles Nachladen starten/neu aufsetzen für den
-            // gewählten Zeitraum, solange die Ansicht sichtbar ist.
+            // Stilles Nachladen für den gewählten Zeitraum, solange die Ansicht sichtbar ist.
             viewModel.startAutoRefresh(dateRange: selectedDateRange)
         }
         .onChange(of: scenePhase) { _, newPhase in
@@ -249,7 +246,6 @@ struct WebsiteDetailView: View {
                     }
                 }
 
-                // Custom Button
                 DateRangeChip(
                     title: selectedDateRange.preset == .custom ? selectedDateRange.displayName : String(localized: "daterange.custom"),
                     isSelected: selectedDateRange.preset == .custom
@@ -460,7 +456,6 @@ struct WebsiteDetailView: View {
                 }
                 .buttonStyle(.plain)
 
-                // Vergleich
                 NavigationLink {
                     CompareView(website: website)
                 } label: {

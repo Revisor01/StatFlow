@@ -85,8 +85,7 @@ class EventsViewModel: ObservableObject {
             defer { if !Task.isCancelled { isLoading = false } }
 
             do {
-                // event-data/fields returns { propertyName, dataType, total }.
-                // Scope to the tapped event so we only show its own properties.
+                // Auf das angetippte Ereignis begrenzt, nur dessen Properties.
                 let allFields = try await api.getEventDataFields(
                     websiteId: websiteId,
                     dateRange: dateRange,
@@ -97,9 +96,7 @@ class EventsViewModel: ObservableObject {
                 let propertyNames = allFields.map { $0.propertyName }.sorted()
                 selectedEventProperties = propertyNames
 
-                // The fields endpoint carries no value breakdown — load values per property
-                // from event-data/values (scoped to the tapped event). Failures per property
-                // are non-fatal: we still show the property name.
+                // Werte je Property aus event-data/values; ein Fehler blendet nur die Werte aus.
                 var valuesDict: [String: [EventDataValue]] = [:]
                 for name in propertyNames {
                     guard !Task.isCancelled else { return }

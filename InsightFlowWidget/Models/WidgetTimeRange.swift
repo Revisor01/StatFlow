@@ -1,8 +1,3 @@
-//
-//  WidgetTimeRange.swift
-//  InsightFlowWidget
-//
-
 import SwiftUI
 import AppIntents
 

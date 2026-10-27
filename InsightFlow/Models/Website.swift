@@ -9,8 +9,7 @@ struct Website: Codable, Identifiable, Hashable, Sendable {
     let resetAt: Date?
     let createdAt: Date?
 
-    /// Name des Teams, dem die Website gehört. Kommt nicht vom Server, sondern
-    /// wird beim Laden ergänzt, damit die Übersicht die Herkunft anzeigen kann.
+    /// Teamname, beim Laden ergänzt, damit die Übersicht die Herkunft zeigt.
     var teamName: String?
 
     var displayDomain: String {

@@ -1,18 +1,13 @@
 import XCTest
 @testable import InsightFlow
 
-/// Tests für die Anbindung an Umami Cloud.
-///
-/// Die JSON-Beispiele stammen aus echten Antworten von
-/// `https://api.umami.is/v1` (abgefragt am 17.09.2026); IDs, Domain und
-/// Benutzername sind durch Platzhalter ersetzt.
+/// Tests für Umami Cloud; Beispiele aus echten Antworten von `https://api.umami.is/v1` (17.09.2026), anonymisiert.
 final class UmamiCloudTests: XCTestCase {
 
     // MARK: - Erkennung der Cloud-Adresse
 
     func testCloudBaseURLIsAPIHostNotWebInterface() {
-        // Die Weboberfläche cloud.umami.is beantwortet keine API-Anfragen;
-        // eingetragen werden muss die API-Basis.
+        // Die Weboberfläche beantwortet keine API-Anfragen, gemeint ist die API-Basis.
         XCTAssertEqual(UmamiAPI.cloudBaseURL, "https://api.umami.is/v1")
     }
 
@@ -21,14 +16,12 @@ final class UmamiCloudTests: XCTestCase {
     }
 
     func testIsCloudURLRecognizesWebInterface() {
-        // Wer die Weboberfläche einträgt, meint ebenfalls Umami Cloud — auch
-        // dann darf nicht der Anmeldeweg mit Passwort versucht werden.
+        // Auch die Weboberfläche meint Umami Cloud, kein Passwort-Login.
         XCTAssertTrue(UmamiAPI.isCloudURL("https://cloud.umami.is"))
     }
 
     func testIsCloudURLRejectsSelfHosted() {
-        // Der erlaubte Fall: eine eigene Instanz bleibt beim Login mit
-        // Benutzername und Passwort.
+        // Erlaubter Fall: eine eigene Instanz bleibt beim Passwort-Login.
         XCTAssertFalse(UmamiAPI.isCloudURL("https://analytics.example.com"))
         XCTAssertFalse(UmamiAPI.isCloudURL("https://umami.example.com/api"))
     }
@@ -45,9 +38,7 @@ final class UmamiCloudTests: XCTestCase {
     // MARK: - Fehlermeldungen
 
     func testCloudLoginWithPasswordHasOwnErrorMessage() throws {
-        // Der verbotene Fall darf nicht als generisches
-        // „Anmeldung fehlgeschlagen“ erscheinen, sonst sieht er aus wie ein
-        // Tippfehler im Passwort.
+        // Verbotener Fall: kein generisches „Anmeldung fehlgeschlagen“.
         let message = try XCTUnwrap(APIError.umamiCloudRequiresAPIKey.errorDescription)
         XCTAssertTrue(message.contains("API keys"), "Meldung nennt den Weg zum Schlüssel nicht: \(message)")
         XCTAssertNotEqual(message, APIError.authenticationFailed.errorDescription)
@@ -77,8 +68,7 @@ final class UmamiCloudTests: XCTestCase {
     }
 
     func testCloudStatsMatchesSelfHostedShape() throws {
-        // Entscheidend für die Wiederverwendung des bestehenden Clients:
-        // Cloud liefert dieselbe flache Form samt `comparison` wie v3.
+        // Die Cloud liefert dieselbe flache Form samt `comparison` wie v3.
         let json = """
         {"pageviews":884,"visitors":294,"visits":395,"bounces":165,"totaltime":60556,"comparison":{"pageviews":294,"visitors":115,"visits":135,"bounces":55,"totaltime":17610}}
         """.data(using: .utf8)!
@@ -117,8 +107,7 @@ final class UmamiCloudTests: XCTestCase {
     // MARK: - Ablage der Zugangsdaten
 
     func testCloudAccountStoresKeyAsToken() {
-        // Der Schlüssel liegt im Feld `token`, damit Widget-Sync und
-        // Kontowechsel unverändert funktionieren.
+        // Schlüssel im Feld `token`, damit Widget-Sync und Kontowechsel gleich bleiben.
         let account = AnalyticsAccount(
             name: "Umami Cloud",
             serverURL: UmamiAPI.cloudBaseURL,
@@ -134,15 +123,9 @@ final class UmamiCloudTests: XCTestCase {
 
     // MARK: - API-Schlüssel an eigener Instanz (Umami ab 3.4)
 
-    /// Umami führt API-Schlüssel erst ab 3.4. Gegen die eigene Instanz gemessen
-    /// (18.09.2026): der Schlüssel wird als `Authorization: Bearer …`
-    /// akzeptiert — derselbe Header wie beim Anmelde-Token, deshalb bleibt die
-    /// Abfrageschicht unverändert. Der Header `x-umami-api-key` wird dort
-    /// dagegen mit 401 abgelehnt.
+    /// API-Schlüssel (ab 3.4) gehen als Bearer; `x-umami-api-key` lehnte die Instanz am 18.09.2026 mit 401 ab.
     func testSelfHostedKeyIsDistinctFromCloudCredential() {
-        // Beide Wege reichen einen Schlüssel, führen aber zu verschiedenen
-        // Basisadressen: die Cloud hat eine feste, die eigene Instanz die
-        // eingetragene. Eine gemeinsame Variante würde das vermischen.
+        // Cloud und eigene Instanz haben verschiedene Basisadressen.
         let cloud = AnalyticsCredentials.umamiCloud(apiKey: "umami_test")
         let selfHosted = AnalyticsCredentials.umamiSelfHostedKey(apiKey: "umami_test")
 
@@ -155,9 +138,7 @@ final class UmamiCloudTests: XCTestCase {
     }
 
     func testSelfHostedKeyRejectsCloudAddress() async {
-        // Wer die Cloud-Adresse in das Feld für die eigene Instanz einträgt,
-        // landete sonst auf `…/v1/api/websites` — einen Pfad, den es dort nicht
-        // gibt. Die Meldung nennt stattdessen den richtigen Weg.
+        // Die Meldung nennt den richtigen Weg statt `…/v1/api/websites`.
         do {
             try await UmamiAPI.shared.authenticate(
                 serverURL: UmamiAPI.cloudBaseURL,

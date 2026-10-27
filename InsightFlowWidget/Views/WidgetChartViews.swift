@@ -1,8 +1,3 @@
-//
-//  WidgetChartViews.swift
-//  InsightFlowWidget
-//
-
 import SwiftUI
 import WidgetKit
 
@@ -80,7 +75,6 @@ struct BarChartView: View {
 
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    // Y-Achse
                     if showYScale {
                         VStack {
                             Text("\(maxVal)")
@@ -94,7 +88,6 @@ struct BarChartView: View {
                         .frame(width: yScaleWidth, height: graphHeight)
                     }
 
-                    // Bar Chart
                     if !data.isEmpty && hasData {
                         let barCount = CGFloat(data.count)
                         let totalSpacing = CGFloat(data.count - 1) * 1 // spacing: 1
@@ -135,7 +128,6 @@ struct BarChartView: View {
                     }
                 }
 
-                // X-Achse
                 if showXScale {
                     HStack {
                         if showYScale {
@@ -234,7 +226,6 @@ struct LineChartView: View {
 
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    // Y-Achse
                     if showYScale {
                         VStack {
                             Text("\(maxVal)")
@@ -248,7 +239,6 @@ struct LineChartView: View {
                         .frame(width: yScaleWidth, height: graphHeight)
                     }
 
-                    // Line Chart
                     if !data.isEmpty && hasData {
                         let points = data.enumerated().map { index, value -> CGPoint in
                             let x = graphWidth * CGFloat(index) / CGFloat(max(data.count - 1, 1))
@@ -286,7 +276,6 @@ struct LineChartView: View {
                                 )
                             )
 
-                            // Curved Line
                             Path { path in
                                 guard points.count > 1 else { return }
                                 path.move(to: points[0])
@@ -305,7 +294,6 @@ struct LineChartView: View {
                             }
                             .stroke(color, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
 
-                            // End dot
                             if let lastPoint = points.last {
                                 Circle()
                                     .fill(color)
@@ -326,7 +314,6 @@ struct LineChartView: View {
                     }
                 }
 
-                // X-Achse
                 if showXScale {
                     HStack {
                         if showYScale {

@@ -1,8 +1,3 @@
-//
-//  WidgetCache.swift
-//  InsightFlowWidget
-//
-
 import Foundation
 
 // MARK: - Widget Cache
@@ -103,8 +98,7 @@ struct WidgetCache {
             decoder.dateDecodingStrategy = .iso8601
             let cached = try decoder.decode(CachedWidgetData.self, from: data)
 
-            // Cache ist maximal 1 Stunde gültig, aber wir geben ihn trotzdem zurück
-            // wenn kein Netzwerk verfügbar ist
+            // Ohne Netz auch einen älteren Cache zurückgeben.
             widgetLog("Cache loaded for \(websiteId), age: \(Int(Date().timeIntervalSince(cached.cachedAt)))s")
             return cached.toWidgetData()
         } catch {

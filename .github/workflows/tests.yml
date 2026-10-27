@@ -1,8 +1,6 @@
 name: Tests
 
-# Unit-Tests bei jedem PR auf einem Simulator, damit die Pflicht "Checks grün
-# vor dem Merge" sie erfasst. Signiert wird mit den Simulator-Einstellungen des
-# Projekts (ad hoc), so prüft der Check auch die lokale Konfiguration.
+# Unit-Tests bei jedem PR, mit den Simulator-Signiereinstellungen des Projekts.
 
 on:
   pull_request:
@@ -24,8 +22,7 @@ jobs:
       test-ziel: InsightFlowTests
 
   xcode-cloud-skript:
-    # Das Skript laeuft sonst erst in Xcode Cloud; hier gegen eine Kopie des
-    # Projekts, damit eine Aenderung an der Signierung es nicht still bricht.
+    # Gegen eine Kopie des Projekts, damit eine Signieränderung das Cloud-Skript nicht still bricht.
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:

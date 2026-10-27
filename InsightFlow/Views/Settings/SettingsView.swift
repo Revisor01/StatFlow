@@ -98,7 +98,6 @@ struct SettingsView: View {
                     currentAccountRow(active)
                 }
             } else {
-                // Alle Accounts anzeigen
                 ForEach(accountManager.accounts) { account in
                     AccountSettingsRow(
                         account: account,
@@ -128,7 +127,6 @@ struct SettingsView: View {
                 }
             }
 
-            // Account hinzufügen Button
             Button {
                 showAddAccount = true
             } label: {
@@ -242,14 +240,12 @@ struct SettingsView: View {
 
     private var notificationsSection: some View {
         Section {
-            // Zeit-Einstellung
             DatePicker(
                 String(localized: "settings.notifications.time"),
                 selection: $notificationManager.notificationTime,
                 displayedComponents: .hourAndMinute
             )
 
-            // Datenquelle-Einstellung
             Picker("settings.notifications.stats", selection: $notificationManager.dataSource) {
                 ForEach(NotificationDataSource.allCases, id: \.self) { source in
                     Text(source.localizedName).tag(source)
@@ -306,7 +302,6 @@ struct SettingsView: View {
                 Label(String(localized: "glossary.settings.link"), systemImage: "book.closed")
             }
 
-            // Umami Link
             Link(destination: URL(string: "https://umami.is")!) {
                 HStack {
                     Label("Umami Analytics", systemImage: "chart.bar.xaxis")
@@ -317,7 +312,6 @@ struct SettingsView: View {
                 }
             }
 
-            // Plausible Link
             Link(destination: URL(string: "https://plausible.io")!) {
                 HStack {
                     Label("Plausible Analytics", systemImage: "chart.line.uptrend.xyaxis")
@@ -328,7 +322,6 @@ struct SettingsView: View {
                 }
             }
 
-            // GitHub Umami
             Link(destination: URL(string: "https://github.com/umami-software/umami")!) {
                 HStack {
                     Label("Umami GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
@@ -339,7 +332,6 @@ struct SettingsView: View {
                 }
             }
 
-            // GitHub Plausible
             Link(destination: URL(string: "https://github.com/plausible/analytics")!) {
                 HStack {
                     Label("Plausible GitHub", systemImage: "chevron.left.forwardslash.chevron.right")
@@ -635,7 +627,6 @@ struct EditAccountView: View {
     private func saveAccount() {
         isSaving = true
 
-        // Create updated account with new name
         let updatedAccount = AnalyticsAccount(
             id: account.id,
             name: accountName,
@@ -645,7 +636,6 @@ struct EditAccountView: View {
             sites: account.sites
         )
 
-        // Update in manager
         accountManager.addAccount(updatedAccount)
 
         // If this was the active account, refresh it

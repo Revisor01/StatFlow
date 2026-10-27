@@ -107,9 +107,7 @@ class AccountManagerTests: XCTestCase {
         XCTAssertNil(manager.activeAccount)
     }
 
-    /// Regression: Abmelden loeschte nur die globalen Zugangsdaten, nicht die
-    /// Kontenliste. Nach einem Neustart waren deshalb alle Konten wieder da,
-    /// und die App sprang auf ein noch vorhandenes Konto eines anderen Anbieters.
+    /// Regression: Abmelden ließ die Kontenliste stehen, nach dem Neustart waren alle Konten zurück.
     func testLogoutAllRemovesAccountsAndSurvivesReload() async throws {
         let manager = AccountManager.shared
         let account = makeTestAccount()
@@ -121,15 +119,13 @@ class AccountManagerTests: XCTestCase {
         XCTAssertNil(manager.activeAccount)
         XCTAssertTrue(manager.accounts.isEmpty, "Konten muessen entfernt sein")
 
-        // Das ist der Kern: der gespeicherte Stand darf keine Konten mehr enthalten,
-        // sonst kehren sie beim naechsten Start zurueck.
+        // Der gespeicherte Stand darf keine Konten mehr enthalten.
         let stored = UserDefaults.standard.data(forKey: "analytics_accounts")
         let decoded = stored.flatMap { try? JSONDecoder().decode([AnalyticsAccount].self, from: $0) }
         XCTAssertEqual(decoded?.count ?? 0, 0, "Gespeicherte Konten muessen geloescht sein")
     }
 
-    /// Die Sitzung zu beenden darf die Konten NICHT entfernen — das ist der
-    /// Unterschied zwischen `clearActiveAccount` und `logoutAll`.
+    /// Die Sitzung zu beenden entfernt die Konten nicht, anders als `logoutAll`.
     func testClearActiveAccountKeepsAccounts() async throws {
         let manager = AccountManager.shared
         let account = makeTestAccount()
@@ -209,8 +205,7 @@ class AccountManagerTests: XCTestCase {
     // MARK: - FIX-01: Widget Sync
 
     func testUpdateAccountSitesDoesNotCallReloadTimelines() throws {
-        // Verifiziere dass updateAccountSites nur syncWidgetData aufruft (kein reloadAllTimelines)
-        // syncWidgetData schreibt Daten ohne Widget-Timeline-Reload
+        // updateAccountSites ruft nur syncWidgetData, kein reloadAllTimelines.
         let manager = AccountManager.shared
         let account = makeTestAccount(name: "Widget Test")
         manager.addAccount(account)
@@ -241,21 +236,11 @@ class AccountManagerTests: XCTestCase {
 
     // MARK: - Kontowechsel darf keine fremden Zugangsdaten stehen lassen
 
-    /// Der verbotene Fall: Ein Konto ohne hinterlegtes Token darf nicht das
-    /// Token des zuvor aktiven Kontos weiterverwenden.
-    ///
-    /// `applyAccountCredentials` schrieb `serverURL` bedingungslos, das Token
-    /// aber nur, wenn eines vorhanden war. Beim Wechsel auf ein Konto ohne
-    /// Token blieb dadurch das fremde Token in der Keychain stehen und wurde
-    /// gegen die neue Serveradresse gesendet. Der Server antwortet darauf auf
-    /// allen Routen gleichzeitig mit 401 — Verläufe, Orte und Ziele bleiben
-    /// zusammen leer, ohne dass die App zur Anmeldung zurückkehrt.
+    /// Verbotener Fall: ein Konto ohne Token darf das Token des vorherigen nicht weiterverwenden, sonst antworten alle Routen 401.
     func testSwitchingToAccountWithoutTokenDoesNotKeepPreviousToken() async throws {
         let manager = AccountManager.shared
 
-        // Diese Tests setzen ein aktives Konto und konfigurieren darüber den
-        // global geteilten AnalyticsManager. Ohne Rücknahme erbt der nächste
-        // Test im selben Lauf diesen Zustand.
+        // Zustand zurücknehmen, sonst erbt der nächste Test das aktive Konto.
         addTeardownBlock { @MainActor in
             AccountManager.shared.clearActiveAccount()
             KeychainService.delete(for: .serverURL)
@@ -293,14 +278,11 @@ class AccountManagerTests: XCTestCase {
         XCTAssertNil(KeychainService.load(for: .token))
     }
 
-    /// Der erlaubte Fall: Ein Konto mit eigenem Token ersetzt das vorherige
-    /// vollständig.
+    /// Erlaubter Fall: ein Konto mit eigenem Token ersetzt das vorherige vollständig.
     func testSwitchingBetweenAccountsReplacesToken() async throws {
         let manager = AccountManager.shared
 
-        // Diese Tests setzen ein aktives Konto und konfigurieren darüber den
-        // global geteilten AnalyticsManager. Ohne Rücknahme erbt der nächste
-        // Test im selben Lauf diesen Zustand.
+        // Zustand zurücknehmen, sonst erbt der nächste Test das aktive Konto.
         addTeardownBlock { @MainActor in
             AccountManager.shared.clearActiveAccount()
             KeychainService.delete(for: .serverURL)
@@ -330,8 +312,7 @@ class AccountManagerTests: XCTestCase {
         XCTAssertEqual(KeychainService.load(for: .token), "token-zwei")
     }
 
-    /// Beim Wechsel von Plausible auf Umami darf der Plausible-Schlüssel nicht
-    /// als Umami-Token zurückbleiben und umgekehrt.
+    /// Beim Anbieterwechsel bleibt kein Schlüssel des anderen zurück.
     func testSwitchingProviderDoesNotLeaveForeignCredential() async throws {
         let manager = AccountManager.shared
 
@@ -369,10 +350,7 @@ class AccountManagerTests: XCTestCase {
         )
     }
 
-    /// Läuft ein Hintergrundlauf über mehrere Konten (Zusammenfassungen), setzt
-    /// er die globalen Zugangsdaten nacheinander auf jedes Konto. Danach muss
-    /// wieder das aktive Konto gelten, sonst laufen die Auswertungen der App
-    /// gegen die Zugangsdaten des zuletzt bearbeiteten Kontos.
+    /// Nach einem Hintergrundlauf über mehrere Konten gilt wieder das aktive.
     func testRestoreActiveAccountCredentialsUndoesIteration() async throws {
         let manager = AccountManager.shared
 

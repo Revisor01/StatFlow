@@ -31,27 +31,19 @@ enum PlausibleGoalType: String, Codable, Sendable {
 
 // MARK: - Plausible Query Filter
 
-/// Filter-Operatoren der Plausible Query API v2.
-/// Belegt in priv/json-schemas/query-api-schema.json (Tag v3.2.1):
-/// filter_with_is ("is"), filter_with_contains ("contains"),
-/// filter_operation_without_goals ("is_not", "contains_not"),
-/// filter_operation_regex ("matches", "matches_not"),
-/// filter_operation_wildcard ("matches_wildcard", "matches_wildcard_not").
+/// Filter-Operatoren der Plausible Query API v2 (query-api-schema.json, v3.2.1).
 enum PlausibleFilterOperator: String, Sendable {
     case is_ = "is"
     case isNot = "is_not"
     case contains = "contains"
-    /// Plausible v2 heißt der Operator "contains_not".
-    /// "does_not_contain" wird vom Schema abgelehnt.
+    /// Plausible v2 heißt "contains_not", "does_not_contain" lehnt das Schema ab.
     case doesNotContain = "contains_not"
     case matches = "matches"
     case matchesNot = "matches_not"
     case matchesWildcard = "matches_wildcard"
     case matchesWildcardNot = "matches_wildcard_not"
 
-    /// Nur "is"/"is_not"/"contains"/"contains_not" akzeptieren laut Schema
-    /// den vierten Eintrag mit { "case_sensitive": Bool }.
-    /// Regex- und Wildcard-Filter sind auf maxItems 3 begrenzt.
+    /// Nur is/is_not/contains/contains_not erlauben den vierten Eintrag { "case_sensitive": Bool }.
     var supportsCaseSensitiveModifier: Bool {
         switch self {
         case .is_, .isNot, .contains, .doesNotContain:
@@ -62,9 +54,7 @@ enum PlausibleFilterOperator: String, Sendable {
     }
 }
 
-/// Behavioral-Filter aus Plausible CE 3.x (filter_has_done im JSON-Schema).
-/// Umschließt genau EINEN weiteren Filter, z. B.
-/// ["has_done", ["is", "event:goal", ["Signup"]]]
+/// Behavioral-Filter (filter_has_done), umschließt genau einen Filter: ["has_done", ["is", "event:goal", ["Signup"]]].
 enum PlausibleBehavioralOperator: String, Sendable {
     case hasDone = "has_done"
     case hasNotDone = "has_not_done"
@@ -78,17 +68,10 @@ struct GoalConversion: Identifiable, Sendable {
     let visitors: Int
     let events: Int
 
-    /// Conversion-Rate in Prozent (0–100): Anteil der Besucher, die dieses Goal
-    /// ausgelöst haben, gemessen an allen Besuchern der Site im Zeitraum.
-    /// Nur zusammen mit event:goal als Dimension oder Filter abfragbar —
-    /// sonst antwortet die API mit "Metric `conversion_rate` can only be
-    /// queried with event:goal filters or dimensions.".
-    /// nil, wenn die Metrik nicht mitabgefragt wurde oder Plausible null liefert.
+    /// Conversion-Rate in Prozent, nur mit event:goal als Dimension oder Filter abfragbar; nil ohne Wert.
     let conversionRate: Double?
 
-    /// Conversion-Rate innerhalb der Dimensionsgruppe (0–100). Ohne weitere
-    /// Gruppierungs-Dimension identisch zu conversionRate; mit zusätzlicher
-    /// Dimension (z. B. visit:source) der Anteil je Gruppe.
+    /// Conversion-Rate innerhalb der Dimensionsgruppe (0–100).
     let groupConversionRate: Double?
 
     /// Defaults halten bestehende Aufrufer ohne Conversion-Rate gültig.
@@ -112,12 +95,10 @@ struct PlausibleQueryFilter: Sendable {
     let operator_: PlausibleFilterOperator
     let values: [String]
 
-    /// Groß-/Kleinschreibung beachten. `nil` = Feld weglassen (Plausible-Default: true).
-    /// Wird nur für is/is_not/contains/contains_not serialisiert.
+    /// Groß-/Kleinschreibung beachten; nil lässt das Feld weg, nur für is/is_not/contains/contains_not.
     let caseSensitive: Bool?
 
-    /// Wenn gesetzt, wird dieser Filter als Behavioral-Filter umschlossen:
-    /// ["has_done", ["is", "event:goal", ["Signup"]]]
+    /// Wenn gesetzt, wird der Filter als Behavioral-Filter umschlossen.
     let behavioral: PlausibleBehavioralOperator?
 
     init(
@@ -156,8 +137,7 @@ struct PlausibleQueryFilter: Sendable {
                              caseSensitive: caseSensitive, behavioral: .hasNotDone)
     }
 
-    /// Der innere, einfache Filter: ["is", "visit:source", ["Google"]]
-    /// plus optionalem Modifier-Objekt als viertem Eintrag.
+    /// Der innere Filter, etwa ["is", "visit:source", ["Google"]], mit optionalem Modifier.
     private func simpleForm() -> [Any] {
         var parts: [Any] = [operator_.rawValue, dimension, values]
         // Modifier nur anhängen, wenn der Operator ihn laut Schema erlaubt.
@@ -167,10 +147,7 @@ struct PlausibleQueryFilter: Sendable {
         return parts
     }
 
-    /// Serialisiert in das Plausible-v2-Filterformat.
-    /// Einfach:     ["is", "visit:source", ["Google"]]
-    /// Mit Modifier:["contains", "event:page", ["/Blog"], {"case_sensitive": false}]
-    /// Behavioral:  ["has_done", ["is", "event:goal", ["Signup"]]]
+    /// Serialisiert ins Plausible-v2-Format, etwa ["contains", "event:page", ["/Blog"], {"case_sensitive": false}].
     func toQueryParam() -> [Any] {
         guard let behavioral else { return simpleForm() }
         return [behavioral.rawValue, simpleForm()]

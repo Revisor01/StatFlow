@@ -56,7 +56,6 @@ class RealtimeViewModel: ObservableObject {
 
     private func refreshPlausible() async {
         do {
-            // Fetch all data in parallel
             async let visitors = plausibleAPI.getActiveVisitors(websiteId: websiteId)
             async let pageviews = plausibleAPI.getRealtimePageviews(websiteId: websiteId)
             async let pages = plausibleAPI.getRealtimeTopPages(websiteId: websiteId)
@@ -89,7 +88,6 @@ class RealtimeViewModel: ObservableObject {
             let recentSessions = Set(data.events.filter { $0.createdDate > fiveMinutesAgo }.map { $0.sessionId })
             activeVisitors = recentSessions.count
 
-            // Totals
             totalPageviews = data.totals?.views ?? data.events.filter { $0.isPageview }.count
             totalEvents = data.totals?.events ?? data.events.filter { !$0.isPageview && !$0.isSession }.count
 
@@ -155,9 +153,7 @@ class LiveEventDetailViewModel: ObservableObject {
         loadingTask?.cancel()
         loadingTask = nil
 
-        // Siehe Website- und Übersichts-Ansicht: `isLoading` bleibt im `defer`
-        // bei Abbruch bewusst stehen; nach einem echten Abbruch muss es hier
-        // zurückgesetzt werden, sonst dreht sich der Ladekreis weiter.
+        // `isLoading` hier zurücksetzen, der `defer` lässt es bei Abbruch stehen.
         isLoading = false
     }
 }

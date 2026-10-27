@@ -2,9 +2,7 @@ import Foundation
 import SwiftUI
 import os
 
-/// Auswählbare Währungen für die Revenue-Endpunkte. Umami liefert die im
-/// Tracking verwendete Währung nirgends aus, deshalb muss sie im UI gesetzt
-/// und gemerkt werden. Der Server normalisiert auf Großschreibung.
+/// Währungen für die Umsatz-Endpunkte, im UI gewählt, weil Umami sie nicht liefert.
 enum RevenueCurrency: String, CaseIterable, Identifiable, Sendable {
     case eur = "EUR"
     case usd = "USD"
@@ -55,9 +53,7 @@ final class RevenueViewModel: ObservableObject {
 
     // MARK: - Abgeleitete Werte
 
-    /// Umsatz-Tracking gilt als eingerichtet, sobald es irgendeinen Betrag oder
-    /// eine gezählte Transaktion gibt. Andernfalls zeigt die View einen
-    /// erklärenden Leerzustand statt einer Fehlermeldung.
+    /// Eingerichtet, sobald es einen Betrag oder eine Transaktion gibt, sonst ein erklärender Leerzustand.
     var hasData: Bool {
         guard let stats else { return false }
         if stats.sum != 0 || stats.count != 0 { return true }
@@ -92,8 +88,7 @@ final class RevenueViewModel: ObservableObject {
             .sorted { $0.amount > $1.amount }
     }
 
-    /// Relative Veränderung gegenüber dem Vergleichszeitraum in Prozent.
-    /// `nil`, wenn kein Vergleich vorliegt oder die Vorperiode 0 war.
+    /// Veränderung zur Vorperiode in Prozent, nil ohne Vergleich oder bei 0.
     func change(for keyPath: KeyPath<UmamiRevenueStatsComparison, Double>,
                 current: Double) -> Double? {
         guard let comparison = stats?.comparison else { return nil }
@@ -151,8 +146,7 @@ final class RevenueViewModel: ObservableObject {
 
     // MARK: - Helfer
 
-    /// Umami liefert Zeitbuckets je nach Unit als ISO8601 oder als
-    /// `yyyy-MM-dd HH:mm:ss` — beide Formate werden probiert.
+    /// Probiert ISO8601 und `yyyy-MM-dd HH:mm:ss`.
     private static func parseDate(_ value: String?) -> Date? {
         guard let value, !value.isEmpty else { return nil }
 

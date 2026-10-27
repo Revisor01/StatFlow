@@ -11,8 +11,7 @@ struct WebVitalsView: View {
         DateRange(preset: DateRangePreset(rawValue: storedPreset) ?? .last30Days)
     }
 
-    /// Ladezeiten kommen aus Umami v3 — bei Plausible erscheint ein Hinweis
-    /// statt eines Fehlers.
+    /// Ladezeiten gibt es nur in Umami v3, bei Plausible ein Hinweis.
     private var isPlausible: Bool {
         AnalyticsManager.shared.providerType == .plausible
     }
@@ -229,8 +228,7 @@ struct WebVitalsView: View {
                     color: viewModel.selectedMetric.rating(for: percentiles.p95).color
                 )
             }
-            // Gleiche Kartenhöhe, auch wenn die Hinweistexte unterschiedlich
-            // lang umbrechen (relevant bei großer Schrift).
+            // Gleiche Kartenhöhe auch bei großer Schrift.
             .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -423,8 +421,7 @@ struct WebVitalsView: View {
 
 // MARK: - Gemeinsame Banner der Report-Ansichten
 
-/// Hinweis auf fehlende Verbindung — einheitlich in Web Vitals, Umsatz und
-/// Besuchszeiten, damit die Reports sich wie eine Ansicht anfühlen.
+/// Einheitlicher Hinweis auf fehlende Verbindung in allen Reports.
 struct ReportOfflineBanner: View {
     let message: String
 

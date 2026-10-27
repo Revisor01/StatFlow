@@ -2,9 +2,7 @@ import Foundation
 import CryptoKit
 import os
 
-/// Shares credentials between app and widget using a file in the App Group container
-/// This avoids UserDefaults issues with "System Containers" error
-/// Credentials are encrypted using AES-GCM for security
+/// Teilt AES-GCM-verschlüsselte Zugangsdaten über eine Datei im App-Group-Container, weil UserDefaults dort scheitert.
 enum SharedCredentials {
     private static let appGroupID = "group.de.godsapp.statflow"
     private static let fileName = "widget_credentials.encrypted"
@@ -171,7 +169,6 @@ enum SharedCredentials {
         guard FileManager.default.fileExists(atPath: url.path) else {
             // Try loading legacy unencrypted file and migrate
             if let legacyCreds = loadLegacyCredentials() {
-                // Re-save with encryption
                 _ = save(
                     serverURL: legacyCreds.serverURL,
                     token: legacyCreds.token,
@@ -220,15 +217,12 @@ enum SharedCredentials {
 
     /// Delete credentials file and encryption key
     static func delete() {
-        // Delete encrypted credentials
         if let url = fileURL {
             try? FileManager.default.removeItem(at: url)
         }
-        // Delete encryption key
         if let keyURL = containerURL?.appendingPathComponent(keyFileName) {
             try? FileManager.default.removeItem(at: keyURL)
         }
-        // Delete legacy file if exists
         deleteLegacyFile()
         Logger.auth.debug("Deleted")
     }

@@ -16,8 +16,7 @@ struct ReportsHubView: View {
         GridItem(.flexible())
     ]
 
-    /// Alle Reports dieses Hubs laufen über die Umami-API — bei Plausible
-    /// erscheint deshalb ein Hinweis statt der Kacheln.
+    /// Alle Reports laufen über die Umami-API, bei Plausible erscheint ein Hinweis.
     private var isPlausible: Bool {
         AnalyticsManager.shared.providerType == .plausible
     }
@@ -212,8 +211,7 @@ struct ReportCategoryCard: View {
                 Text(subtitle)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    // Zweizeilig reservieren, damit alle Kacheln gleich hoch bleiben,
-                    // auch wenn ein Untertitel nur eine Zeile braucht.
+                    // Zweizeilig reservieren, damit alle Kacheln gleich hoch sind.
                     .lineLimit(2, reservesSpace: true)
                     .fixedSize(horizontal: false, vertical: true)
             }

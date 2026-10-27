@@ -1,10 +1,6 @@
 import SwiftUI
 
-/// Vermerke einer Website — datierte Notizen, die erklären, warum der Verlauf
-/// an einer Stelle ausschlägt („Newsletter raus", „Beitrag im Gemeindebrief").
-///
-/// Umami führt sie ab Version 3.4. Auf älteren Servern erscheint statt der
-/// Liste ein Hinweis, weil die Adresse dort nicht existiert.
+/// Vermerke einer Website (Umami ab 3.4), auf älteren Servern ein Hinweis.
 struct AnnotationsView: View {
     let website: Website
     let dateRange: DateRange
@@ -136,8 +132,7 @@ struct AnnotationsView: View {
         }
     }
 
-    /// Ganztägige Vermerke zeigen nur das Datum — die gespeicherte Uhrzeit ist
-    /// dort ohne Bedeutung und würde eine Genauigkeit vortäuschen.
+    /// Ganztägige Vermerke zeigen nur das Datum.
     static func dateText(for annotation: UmamiAnnotation) -> String {
         annotation.allDay
             ? annotation.date.formatted(date: .abbreviated, time: .omitted)
@@ -158,8 +153,7 @@ enum AnnotationEditorSubject: Identifiable {
     }
 }
 
-/// Eingabe für einen Vermerk. Dieselbe Maske für Anlegen und Ändern, weil sich
-/// beides nur darin unterscheidet, womit die Felder starten.
+/// Eingabe für einen Vermerk, für Anlegen und Ändern.
 struct AnnotationEditorView: View {
     let subject: AnnotationEditorSubject
     let dateRange: DateRange
@@ -188,8 +182,7 @@ struct AnnotationEditorView: View {
         }
     }
 
-    /// Der Server lehnt leere Notizen und mehr als 500 Zeichen mit HTTP 400 ab —
-    /// deshalb hier schon prüfen, statt den Fehler erst zurückzubekommen.
+    /// Vorab prüfen, weil der Server leere und über 500 Zeichen lange Notizen mit 400 ablehnt.
     private var isValid: Bool {
         let trimmed = note.trimmingCharacters(in: .whitespacesAndNewlines)
         return !trimmed.isEmpty && trimmed.count <= UmamiAnnotation.noteLimit
@@ -276,8 +269,7 @@ struct AnnotationEditorView: View {
             )
         }
 
-        // Nur schließen, wenn es geklappt hat — sonst wäre die Eingabe weg und
-        // die Fehlermeldung ohne Bezug.
+        // Nur bei Erfolg schließen, sonst wäre die Eingabe weg.
         if succeeded { dismiss() }
     }
 }

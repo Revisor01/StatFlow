@@ -73,7 +73,6 @@ struct SetupGuideView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
 
-                // Intro
                 Text("setupGuide.intro")
                     .font(.body)
                     .foregroundStyle(.secondary)

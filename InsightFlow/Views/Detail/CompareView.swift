@@ -36,7 +36,6 @@ struct CompareView: View {
     @State private var selectedPeriod: String?
     @State private var selectedMetric: CompareMetric = .pageviews
 
-    // Periode A
     @State private var periodAWeek: Int = Calendar.current.component(.weekOfYear, from: Date())
     @State private var periodAMonth: Int = Calendar.current.component(.month, from: Date())
     @State private var periodAYear: Int = Calendar.current.component(.year, from: Date())
@@ -54,13 +53,10 @@ struct CompareView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Perioden-Auswahl
                 periodSelectionSection
 
-                // Vergleichen Button
                 compareButton
 
-                // Ergebnisse
                 if let stats1 = viewModel.stats1, let stats2 = viewModel.stats2 {
                     comparisonStatsSection(stats1: stats1, stats2: stats2)
                     CompareChartSection(
@@ -104,7 +100,6 @@ struct CompareView: View {
 
     private var periodSelectionSection: some View {
         VStack(spacing: 16) {
-            // Periode A
             periodCard(
                 title: String(localized: "compare.periodA"),
                 color: .blue,
@@ -113,7 +108,6 @@ struct CompareView: View {
                 year: $periodAYear
             )
 
-            // VS Divider
             HStack {
                 Rectangle()
                     .fill(Color.secondary.opacity(0.3))
@@ -128,7 +122,6 @@ struct CompareView: View {
                     .frame(height: 1)
             }
 
-            // Periode B
             periodCard(
                 title: String(localized: "compare.periodB"),
                 color: .orange,
@@ -304,7 +297,6 @@ struct CompareView: View {
 
     private func comparisonStatsSection(stats1: WebsiteStats, stats2: WebsiteStats) -> some View {
         VStack(spacing: 16) {
-            // Header mit Perioden
             HStack {
                 VStack(alignment: .leading) {
                     Circle().fill(.blue).frame(width: 8, height: 8)
@@ -324,7 +316,6 @@ struct CompareView: View {
 
             // Anklickbare Hero Cards - alle 4 Werte
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                // Aufrufe Hero - klickbar
                 Button {
                     withAnimation(.spring(duration: 0.3)) {
                         selectedMetric = .pageviews
@@ -341,7 +332,6 @@ struct CompareView: View {
                 }
                 .buttonStyle(.plain)
 
-                // Besucher Hero - klickbar
                 Button {
                     withAnimation(.spring(duration: 0.3)) {
                         selectedMetric = .visitors
@@ -367,7 +357,6 @@ struct CompareView: View {
                     isSelected: false
                 )
 
-                // Absprungrate Hero
                 CompareHeroCard(
                     label: String(localized: "metrics.bounceRate"),
                     icon: "arrow.uturn.backward",

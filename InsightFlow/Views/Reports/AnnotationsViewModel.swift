@@ -1,13 +1,7 @@
 import Foundation
 import os
 
-/// Vermerke einer Website: datierte Notizen an der Zeitachse, die Umami ab
-/// Version 3.4 führt.
-///
-/// Anders als die übrigen Auswertungen schreibt diese Ansicht auch — Anlegen,
-/// Ändern und Löschen brauchen serverseitig das Änderungsrecht an der Website.
-/// Ein Konto mit reinem Leserecht bekommt darauf HTTP 401; die Liste bleibt
-/// trotzdem sichtbar.
+/// Vermerke einer Website (Umami ab 3.4); Schreiben braucht das Änderungsrecht, sonst HTTP 401.
 @MainActor
 class AnnotationsViewModel: ObservableObject {
     let websiteId: String
@@ -28,10 +22,7 @@ class AnnotationsViewModel: ObservableObject {
         self.api = api
     }
 
-    /// Lädt die Vermerke des Zeitraums, neueste zuerst.
-    ///
-    /// Der Zeitraum wird bewusst mitgegeben: Vermerke sollen zu dem passen, was
-    /// die übrigen Auswertungen gerade zeigen.
+    /// Lädt die Vermerke des gezeigten Zeitraums, neueste zuerst.
     func load(dateRange: DateRange) async {
         loadingTask?.cancel()
         let task = Task {
@@ -61,8 +52,7 @@ class AnnotationsViewModel: ObservableObject {
         await task.value
     }
 
-    /// Legt einen Vermerk an und nimmt ihn sofort in die Liste auf.
-    /// Gibt zurück, ob das geklappt hat — die Eingabe bleibt sonst offen.
+    /// Legt einen Vermerk an und gibt zurück, ob es geklappt hat.
     func create(date: Date, note: String, allDay: Bool, dateRange: DateRange) async -> Bool {
         await perform {
             let created = try await self.api.createAnnotation(
@@ -71,8 +61,7 @@ class AnnotationsViewModel: ObservableObject {
                 note: note,
                 allDay: allDay
             )
-            // Nur einsortieren, wenn der Vermerk in den gezeigten Zeitraum fällt;
-            // sonst stünde er in einer Liste, die ihn beim Neuladen verliert.
+            // Nur einsortieren, wenn er im gezeigten Zeitraum liegt.
             let dates = dateRange.dates
             if created.date >= dates.start && created.date <= dates.end {
                 self.annotations.append(created)
@@ -108,8 +97,7 @@ class AnnotationsViewModel: ObservableObject {
         }
     }
 
-    /// Klammer um die drei schreibenden Wege: Zustand setzen, Fehler in eine
-    /// lesbare Meldung übersetzen, Erfolg zurückmelden.
+    /// Gemeinsamer Rahmen der schreibenden Wege mit lesbarer Fehlermeldung.
     private func perform(_ work: @escaping () async throws -> Void) async -> Bool {
         isSaving = true
         error = nil

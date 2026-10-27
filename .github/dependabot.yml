@@ -1,5 +1,4 @@
-# Die App hat keine Paketabhaengigkeiten; aktuell zu halten sind nur die
-# gepinnten Actions.
+# Die App hat keine Paketabhängigkeiten, aktuell zu halten sind nur die Actions.
 version: 2
 updates:
   - package-ecosystem: github-actions

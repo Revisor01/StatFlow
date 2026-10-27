@@ -8,8 +8,7 @@ struct VisitTimesView: View {
 
     /// Breite der Wochentags-Spalte links neben der Heatmap.
     private let labelWidth: CGFloat = 34
-    /// Kleinste noch lesbare Zellbreite — darunter wird horizontal gescrollt
-    /// statt die Zellen zu quetschen.
+    /// Kleinste lesbare Zellbreite, darunter wird gescrollt.
     private let minimumCellSize: CGFloat = 13
     private let cellSpacing: CGFloat = 2
 
@@ -17,8 +16,7 @@ struct VisitTimesView: View {
         DateRange(preset: DateRangePreset(rawValue: storedPreset) ?? .last30Days)
     }
 
-    /// Besuchszeiten kommen aus Umami v3 — bei Plausible erscheint ein Hinweis
-    /// statt eines Fehlers.
+    /// Besuchszeiten gibt es nur in Umami v3, bei Plausible ein Hinweis.
     private var isPlausible: Bool {
         AnalyticsManager.shared.providerType == .plausible
     }
@@ -214,8 +212,7 @@ struct VisitTimesView: View {
         }
     }
 
-    /// Höhe der Heatmap: 7 Zeilen plus Stundenachse. Die Zellhöhe ist fix, damit
-    /// die Karte bei horizontalem Scrollen nicht springt.
+    /// Feste Zellhöhe, damit die Karte beim Scrollen nicht springt.
     private var heatmapHeight: CGFloat {
         7 * (minimumCellSize + cellSpacing) + 18
     }
@@ -290,8 +287,7 @@ struct VisitTimesView: View {
         }
     }
 
-    /// Farbintensität relativ zum Maximalwert. Die Wurzel-Skalierung sorgt
-    /// dafür, dass auch schwache Stunden noch sichtbar bleiben.
+    /// Wurzel-Skalierung, damit schwache Stunden sichtbar bleiben.
     private func cellColor(_ value: Int) -> Color {
         let maxValue = viewModel.maxValue
         guard maxValue > 0, value > 0 else {
