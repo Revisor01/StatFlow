@@ -48,8 +48,7 @@ the data on your own server — there is no service in between.
 **[Download on the App Store »](https://apps.apple.com/app/id6761671122)**
 
 > In the App Store the app is called **StatsFlow** — *StatFlow* was already
-> taken. In the source code and documentation it is still StatFlow; the Xcode
-> target name `InsightFlow` dates from the early days.
+> taken. In the source code it is StatFlow, the Xcode target `InsightFlow`.
 
 To get started you need an Umami or Plausible account: enter the server address
 and credentials in the app, pick your websites, done.

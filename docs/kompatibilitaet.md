@@ -9,20 +9,6 @@ durchgespielt wurden.
 | **Umami** | ab 3.0, selbst betrieben oder Cloud | 3.3.0 und 3.4.0 |
 | **Plausible** | ab CE 2.1 oder Cloud | CE 3.2.1 |
 
-### Aktuelle Versionen (25.10.2026)
-
-- **Umami 3.4.1** (23.10.2026) ist ein reiner Sicherheits-Hotfix: Next.js,
-  React, die Node-Basis des Docker-Images und einige Abhängigkeiten wurden
-  angehoben, darunter eine kritische Lücke in Next.js. Laut Release-Notizen
-  ändert sich an keiner API-Route, an der Anmeldung, den Vermerken oder den
-  Auswertungen etwas; Datenbankmigrationen gibt es keine. Für die App ist
-  nichts zu tun — wer Umami selbst betreibt, sollte trotzdem umgehend
-  aktualisieren.
-- **Plausible CE 3.2.1** (Mai 2026) ist weiterhin der neueste Stand. Es war
-  selbst ein Sicherheits-Patch (entfernt den `/storybook`-Pfad, CVE-2026-8467);
-  wer noch 3.2.0 oder älter betreibt, sollte nachziehen. An der Query-API hat
-  sich seit 3.2.1 nichts geändert.
-
 ## Umami
 
 Ab Version 3 liefert `/api/websites/{id}/stats` flache Werte plus `comparison`.
@@ -36,10 +22,10 @@ Ziele, Trichter, Wiederkehr, Pfade, Zuordnung und Ladezeiten sind auf
 `GET /api/websites/{id}/…` umgestellt. Die früheren `POST /api/reports/…`
 bleiben über eine Kompatibilitätsschicht erreichbar.
 
-Die App probiert nicht herum, sondern fragt einmal `performance/stats` ab:
-Antwort 200 heißt neue Adressen, 404 heißt alte. Die angezeigten Zahlen sind in
-beiden Fällen dieselben. Einzige Abweichung: die Wiederkehr-Auswertung richtet
-die Tagesgrenzen ab 3.4 nach der Zeitzone des Geräts statt nach UTC.
+Die App fragt einmal `performance/stats` ab: Antwort 200 heißt neue Adressen,
+404 heißt alte. Die angezeigten Zahlen sind in beiden Fällen dieselben. Einzige
+Abweichung: die Wiederkehr-Auswertung richtet die Tagesgrenzen ab 3.4 nach der
+Zeitzone des Geräts statt nach UTC.
 
 **Vermerke** (`/api/websites/{id}/annotations`) gibt es erst ab 3.4. Auf
 älteren Servern zeigt die App dort einen Hinweis statt einer leeren Liste.
