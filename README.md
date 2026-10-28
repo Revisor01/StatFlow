@@ -48,8 +48,7 @@ Geräts, die Daten auf dem eigenen Server — es gibt keinen Dienst dazwischen.
 **[Im App Store laden »](https://apps.apple.com/app/id6761671122)**
 
 > Im App Store heißt die App **StatsFlow** — *StatFlow* war dort schon vergeben.
-> Im Quelltext und in der Dokumentation heißt sie weiter StatFlow, der
-> Xcode-Zielname `InsightFlow` stammt noch aus der Anfangszeit.
+> Im Quelltext heißt sie StatFlow, das Xcode-Ziel `InsightFlow`.
 
 Zum Loslegen braucht es ein Konto bei Umami oder Plausible: in der App die
 Adresse des Servers und die Zugangsdaten eintragen, Websites auswählen, fertig.
