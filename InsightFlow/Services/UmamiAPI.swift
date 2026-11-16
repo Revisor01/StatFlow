@@ -562,6 +562,7 @@ actor UmamiAPI: AnalyticsProvider {
         let loginResponse = try JSONDecoder().decode(LoginResponse.self, from: data)
 
         if let token = loginResponse.token {
+            try await ensureSessionUsable(baseURL: baseURL, token: token)
             return .token(token)
         }
 
@@ -627,7 +628,57 @@ actor UmamiAPI: AnalyticsProvider {
             let token: String
         }
 
-        return try JSONDecoder().decode(VerifyResponse.self, from: data).token
+        let token = try JSONDecoder().decode(VerifyResponse.self, from: data).token
+        try await ensureSessionUsable(baseURL: baseURL, token: token)
+        return token
+    }
+
+    /// Umami ab 3.5 stellt bei erzwungener, nicht eingerichteter 2FA ein Token aus, das jede Datenroute mit 403 ablehnt.
+    nonisolated func ensureSessionUsable(baseURL: URL, token: String) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/me"))
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 15
+
+        // Nur das eindeutige Signal bricht ab, sonst bliebe der Login an älteren Servern hängen.
+        let result: (Data, URLResponse)
+        do {
+            result = try await URLSession.shared.data(for: request)
+        } catch {
+            return
+        }
+        guard let httpResponse = result.1 as? HTTPURLResponse else { return }
+
+        if Self.isTwoFactorSetupRequired(statusCode: httpResponse.statusCode, data: result.0) {
+            throw APIError.twoFactorSetupRequired
+        }
+    }
+
+    /// Erkennt `two-factor-error-setup-required`, verschachtelt unter `error` wie in `forbidden()` oder flach.
+    static func isTwoFactorSetupRequired(statusCode: Int, data: Data) -> Bool {
+        guard statusCode == 403 else { return false }
+        return errorCode(in: data) == "two-factor-error-setup-required"
+    }
+
+    static func errorCode(in data: Data) -> String? {
+        struct Body: Decodable { let code: String? }
+        struct Envelope: Decodable {
+            let error: Body?
+            let code: String?
+        }
+        guard let envelope = try? JSONDecoder().decode(Envelope.self, from: data) else { return nil }
+        return envelope.error?.code ?? envelope.code
+    }
+
+    /// Übersetzt eine Fehlerantwort der Datenrouten in einen `APIError`.
+    static func apiError(statusCode: Int, data: Data) -> APIError {
+        if statusCode == 401 {
+            return .unauthorized
+        }
+        if isTwoFactorSetupRequired(statusCode: statusCode, data: data) {
+            return .twoFactorSetupRequired
+        }
+        return .serverError(statusCode)
     }
 
     // MARK: - Websites
@@ -1823,10 +1874,7 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            if httpResponse.statusCode == 401 {
-                throw APIError.unauthorized
-            }
-            throw APIError.serverError(httpResponse.statusCode)
+            throw Self.apiError(statusCode: httpResponse.statusCode, data: data)
         }
 
         return data
@@ -1854,10 +1902,7 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            if httpResponse.statusCode == 401 {
-                throw APIError.unauthorized
-            }
-            throw APIError.serverError(httpResponse.statusCode)
+            throw Self.apiError(statusCode: httpResponse.statusCode, data: data)
         }
 
         return data
@@ -1883,10 +1928,7 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            if httpResponse.statusCode == 401 {
-                throw APIError.unauthorized
-            }
-            throw APIError.serverError(httpResponse.statusCode)
+            throw Self.apiError(statusCode: httpResponse.statusCode, data: data)
         }
 
         return data
@@ -1919,6 +1961,7 @@ enum APIError: LocalizedError, Sendable {
     case twoFactorRequired
     case umamiCloudRequiresAPIKey
     case invalidAPIKey
+    case twoFactorSetupRequired
 
     var errorDescription: String? {
         switch self {
@@ -1944,6 +1987,8 @@ enum APIError: LocalizedError, Sendable {
             return "Umami Cloud verwendet keine Anmeldung mit Benutzername und Passwort. Bitte in Umami unter Einstellungen → API keys einen Schlüssel erzeugen und hier eintragen."
         case .invalidAPIKey:
             return "Der API-Schlüssel wurde nicht akzeptiert. Bitte in Umami unter Einstellungen → API keys prüfen."
+        case .twoFactorSetupRequired:
+            return String(localized: "error.twoFactorSetupRequired")
         }
     }
 }

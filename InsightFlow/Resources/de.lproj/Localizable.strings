@@ -418,6 +418,7 @@
 "error.generic" = "Ein Fehler ist aufgetreten";
 "error.network" = "Netzwerkfehler";
 "error.auth" = "Anmeldung fehlgeschlagen";
+"error.twoFactorSetupRequired" = "Dein Umami-Server verlangt für dieses Konto die Bestätigung in zwei Schritten. Richte sie zuerst in der Umami-Weboberfläche ein und melde dich dann hier erneut an.";
 "error.invalidURL" = "Ungültige Server-URL";
 "error.notAuthenticated" = "Nicht angemeldet";
 "error.invalidCredentials" = "Ungültige Anmeldedaten";
