@@ -47,6 +47,9 @@
 "dashboard.offlineData %@" = "Offline – Letzte Daten von %@";
 "dashboard.offlineExpired" = "Offline – gecachte Daten sind zu alt";
 "detail.offline" = "Offline – Daten nicht verfügbar";
+"detail.cohortNeedsUpdate" = "Diese Cohort lässt sich auf dem Server nicht mehr auswerten, vermutlich wegen einer Aktion, die Umami nicht mehr unterstützt. Aktualisiere sie in der Umami-Weboberfläche.";
+"detail.cohortNeedsUpdate.clear" = "Ohne Cohort anzeigen";
+"dashboard.passwordChangeRequired" = "Für dieses Umami-Konto ist noch das Standardpasswort gesetzt. Ändere es bitte in der Umami-Weboberfläche.";
 "dashboard.reorder.hint" = "Halte und ziehe um die Reihenfolge zu andern";
 "dashboard.edit.button" = "Dashboard anpassen";
 "dashboard.edit.order" = "Reihenfolge";
@@ -418,12 +421,29 @@
 "error.generic" = "Ein Fehler ist aufgetreten";
 "error.network" = "Netzwerkfehler";
 "error.auth" = "Anmeldung fehlgeschlagen";
+"error.twoFactorSetupRequired" = "Dein Umami-Server verlangt für dieses Konto die Bestätigung in zwei Schritten. Richte sie zuerst in der Umami-Weboberfläche ein und melde dich dann hier erneut an.";
+"error.cohortNeedsUpdate" = "Die gewählte Cohort lässt sich nicht auswerten. Sie nutzt vermutlich eine Aktion, die Umami nicht mehr unterstützt. Aktualisiere die Cohort in der Umami-Weboberfläche oder wähle eine andere.";
 "error.invalidURL" = "Ungültige Server-URL";
 "error.notAuthenticated" = "Nicht angemeldet";
 "error.invalidCredentials" = "Ungültige Anmeldedaten";
 "error.invalidResponse" = "Ungültige Server-Antwort";
 "error.unauthorized" = "Nicht autorisiert - bitte überprüfe deine Anmeldedaten";
 "error.server %lld" = "Serverfehler: %lld";
+
+// MARK: - Fehler der Umami-Schnittstelle und des Schlüsselbunds
+"error.api.notConfigured" = "API ist nicht konfiguriert";
+"error.api.invalidURL" = "Ungültige URL";
+"error.api.invalidResponse" = "Ungültige Server-Antwort";
+"error.api.authenticationFailed" = "Anmeldung fehlgeschlagen";
+"error.api.unauthorized" = "Nicht autorisiert";
+"error.api.server %lld" = "Server-Fehler (%lld)";
+"error.api.twoFactorInvalidCode" = "Der Bestätigungscode ist ungültig";
+"error.api.twoFactorLocked" = "Zu viele Fehlversuche. Bitte versuche es später erneut.";
+"error.api.twoFactorRequired" = "Für dieses Konto ist eine Bestätigung in zwei Schritten aktiv. Bitte melde dich über die Anmeldemaske an.";
+"error.api.umamiCloudRequiresAPIKey" = "Umami Cloud verwendet keine Anmeldung mit Benutzername und Passwort. Bitte erzeuge in Umami unter Einstellungen → API keys einen Schlüssel und trage ihn hier ein.";
+"error.api.invalidAPIKey" = "Der API-Schlüssel wurde nicht akzeptiert. Bitte prüfe ihn in Umami unter Einstellungen → API keys.";
+"error.keychain.saveFailed %@" = "Keychain Speicherfehler: %@";
+"error.keychain.encodingFailed" = "Wert konnte nicht als UTF-8 kodiert werden";
 "error.plausible.sitesAPIUnavailable" = "Diese Funktion benötigt die Plausible Sites-API, die es nur in Plausible Cloud und Enterprise gibt. Selbst gehostete Community-Edition-Server bieten sie nicht an.";
 
 // MARK: - Account Switcher

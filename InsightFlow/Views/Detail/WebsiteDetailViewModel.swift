@@ -35,6 +35,8 @@ class WebsiteDetailViewModel: ObservableObject {
     /// true, solange noch keine Chart-Daten vorliegen; steuert das Skeleton.
     @Published var isChartLoading = false
     @Published var isOffline = false
+    /// Die gewählte Kohorte lässt sich auf dem Server nicht mehr auswerten (Umami ab 3.5).
+    @Published var cohortNeedsUpdate = false
     @Published var error: String?
     private var loadingTask: Task<Void, Never>?
     private let cache: AnalyticsCacheService
@@ -53,6 +55,7 @@ class WebsiteDetailViewModel: ObservableObject {
         let task = Task {
             if !silent { isLoading = true }
             isOffline = false
+            if !silent { cohortNeedsUpdate = false }
             defer {
                 if !Task.isCancelled && !silent {
                     isLoading = false
@@ -163,7 +166,7 @@ class WebsiteDetailViewModel: ObservableObject {
         let dateRangeId = dateRange.preset.rawValue
 
         // Cache-first, danach still revalidieren.
-        if let cached = cache.loadStats(websiteId: websiteId, dateRangeId: dateRangeId) {
+        if !cohortNeedsUpdate, let cached = cache.loadStats(websiteId: websiteId, dateRangeId: dateRangeId) {
             let cachedStats = cached.data.toAnalyticsStats().toWebsiteStats()
             if stats != cachedStats {
                 stats = cachedStats
@@ -185,10 +188,28 @@ class WebsiteDetailViewModel: ObservableObject {
             guard !Task.isCancelled else { return }
             if error.isNetworkError {
                 isOffline = true
+            } else if case APIError.cohortNeedsUpdate = error {
+                markCohortNeedsUpdate()
             } else {
                 self.error = error.localizedDescription
             }
         }
+    }
+
+    // Zahlen aus dem Cache gelten ohne Kohorte und würden sonst als Kohortenwerte erscheinen.
+    private func markCohortNeedsUpdate() {
+        cohortNeedsUpdate = true
+        stats = nil
+        totalVisitors = 0
+        pageviewsData = []
+        sessionsData = []
+        isChartLoading = false
+    }
+
+    /// Entfernt die Kohorte und lädt ohne sie neu.
+    func clearCohort(dateRange: DateRange) async {
+        await UmamiAPI.shared.setCohort(nil)
+        await loadData(dateRange: dateRange)
     }
 
     private func loadActiveVisitors() async {
@@ -207,7 +228,7 @@ class WebsiteDetailViewModel: ObservableObject {
         let dateRangeId = dateRange.preset.rawValue
 
         // Cache-first wie bei loadStats, danach still revalidieren.
-        if let cached = cache.loadChart(websiteId: websiteId, dateRangeId: dateRangeId) {
+        if !cohortNeedsUpdate, let cached = cache.loadChart(websiteId: websiteId, dateRangeId: dateRangeId) {
             if pageviewsData != cached.data.pageviews { pageviewsData = cached.data.pageviews }
             if sessionsData != cached.data.visitors { sessionsData = cached.data.visitors }
         }
@@ -238,6 +259,9 @@ class WebsiteDetailViewModel: ObservableObject {
         } catch {
             if !Task.isCancelled {
                 isChartLoading = false
+                if case APIError.cohortNeedsUpdate = error {
+                    markCohortNeedsUpdate()
+                }
                 Logger.ui.error("Failed to load pageviews: \(error.localizedDescription)")
             }
         }

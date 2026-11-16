@@ -148,9 +148,10 @@ enum KeychainError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .saveFailed(let status):
-            return "Keychain Speicherfehler: \(status)"
+            // Als Text, sonst setzt die Lokalisierung Tausendertrennzeichen in den Statuscode.
+            return String(localized: "error.keychain.saveFailed \(String(status))")
         case .encodingFailed:
-            return "Wert konnte nicht als UTF-8 kodiert werden"
+            return String(localized: "error.keychain.encodingFailed")
         }
     }
 }

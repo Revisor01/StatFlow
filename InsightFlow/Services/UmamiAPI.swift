@@ -331,7 +331,7 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         // Ohne Rückfrage: ein zweiter Faktor braucht die Login-Ansicht.
-        guard case .token(let token) = try await login(
+        guard case .token(let session) = try await login(
             baseURL: url,
             username: username,
             password: password
@@ -340,11 +340,11 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         try KeychainService.save(serverURL, for: .serverURL)
-        try KeychainService.save(token, for: .token)
+        try KeychainService.save(session.token, for: .token)
         try KeychainService.save(username, for: .username)
         try KeychainService.save(AnalyticsProviderType.umami.rawValue, for: .providerType)
 
-        await configure(baseURL: url, token: token)
+        await configure(baseURL: url, token: session.token)
     }
 
     /// Prüft einen API-Schlüssel gegen eine echte Route; die Cloud antwortet ohne Schlüssel 400, mit ungültigem 401.
@@ -521,7 +521,7 @@ actor UmamiAPI: AnalyticsProvider {
 
     /// Ergebnis eines Logins; ab 3.3 kommt bei Zwei-Faktor statt Token ein `partialToken` für `api/2fa/verify`.
     enum LoginResult: Sendable {
-        case token(String)
+        case token(UmamiLoginSession)
         case twoFactorRequired(partialToken: String)
     }
 
@@ -547,22 +547,11 @@ actor UmamiAPI: AnalyticsProvider {
             throw APIError.authenticationFailed
         }
 
-        struct LoginResponse: Codable {
-            let token: String?
-            let requiresTwoFactor: Bool?
-            let partialToken: String?
-            let user: User?
-
-            struct User: Codable {
-                let id: String?
-                let username: String?
-            }
-        }
-
-        let loginResponse = try JSONDecoder().decode(LoginResponse.self, from: data)
+        let loginResponse = try JSONDecoder().decode(UmamiAuthResponse.self, from: data)
 
         if let token = loginResponse.token {
-            return .token(token)
+            try await ensureSessionUsable(baseURL: baseURL, token: token)
+            return .token(UmamiLoginSession(token: token, passwordChangeRequired: loginResponse.passwordChangeRequired))
         }
 
         if loginResponse.requiresTwoFactor == true, let partialToken = loginResponse.partialToken {
@@ -578,7 +567,7 @@ actor UmamiAPI: AnalyticsProvider {
         partialToken: String,
         code: String,
         isBackupCode: Bool = false
-    ) async throws -> String {
+    ) async throws -> UmamiLoginSession {
         let verifyURL = baseURL.appendingPathComponent("api/2fa/verify")
 
         var request = URLRequest(url: verifyURL)
@@ -623,11 +612,69 @@ actor UmamiAPI: AnalyticsProvider {
             }
         }
 
-        struct VerifyResponse: Codable {
-            let token: String
+        let verifyResponse = try JSONDecoder().decode(UmamiAuthResponse.self, from: data)
+        guard let token = verifyResponse.token else {
+            throw APIError.invalidResponse
         }
+        try await ensureSessionUsable(baseURL: baseURL, token: token)
+        return UmamiLoginSession(token: token, passwordChangeRequired: verifyResponse.passwordChangeRequired)
+    }
 
-        return try JSONDecoder().decode(VerifyResponse.self, from: data).token
+    /// Umami ab 3.5 stellt bei erzwungener, nicht eingerichteter 2FA ein Token aus, das jede Datenroute mit 403 ablehnt.
+    nonisolated func ensureSessionUsable(baseURL: URL, token: String) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/me"))
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 15
+
+        // Nur das eindeutige Signal bricht ab, sonst bliebe der Login an älteren Servern hängen.
+        let result: (Data, URLResponse)
+        do {
+            result = try await URLSession.shared.data(for: request)
+        } catch {
+            return
+        }
+        guard let httpResponse = result.1 as? HTTPURLResponse else { return }
+
+        if Self.isTwoFactorSetupRequired(statusCode: httpResponse.statusCode, data: result.0) {
+            throw APIError.twoFactorSetupRequired
+        }
+    }
+
+    /// Erkennt `two-factor-error-setup-required`, verschachtelt unter `error` wie in `forbidden()` oder flach.
+    static func isTwoFactorSetupRequired(statusCode: Int, data: Data) -> Bool {
+        guard statusCode == 403 else { return false }
+        return errorCode(in: data) == "two-factor-error-setup-required"
+    }
+
+    static func errorCode(in data: Data) -> String? {
+        struct Body: Decodable { let code: String? }
+        struct Envelope: Decodable {
+            let error: Body?
+            let code: String?
+        }
+        guard let envelope = try? JSONDecoder().decode(Envelope.self, from: data) else { return nil }
+        return envelope.error?.code ?? envelope.code
+    }
+
+    /// Übersetzt eine Fehlerantwort der Datenrouten in einen `APIError`.
+    static func apiError(statusCode: Int, data: Data, sentCohort: Bool = false) -> APIError {
+        if statusCode == 401 {
+            return .unauthorized
+        }
+        if isTwoFactorSetupRequired(statusCode: statusCode, data: data) {
+            return .twoFactorSetupRequired
+        }
+        if isRetiredCohortError(statusCode: statusCode, data: data, sentCohort: sentCohort) {
+            return .cohortNeedsUpdate
+        }
+        return .serverError(statusCode)
+    }
+
+    /// Umami ab 3.5 wirft bei Kohorten mit abgeschaffter Aktion einen unbehandelten Fehler, die Antwort ist ein 500 ohne Code.
+    static func isRetiredCohortError(statusCode: Int, data: Data, sentCohort: Bool) -> Bool {
+        guard sentCohort, (500...599).contains(statusCode) else { return false }
+        return statusCode == 500 || String(decoding: data, as: UTF8.self).contains("retired action")
     }
 
     // MARK: - Websites
@@ -1823,10 +1870,11 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            if httpResponse.statusCode == 401 {
-                throw APIError.unauthorized
-            }
-            throw APIError.serverError(httpResponse.statusCode)
+            throw Self.apiError(
+                statusCode: httpResponse.statusCode,
+                data: data,
+                sentCohort: queryItems.contains { $0.name == "cohort" }
+            )
         }
 
         return data
@@ -1854,10 +1902,12 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            if httpResponse.statusCode == 401 {
-                throw APIError.unauthorized
-            }
-            throw APIError.serverError(httpResponse.statusCode)
+            let filters = body["filters"] as? [String: Any]
+            throw Self.apiError(
+                statusCode: httpResponse.statusCode,
+                data: data,
+                sentCohort: body["cohort"] != nil || filters?["cohort"] != nil
+            )
         }
 
         return data
@@ -1883,14 +1933,35 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            if httpResponse.statusCode == 401 {
-                throw APIError.unauthorized
-            }
-            throw APIError.serverError(httpResponse.statusCode)
+            throw Self.apiError(statusCode: httpResponse.statusCode, data: data)
         }
 
         return data
     }
+}
+
+/// Antwort von `api/auth/login` und `api/2fa/verify`; `passwordChangeRequired` senden erst Server ab 3.5.
+struct UmamiAuthResponse: Decodable, Sendable {
+    let token: String?
+    let requiresTwoFactor: Bool?
+    let partialToken: String?
+    let user: User?
+
+    struct User: Decodable, Sendable {
+        let id: String?
+        let username: String?
+        let passwordChangeRequired: Bool?
+    }
+
+    var passwordChangeRequired: Bool {
+        user?.passwordChangeRequired == true
+    }
+}
+
+/// Vollständige Anmeldung nach Login oder Code-Bestätigung.
+struct UmamiLoginSession: Sendable, Equatable {
+    let token: String
+    let passwordChangeRequired: Bool
 }
 
 /// Verknüpfung mehrerer Filter (`match`-Parameter in Umami v3).
@@ -1919,31 +1990,37 @@ enum APIError: LocalizedError, Sendable {
     case twoFactorRequired
     case umamiCloudRequiresAPIKey
     case invalidAPIKey
+    case twoFactorSetupRequired
+    case cohortNeedsUpdate
 
     var errorDescription: String? {
         switch self {
         case .notConfigured:
-            return "API ist nicht konfiguriert"
+            return String(localized: "error.api.notConfigured")
         case .invalidURL:
-            return "Ungültige URL"
+            return String(localized: "error.api.invalidURL")
         case .invalidResponse:
-            return "Ungültige Server-Antwort"
+            return String(localized: "error.api.invalidResponse")
         case .authenticationFailed:
-            return "Anmeldung fehlgeschlagen"
+            return String(localized: "error.api.authenticationFailed")
         case .unauthorized:
-            return "Nicht autorisiert"
+            return String(localized: "error.api.unauthorized")
         case .serverError(let code):
-            return "Server-Fehler (\(code))"
+            return String(localized: "error.api.server \(code)")
         case .twoFactorInvalidCode:
-            return "Der Bestätigungscode ist ungültig"
+            return String(localized: "error.api.twoFactorInvalidCode")
         case .twoFactorLocked:
-            return "Zu viele Fehlversuche. Bitte später erneut versuchen."
+            return String(localized: "error.api.twoFactorLocked")
         case .twoFactorRequired:
-            return "Für dieses Konto ist eine Bestätigung in zwei Schritten aktiv. Bitte über die Anmeldemaske anmelden."
+            return String(localized: "error.api.twoFactorRequired")
         case .umamiCloudRequiresAPIKey:
-            return "Umami Cloud verwendet keine Anmeldung mit Benutzername und Passwort. Bitte in Umami unter Einstellungen → API keys einen Schlüssel erzeugen und hier eintragen."
+            return String(localized: "error.api.umamiCloudRequiresAPIKey")
         case .invalidAPIKey:
-            return "Der API-Schlüssel wurde nicht akzeptiert. Bitte in Umami unter Einstellungen → API keys prüfen."
+            return String(localized: "error.api.invalidAPIKey")
+        case .twoFactorSetupRequired:
+            return String(localized: "error.twoFactorSetupRequired")
+        case .cohortNeedsUpdate:
+            return String(localized: "error.cohortNeedsUpdate")
         }
     }
 }

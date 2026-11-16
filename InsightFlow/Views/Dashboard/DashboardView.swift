@@ -17,6 +17,7 @@ struct DashboardView: View {
     @State private var websiteAccountMap: [String: AnalyticsAccount] = [:]
     // Der erste Load läuft nur einmal, danach Pull-to-Refresh, Datums-, Kontowechsel und scenePhase.
     @State private var hasLoadedInitially = false
+    @AppStorage(PasswordChangeNotice.storageKey) private var passwordChangeNoticeIds = ""
 
     var body: some View {
         NavigationStack {
@@ -29,6 +30,10 @@ struct DashboardView: View {
                         VStack(spacing: 16) {
                             if viewModel.isOffline {
                                 offlineBanner
+                            }
+
+                            if showsPasswordChangeNotice {
+                                passwordChangeBanner
                             }
 
                             if settingsManager.showDateRangePicker {
@@ -321,6 +326,39 @@ struct DashboardView: View {
         } label: {
             Label("account.switcher.addAccount", systemImage: "plus.circle.fill")
         }
+    }
+
+    private var showsPasswordChangeNotice: Bool {
+        guard let id = accountManager.activeAccount?.id else { return false }
+        return PasswordChangeNotice.isMarked(passwordChangeNoticeIds, accountId: id)
+    }
+
+    // Nur ein Hinweis: die App kann das Passwort nicht ändern, und die Anmeldung gilt trotzdem.
+    private var passwordChangeBanner: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "key.fill")
+                .font(.subheadline)
+            Text("dashboard.passwordChangeRequired")
+                .font(.subheadline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Button {
+                guard let id = accountManager.activeAccount?.id else { return }
+                passwordChangeNoticeIds = PasswordChangeNotice.updated(
+                    passwordChangeNoticeIds,
+                    accountId: id,
+                    required: false
+                )
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.caption.weight(.semibold))
+            }
+            .accessibilityLabel(String(localized: "button.close"))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.blue.opacity(0.12))
+        .foregroundStyle(.blue)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private var offlineBanner: some View {
@@ -912,8 +950,12 @@ struct AddAccountView: View {
 
                 // Bei `partialToken` übernimmt die Code-Eingabe statt eines Fehlers.
                 switch try await UmamiAPI.shared.login(baseURL: url, username: username, password: password) {
-                case .token(let token):
-                    await createUmamiAccount(token: token, serverURL: normalizedURL)
+                case .token(let session):
+                    await createUmamiAccount(
+                        token: session.token,
+                        serverURL: normalizedURL,
+                        passwordChangeRequired: session.passwordChangeRequired
+                    )
                 case .twoFactorRequired(let partialToken):
                     await MainActor.run {
                         pendingTwoFactor = (partialToken, url, normalizedURL)
@@ -956,14 +998,18 @@ struct AddAccountView: View {
         errorMessage = nil
 
         do {
-            let token = try await UmamiAPI.shared.verifyTwoFactor(
+            let session = try await UmamiAPI.shared.verifyTwoFactor(
                 baseURL: pending.url,
                 partialToken: pending.partialToken,
                 code: twoFactorCode.trimmingCharacters(in: .whitespaces),
                 isBackupCode: useBackupCode
             )
 
-            await createUmamiAccount(token: token, serverURL: pending.serverURL)
+            await createUmamiAccount(
+                token: session.token,
+                serverURL: pending.serverURL,
+                passwordChangeRequired: session.passwordChangeRequired
+            )
 
             await MainActor.run {
                 onAccountAdded?()
@@ -986,13 +1032,14 @@ struct AddAccountView: View {
         errorMessage = nil
     }
 
-    private func createUmamiAccount(token: String, serverURL: String) async {
+    private func createUmamiAccount(token: String, serverURL: String, passwordChangeRequired: Bool = false) async {
         let account = AnalyticsAccount(
             name: accountName,
             serverURL: serverURL,
             providerType: .umami,
             credentials: AccountCredentials(token: token, apiKey: nil)
         )
+        PasswordChangeNotice.record(accountId: account.id, required: passwordChangeRequired)
         accountManager.addAccount(account)
         await accountManager.setActiveAccount(account)
     }

@@ -74,6 +74,10 @@ struct WebsiteDetailView: View {
                         .padding(.horizontal)
                 }
 
+                if viewModel.cohortNeedsUpdate {
+                    cohortNeedsUpdateBanner
+                }
+
                 if let stats = viewModel.stats {
                     heroStats(stats)
                 }
@@ -214,6 +218,30 @@ struct WebsiteDetailView: View {
     }
 
     // MARK: - Offline Banner
+
+    private var cohortNeedsUpdateBanner: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "person.3.fill")
+                    .font(.subheadline)
+                Text("detail.cohortNeedsUpdate")
+                    .font(.subheadline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Button {
+                Task { await viewModel.clearCohort(dateRange: selectedDateRange) }
+            } label: {
+                Text("detail.cohortNeedsUpdate.clear")
+                    .font(.subheadline.weight(.semibold))
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.orange.opacity(0.15))
+        .foregroundStyle(.orange)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
 
     private var offlineBanner: some View {
         HStack(spacing: 8) {
