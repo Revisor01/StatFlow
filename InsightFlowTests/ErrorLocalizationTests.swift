@@ -3,7 +3,7 @@ import XCTest
 
 final class ErrorLocalizationTests: XCTestCase {
 
-    /// Die deutschen Texte müssen wörtlich den früher fest eingetragenen Meldungen entsprechen.
+    /// Deutsche Texte wörtlich: die früheren Meldungen, mit Du-Anrede wie im Rest der App.
     private let germanTexts: [String: String] = [
         "error.api.notConfigured": "API ist nicht konfiguriert",
         "error.api.invalidURL": "Ungültige URL",
@@ -12,10 +12,10 @@ final class ErrorLocalizationTests: XCTestCase {
         "error.api.unauthorized": "Nicht autorisiert",
         "error.api.server %lld": "Server-Fehler (%lld)",
         "error.api.twoFactorInvalidCode": "Der Bestätigungscode ist ungültig",
-        "error.api.twoFactorLocked": "Zu viele Fehlversuche. Bitte später erneut versuchen.",
-        "error.api.twoFactorRequired": "Für dieses Konto ist eine Bestätigung in zwei Schritten aktiv. Bitte über die Anmeldemaske anmelden.",
-        "error.api.umamiCloudRequiresAPIKey": "Umami Cloud verwendet keine Anmeldung mit Benutzername und Passwort. Bitte in Umami unter Einstellungen → API keys einen Schlüssel erzeugen und hier eintragen.",
-        "error.api.invalidAPIKey": "Der API-Schlüssel wurde nicht akzeptiert. Bitte in Umami unter Einstellungen → API keys prüfen.",
+        "error.api.twoFactorLocked": "Zu viele Fehlversuche. Bitte versuche es später erneut.",
+        "error.api.twoFactorRequired": "Für dieses Konto ist eine Bestätigung in zwei Schritten aktiv. Bitte melde dich über die Anmeldemaske an.",
+        "error.api.umamiCloudRequiresAPIKey": "Umami Cloud verwendet keine Anmeldung mit Benutzername und Passwort. Bitte erzeuge in Umami unter Einstellungen → API keys einen Schlüssel und trage ihn hier ein.",
+        "error.api.invalidAPIKey": "Der API-Schlüssel wurde nicht akzeptiert. Bitte prüfe ihn in Umami unter Einstellungen → API keys.",
         "error.keychain.saveFailed %lld": "Keychain Speicherfehler: %lld",
         "error.keychain.encodingFailed": "Wert konnte nicht als UTF-8 kodiert werden"
     ]
@@ -35,7 +35,7 @@ final class ErrorLocalizationTests: XCTestCase {
         bundle.localizedString(forKey: key, value: "", table: nil)
     }
 
-    func testGermanTableKeepsFormerMessagesVerbatim() throws {
+    func testGermanTableMatchesExpectedMessages() throws {
         let de = try bundle("de")
         for (key, expected) in germanTexts {
             XCTAssertEqual(text(key, in: de), expected, key)

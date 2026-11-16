@@ -24,6 +24,7 @@ ersten Store-Veröffentlichung.
 
 ### Geändert
 - Fehlermeldungen bei Anmeldung und Serverfehlern erscheinen jetzt auch auf Englisch, wenn das Gerät nicht auf Deutsch eingestellt ist.
+- Die deutschen Fehlermeldungen sprechen jetzt wie der Rest der App mit Du an.
 - Neue Lizenz: GNU AGPL v3.0 statt GPL-3.0: Die Pflicht, Änderungen offenzulegen, gilt jetzt auch für den Betrieb als Webdienst.
 
 ### Sonstiges
