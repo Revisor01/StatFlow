@@ -428,6 +428,21 @@
 "error.invalidResponse" = "Invalid server response";
 "error.unauthorized" = "Unauthorized - please check your credentials";
 "error.server %lld" = "Server error: %lld";
+
+// MARK: - Umami API and keychain errors
+"error.api.notConfigured" = "API is not configured";
+"error.api.invalidURL" = "Invalid URL";
+"error.api.invalidResponse" = "Invalid server response";
+"error.api.authenticationFailed" = "Login failed";
+"error.api.unauthorized" = "Not authorized";
+"error.api.server %lld" = "Server error (%lld)";
+"error.api.twoFactorInvalidCode" = "The verification code is invalid";
+"error.api.twoFactorLocked" = "Too many failed attempts. Please try again later.";
+"error.api.twoFactorRequired" = "Two-step verification is active for this account. Please sign in using the login screen.";
+"error.api.umamiCloudRequiresAPIKey" = "Umami Cloud does not use sign-in with username and password. Please create a key in Umami under Settings → API keys and enter it here.";
+"error.api.invalidAPIKey" = "The API key was not accepted. Please check it in Umami under Settings → API keys.";
+"error.keychain.saveFailed %lld" = "Keychain save error: %lld";
+"error.keychain.encodingFailed" = "Value could not be encoded as UTF-8";
 "error.plausible.sitesAPIUnavailable" = "This function requires the Plausible Sites API, which is only available in Plausible Cloud and Enterprise. Self-hosted Community Edition servers do not provide it.";
 
 // MARK: - Account Switcher

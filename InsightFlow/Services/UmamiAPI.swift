@@ -1996,27 +1996,27 @@ enum APIError: LocalizedError, Sendable {
     var errorDescription: String? {
         switch self {
         case .notConfigured:
-            return "API ist nicht konfiguriert"
+            return String(localized: "error.api.notConfigured")
         case .invalidURL:
-            return "Ungültige URL"
+            return String(localized: "error.api.invalidURL")
         case .invalidResponse:
-            return "Ungültige Server-Antwort"
+            return String(localized: "error.api.invalidResponse")
         case .authenticationFailed:
-            return "Anmeldung fehlgeschlagen"
+            return String(localized: "error.api.authenticationFailed")
         case .unauthorized:
-            return "Nicht autorisiert"
+            return String(localized: "error.api.unauthorized")
         case .serverError(let code):
-            return "Server-Fehler (\(code))"
+            return String(localized: "error.api.server \(code)")
         case .twoFactorInvalidCode:
-            return "Der Bestätigungscode ist ungültig"
+            return String(localized: "error.api.twoFactorInvalidCode")
         case .twoFactorLocked:
-            return "Zu viele Fehlversuche. Bitte später erneut versuchen."
+            return String(localized: "error.api.twoFactorLocked")
         case .twoFactorRequired:
-            return "Für dieses Konto ist eine Bestätigung in zwei Schritten aktiv. Bitte über die Anmeldemaske anmelden."
+            return String(localized: "error.api.twoFactorRequired")
         case .umamiCloudRequiresAPIKey:
-            return "Umami Cloud verwendet keine Anmeldung mit Benutzername und Passwort. Bitte in Umami unter Einstellungen → API keys einen Schlüssel erzeugen und hier eintragen."
+            return String(localized: "error.api.umamiCloudRequiresAPIKey")
         case .invalidAPIKey:
-            return "Der API-Schlüssel wurde nicht akzeptiert. Bitte in Umami unter Einstellungen → API keys prüfen."
+            return String(localized: "error.api.invalidAPIKey")
         case .twoFactorSetupRequired:
             return String(localized: "error.twoFactorSetupRequired")
         case .cohortNeedsUpdate:

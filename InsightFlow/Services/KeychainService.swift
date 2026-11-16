@@ -148,9 +148,9 @@ enum KeychainError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .saveFailed(let status):
-            return "Keychain Speicherfehler: \(status)"
+            return String(localized: "error.keychain.saveFailed \(Int(status))")
         case .encodingFailed:
-            return "Wert konnte nicht als UTF-8 kodiert werden"
+            return String(localized: "error.keychain.encodingFailed")
         }
     }
 }
