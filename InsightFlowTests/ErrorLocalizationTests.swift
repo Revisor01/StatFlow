@@ -16,7 +16,7 @@ final class ErrorLocalizationTests: XCTestCase {
         "error.api.twoFactorRequired": "Für dieses Konto ist eine Bestätigung in zwei Schritten aktiv. Bitte melde dich über die Anmeldemaske an.",
         "error.api.umamiCloudRequiresAPIKey": "Umami Cloud verwendet keine Anmeldung mit Benutzername und Passwort. Bitte erzeuge in Umami unter Einstellungen → API keys einen Schlüssel und trage ihn hier ein.",
         "error.api.invalidAPIKey": "Der API-Schlüssel wurde nicht akzeptiert. Bitte prüfe ihn in Umami unter Einstellungen → API keys.",
-        "error.keychain.saveFailed %lld": "Keychain Speicherfehler: %lld",
+        "error.keychain.saveFailed %@": "Keychain Speicherfehler: %@",
         "error.keychain.encodingFailed": "Wert konnte nicht als UTF-8 kodiert werden"
     ]
 
@@ -73,6 +73,7 @@ final class ErrorLocalizationTests: XCTestCase {
         let saveFailed = try XCTUnwrap(KeychainError.saveFailed(-25299).errorDescription)
         XCTAssertFalse(saveFailed.hasPrefix("error."))
         XCTAssertTrue(saveFailed.contains("-25299"))
+        XCTAssertFalse(saveFailed.contains("25,299") || saveFailed.contains("25.299"))
         XCTAssertEqual(KeychainError.encodingFailed.errorDescription, String(localized: "error.keychain.encodingFailed"))
         XCTAssertNotEqual(KeychainError.encodingFailed.errorDescription, "error.keychain.encodingFailed")
     }

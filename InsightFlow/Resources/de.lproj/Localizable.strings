@@ -442,7 +442,7 @@
 "error.api.twoFactorRequired" = "Für dieses Konto ist eine Bestätigung in zwei Schritten aktiv. Bitte melde dich über die Anmeldemaske an.";
 "error.api.umamiCloudRequiresAPIKey" = "Umami Cloud verwendet keine Anmeldung mit Benutzername und Passwort. Bitte erzeuge in Umami unter Einstellungen → API keys einen Schlüssel und trage ihn hier ein.";
 "error.api.invalidAPIKey" = "Der API-Schlüssel wurde nicht akzeptiert. Bitte prüfe ihn in Umami unter Einstellungen → API keys.";
-"error.keychain.saveFailed %lld" = "Keychain Speicherfehler: %lld";
+"error.keychain.saveFailed %@" = "Keychain Speicherfehler: %@";
 "error.keychain.encodingFailed" = "Wert konnte nicht als UTF-8 kodiert werden";
 "error.plausible.sitesAPIUnavailable" = "Diese Funktion benötigt die Plausible Sites-API, die es nur in Plausible Cloud und Enterprise gibt. Selbst gehostete Community-Edition-Server bieten sie nicht an.";
 
