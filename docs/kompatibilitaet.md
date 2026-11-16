@@ -38,6 +38,27 @@ ebenfalls ab 3.4 möglich. Der Schlüssel geht wie ein Anmelde-Token als
 läuft nicht ab. Die Admin-Routen (`/api/admin/…`) sind für Schlüssel gesperrt;
 die App ruft sie nicht auf.
 
+### Was sich mit 3.5 ändert
+
+Die Datenrouten antworten unverändert. Drei Dinge fängt die App ab:
+
+- **Pflicht zur Bestätigung in zwei Schritten.** Verlangt der Server sie, ist
+  sie für das Konto aber noch nicht eingerichtet, gibt der Login ein Token aus,
+  mit dem jede andere Route `403` mit `two-factor-error-setup-required`
+  liefert. Die App prüft das direkt nach dem Login an `/api/me` und verweist
+  auf die Einrichtung in der Weboberfläche. API-Schlüssel sind davon nicht
+  betroffen.
+- **Standardpasswort.** `passwordChangeRequired` im Login-Ergebnis führt zu
+  einem Hinweis im Dashboard. Ältere Server senden das Feld nicht.
+- **Cohorts mit abgeschaffter Aktion** (weder Seite noch Ereignis) lassen jede
+  Abfrage mit `500` scheitern. Die App meldet das und bietet an, ohne Cohort
+  weiterzuarbeiten.
+
+Den neuen Parameter `period` nutzt die App nicht: Server vor 3.5 verlangen
+`startAt`/`endAt`, und eine Versionsabfrage gibt es nicht. Zudem rechnet der
+Server anders: Die Woche beginnt nach `en-US` am Sonntag, `7d` zählt rollend
+ab jetzt. Die App beginnt die Woche am Montag und zählt ganze Kalendertage.
+
 ### Umami Cloud
 
 Cloud kennt `POST /api/auth/login` nicht — der Endpunkt antwortet dort mit 404.
