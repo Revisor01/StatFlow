@@ -47,6 +47,7 @@
 "dashboard.offlineData %@" = "Offline – Last data from %@";
 "dashboard.offlineExpired" = "Offline – cached data is too old to display";
 "detail.offline" = "Offline – data unavailable";
+"dashboard.passwordChangeRequired" = "This Umami account still uses the default password. Please change it in the Umami web interface.";
 "dashboard.reorder.hint" = "Hold and drag to reorder";
 "dashboard.edit.button" = "Customize Dashboard";
 "dashboard.edit.order" = "Order";

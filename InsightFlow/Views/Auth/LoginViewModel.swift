@@ -34,9 +34,9 @@ class LoginViewModel: ObservableObject {
             let result = try await umamiAPI.login(baseURL: url, username: username, password: password)
 
             switch result {
-            case .token(let token):
+            case .token(let session):
                 await createAccount(
-                    token: token,
+                    session: session,
                     serverURL: serverURL,
                     username: username,
                     accountName: accountName
@@ -65,7 +65,7 @@ class LoginViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let token = try await umamiAPI.verifyTwoFactor(
+            let session = try await umamiAPI.verifyTwoFactor(
                 baseURL: pending.url,
                 partialToken: pending.partialToken,
                 code: code,
@@ -73,7 +73,7 @@ class LoginViewModel: ObservableObject {
             )
 
             await createAccount(
-                token: token,
+                session: session,
                 serverURL: pending.serverURL,
                 username: pending.username,
                 accountName: pending.accountName
@@ -94,13 +94,14 @@ class LoginViewModel: ObservableObject {
         requiresTwoFactor = false
     }
 
-    private func createAccount(token: String, serverURL: String, username: String, accountName: String) async {
+    private func createAccount(session: UmamiLoginSession, serverURL: String, username: String, accountName: String) async {
         let account = AnalyticsAccount(
             name: accountName.isEmpty ? username : accountName,
             serverURL: serverURL,
             providerType: .umami,
-            credentials: AccountCredentials(token: token, apiKey: nil)
+            credentials: AccountCredentials(token: session.token, apiKey: nil)
         )
+        PasswordChangeNotice.record(accountId: account.id, required: session.passwordChangeRequired)
         AccountManager.shared.addAccount(account)
         await AccountManager.shared.setActiveAccount(account)
     }

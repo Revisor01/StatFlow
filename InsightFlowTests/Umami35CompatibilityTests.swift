@@ -68,4 +68,85 @@ final class Umami35CompatibilityTests: XCTestCase {
         XCTAssertNotEqual(message, "error.twoFactorSetupRequired")
         XCTAssertNotEqual(message, APIError.authenticationFailed.errorDescription)
     }
+
+    // MARK: - passwordChangeRequired
+
+    func testLoginResponseFrom35DecodesPasswordChangeRequired() throws {
+        let json = """
+        {"token":"abc","user":{"id":"u1","username":"admin","role":"admin","isAdmin":true,"passwordChangeRequired":true,"teams":[]}}
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(UmamiAuthResponse.self, from: json)
+
+        XCTAssertEqual(response.token, "abc")
+        XCTAssertEqual(response.user?.passwordChangeRequired, true)
+        XCTAssertTrue(response.passwordChangeRequired)
+    }
+
+    func testLoginResponseWithFalseFlag() throws {
+        let json = """
+        {"token":"abc","user":{"id":"u1","username":"admin","passwordChangeRequired":false}}
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(UmamiAuthResponse.self, from: json)
+
+        XCTAssertEqual(response.user?.passwordChangeRequired, false)
+        XCTAssertFalse(response.passwordChangeRequired)
+    }
+
+    func testLoginResponseFromOlderServerDecodesWithoutFlag() throws {
+        let json = """
+        {"token":"abc","user":{"id":"u1","username":"admin","role":"admin","isAdmin":true}}
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(UmamiAuthResponse.self, from: json)
+
+        XCTAssertEqual(response.token, "abc")
+        XCTAssertEqual(response.user?.username, "admin")
+        XCTAssertNil(response.user?.passwordChangeRequired)
+        XCTAssertFalse(response.passwordChangeRequired)
+    }
+
+    func testTwoFactorLoginResponseDecodesWithoutUser() throws {
+        let json = """
+        {"requiresTwoFactor":true,"partialToken":"partial"}
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(UmamiAuthResponse.self, from: json)
+
+        XCTAssertNil(response.token)
+        XCTAssertEqual(response.requiresTwoFactor, true)
+        XCTAssertEqual(response.partialToken, "partial")
+        XCTAssertNil(response.user)
+        XCTAssertFalse(response.passwordChangeRequired)
+    }
+
+    func testPasswordChangeNoticeMarksAndClearsOneAccount() {
+        let first = UUID()
+        let second = UUID()
+
+        var raw = PasswordChangeNotice.updated("", accountId: first, required: true)
+        raw = PasswordChangeNotice.updated(raw, accountId: second, required: true)
+        XCTAssertTrue(PasswordChangeNotice.isMarked(raw, accountId: first))
+        XCTAssertTrue(PasswordChangeNotice.isMarked(raw, accountId: second))
+        XCTAssertEqual(PasswordChangeNotice.accountIds(in: raw).count, 2)
+
+        raw = PasswordChangeNotice.updated(raw, accountId: first, required: false)
+        XCTAssertFalse(PasswordChangeNotice.isMarked(raw, accountId: first))
+        XCTAssertTrue(PasswordChangeNotice.isMarked(raw, accountId: second))
+        XCTAssertEqual(raw, second.uuidString)
+    }
+
+    func testPasswordChangeNoticeRecordWritesDefaults() throws {
+        let suite = "PasswordChangeNoticeTests"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let account = UUID()
+
+        PasswordChangeNotice.record(accountId: account, required: true, defaults: defaults)
+        XCTAssertEqual(defaults.string(forKey: PasswordChangeNotice.storageKey), account.uuidString)
+
+        PasswordChangeNotice.record(accountId: account, required: false, defaults: defaults)
+        XCTAssertEqual(defaults.string(forKey: PasswordChangeNotice.storageKey), "")
+    }
 }

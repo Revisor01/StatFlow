@@ -331,7 +331,7 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         // Ohne Rückfrage: ein zweiter Faktor braucht die Login-Ansicht.
-        guard case .token(let token) = try await login(
+        guard case .token(let session) = try await login(
             baseURL: url,
             username: username,
             password: password
@@ -340,11 +340,11 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         try KeychainService.save(serverURL, for: .serverURL)
-        try KeychainService.save(token, for: .token)
+        try KeychainService.save(session.token, for: .token)
         try KeychainService.save(username, for: .username)
         try KeychainService.save(AnalyticsProviderType.umami.rawValue, for: .providerType)
 
-        await configure(baseURL: url, token: token)
+        await configure(baseURL: url, token: session.token)
     }
 
     /// Prüft einen API-Schlüssel gegen eine echte Route; die Cloud antwortet ohne Schlüssel 400, mit ungültigem 401.
@@ -521,7 +521,7 @@ actor UmamiAPI: AnalyticsProvider {
 
     /// Ergebnis eines Logins; ab 3.3 kommt bei Zwei-Faktor statt Token ein `partialToken` für `api/2fa/verify`.
     enum LoginResult: Sendable {
-        case token(String)
+        case token(UmamiLoginSession)
         case twoFactorRequired(partialToken: String)
     }
 
@@ -547,23 +547,11 @@ actor UmamiAPI: AnalyticsProvider {
             throw APIError.authenticationFailed
         }
 
-        struct LoginResponse: Codable {
-            let token: String?
-            let requiresTwoFactor: Bool?
-            let partialToken: String?
-            let user: User?
-
-            struct User: Codable {
-                let id: String?
-                let username: String?
-            }
-        }
-
-        let loginResponse = try JSONDecoder().decode(LoginResponse.self, from: data)
+        let loginResponse = try JSONDecoder().decode(UmamiAuthResponse.self, from: data)
 
         if let token = loginResponse.token {
             try await ensureSessionUsable(baseURL: baseURL, token: token)
-            return .token(token)
+            return .token(UmamiLoginSession(token: token, passwordChangeRequired: loginResponse.passwordChangeRequired))
         }
 
         if loginResponse.requiresTwoFactor == true, let partialToken = loginResponse.partialToken {
@@ -579,7 +567,7 @@ actor UmamiAPI: AnalyticsProvider {
         partialToken: String,
         code: String,
         isBackupCode: Bool = false
-    ) async throws -> String {
+    ) async throws -> UmamiLoginSession {
         let verifyURL = baseURL.appendingPathComponent("api/2fa/verify")
 
         var request = URLRequest(url: verifyURL)
@@ -624,13 +612,12 @@ actor UmamiAPI: AnalyticsProvider {
             }
         }
 
-        struct VerifyResponse: Codable {
-            let token: String
+        let verifyResponse = try JSONDecoder().decode(UmamiAuthResponse.self, from: data)
+        guard let token = verifyResponse.token else {
+            throw APIError.invalidResponse
         }
-
-        let token = try JSONDecoder().decode(VerifyResponse.self, from: data).token
         try await ensureSessionUsable(baseURL: baseURL, token: token)
-        return token
+        return UmamiLoginSession(token: token, passwordChangeRequired: verifyResponse.passwordChangeRequired)
     }
 
     /// Umami ab 3.5 stellt bei erzwungener, nicht eingerichteter 2FA ein Token aus, das jede Datenroute mit 403 ablehnt.
@@ -1933,6 +1920,30 @@ actor UmamiAPI: AnalyticsProvider {
 
         return data
     }
+}
+
+/// Antwort von `api/auth/login` und `api/2fa/verify`; `passwordChangeRequired` senden erst Server ab 3.5.
+struct UmamiAuthResponse: Decodable, Sendable {
+    let token: String?
+    let requiresTwoFactor: Bool?
+    let partialToken: String?
+    let user: User?
+
+    struct User: Decodable, Sendable {
+        let id: String?
+        let username: String?
+        let passwordChangeRequired: Bool?
+    }
+
+    var passwordChangeRequired: Bool {
+        user?.passwordChangeRequired == true
+    }
+}
+
+/// Vollständige Anmeldung nach Login oder Code-Bestätigung.
+struct UmamiLoginSession: Sendable, Equatable {
+    let token: String
+    let passwordChangeRequired: Bool
 }
 
 /// Verknüpfung mehrerer Filter (`match`-Parameter in Umami v3).

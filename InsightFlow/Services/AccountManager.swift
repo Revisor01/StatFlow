@@ -119,6 +119,7 @@ class AccountManager: ObservableObject {
     func removeAccount(_ account: AnalyticsAccount) {
         accounts.removeAll { $0.id == account.id }
         KeychainService.deleteCredentials(for: account.id.uuidString)
+        PasswordChangeNotice.record(accountId: account.id, required: false)
         saveAccounts()
 
         // If we removed the active account, switch to another one
