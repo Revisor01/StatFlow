@@ -16,6 +16,8 @@ ersten Store-Veröffentlichung.
 
 ## [Unreleased]
 
+## [2.3.0] – 2026-11-17
+
 ### Hinzugefügt
 
 - Verlangt ein Umami-Server die Bestätigung in zwei Schritten, die für das Konto noch nicht eingerichtet ist, erklärt die Anmeldung jetzt, dass sie zuerst in der Umami-Weboberfläche eingerichtet werden muss, statt leere Ansichten zu zeigen.
@@ -23,6 +25,7 @@ ersten Store-Veröffentlichung.
 - Lässt sich eine gewählte Cohort nicht mehr auswerten, weil sie eine von Umami abgeschaffte Aktion nutzt, erklärt die Website-Ansicht das und bietet an, ohne Cohort weiterzuarbeiten, statt leere Kacheln zu zeigen.
 
 ### Geändert
+
 - Fehlermeldungen bei Anmeldung und Serverfehlern erscheinen jetzt auch auf Englisch, wenn das Gerät nicht auf Deutsch eingestellt ist.
 - Die deutschen Fehlermeldungen sprechen jetzt wie der Rest der App mit Du an.
 - Neue Lizenz: GNU AGPL v3.0 statt GPL-3.0: Die Pflicht, Änderungen offenzulegen, gilt jetzt auch für den Betrieb als Webdienst.
@@ -317,7 +320,8 @@ Erste Fassung als *InsightFlow*.
 - Offline-Caching und verbesserte Diagrammskalierung.
 - Datenschutzerklärung im README.
 
-[Unreleased]: https://github.com/Revisor01/StatFlow/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/Revisor01/StatFlow/compare/2.3.0...HEAD
+[2.3.0]: https://github.com/Revisor01/StatFlow/compare/v2.2.0...2.3.0
 [2.2.0]: https://github.com/Revisor01/StatFlow/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/Revisor01/StatFlow/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/Revisor01/StatFlow/compare/v1.0.6...v2.0.0
