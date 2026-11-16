@@ -47,6 +47,8 @@
 "dashboard.offlineData %@" = "Offline – Letzte Daten von %@";
 "dashboard.offlineExpired" = "Offline – gecachte Daten sind zu alt";
 "detail.offline" = "Offline – Daten nicht verfügbar";
+"detail.cohortNeedsUpdate" = "Diese Cohort lässt sich auf dem Server nicht mehr auswerten, vermutlich wegen einer Aktion, die Umami nicht mehr unterstützt. Aktualisiere sie in der Umami-Weboberfläche.";
+"detail.cohortNeedsUpdate.clear" = "Ohne Cohort anzeigen";
 "dashboard.passwordChangeRequired" = "Für dieses Umami-Konto ist noch das Standardpasswort gesetzt. Ändere es bitte in der Umami-Weboberfläche.";
 "dashboard.reorder.hint" = "Halte und ziehe um die Reihenfolge zu andern";
 "dashboard.edit.button" = "Dashboard anpassen";
@@ -420,6 +422,7 @@
 "error.network" = "Netzwerkfehler";
 "error.auth" = "Anmeldung fehlgeschlagen";
 "error.twoFactorSetupRequired" = "Dein Umami-Server verlangt für dieses Konto die Bestätigung in zwei Schritten. Richte sie zuerst in der Umami-Weboberfläche ein und melde dich dann hier erneut an.";
+"error.cohortNeedsUpdate" = "Die gewählte Cohort lässt sich nicht auswerten. Sie nutzt vermutlich eine Aktion, die Umami nicht mehr unterstützt. Aktualisiere die Cohort in der Umami-Weboberfläche oder wähle eine andere.";
 "error.invalidURL" = "Ungültige Server-URL";
 "error.notAuthenticated" = "Nicht angemeldet";
 "error.invalidCredentials" = "Ungültige Anmeldedaten";

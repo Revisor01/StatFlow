@@ -47,6 +47,8 @@
 "dashboard.offlineData %@" = "Offline – Last data from %@";
 "dashboard.offlineExpired" = "Offline – cached data is too old to display";
 "detail.offline" = "Offline – data unavailable";
+"detail.cohortNeedsUpdate" = "This cohort can no longer be evaluated by the server, probably because it uses an action Umami no longer supports. Update it in the Umami web interface.";
+"detail.cohortNeedsUpdate.clear" = "Show without cohort";
 "dashboard.passwordChangeRequired" = "This Umami account still uses the default password. Please change it in the Umami web interface.";
 "dashboard.reorder.hint" = "Hold and drag to reorder";
 "dashboard.edit.button" = "Customize Dashboard";
@@ -419,6 +421,7 @@
 "error.network" = "Network Error";
 "error.auth" = "Login Failed";
 "error.twoFactorSetupRequired" = "Your Umami server requires two-step verification for this account. Set it up in the Umami web interface first, then sign in here again.";
+"error.cohortNeedsUpdate" = "The selected cohort can't be evaluated. It probably uses an action Umami no longer supports. Update the cohort in the Umami web interface or choose another one.";
 "error.invalidURL" = "Invalid server URL";
 "error.notAuthenticated" = "Not authenticated";
 "error.invalidCredentials" = "Invalid credentials";

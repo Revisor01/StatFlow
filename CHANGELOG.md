@@ -20,6 +20,7 @@ ersten Store-Veröffentlichung.
 
 - Verlangt ein Umami-Server die Bestätigung in zwei Schritten, die für das Konto noch nicht eingerichtet ist, erklärt die Anmeldung jetzt, dass sie zuerst in der Umami-Weboberfläche eingerichtet werden muss, statt leere Ansichten zu zeigen.
 - Meldet ein Umami-Server beim Anmelden, dass noch das Standardpasswort gesetzt ist, weist ein schließbarer Hinweis im Dashboard darauf hin, es in der Umami-Weboberfläche zu ändern.
+- Lässt sich eine gewählte Cohort nicht mehr auswerten, weil sie eine von Umami abgeschaffte Aktion nutzt, erklärt die Website-Ansicht das und bietet an, ohne Cohort weiterzuarbeiten, statt leere Kacheln zu zeigen.
 
 ### Geändert
 - Neue Lizenz: GNU AGPL v3.0 statt GPL-3.0: Die Pflicht, Änderungen offenzulegen, gilt jetzt auch für den Betrieb als Webdienst.

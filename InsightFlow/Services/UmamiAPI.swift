@@ -658,14 +658,23 @@ actor UmamiAPI: AnalyticsProvider {
     }
 
     /// Übersetzt eine Fehlerantwort der Datenrouten in einen `APIError`.
-    static func apiError(statusCode: Int, data: Data) -> APIError {
+    static func apiError(statusCode: Int, data: Data, sentCohort: Bool = false) -> APIError {
         if statusCode == 401 {
             return .unauthorized
         }
         if isTwoFactorSetupRequired(statusCode: statusCode, data: data) {
             return .twoFactorSetupRequired
         }
+        if isRetiredCohortError(statusCode: statusCode, data: data, sentCohort: sentCohort) {
+            return .cohortNeedsUpdate
+        }
         return .serverError(statusCode)
+    }
+
+    /// Umami ab 3.5 wirft bei Kohorten mit abgeschaffter Aktion einen unbehandelten Fehler, die Antwort ist ein 500 ohne Code.
+    static func isRetiredCohortError(statusCode: Int, data: Data, sentCohort: Bool) -> Bool {
+        guard sentCohort, (500...599).contains(statusCode) else { return false }
+        return statusCode == 500 || String(decoding: data, as: UTF8.self).contains("retired action")
     }
 
     // MARK: - Websites
@@ -1861,7 +1870,11 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            throw Self.apiError(statusCode: httpResponse.statusCode, data: data)
+            throw Self.apiError(
+                statusCode: httpResponse.statusCode,
+                data: data,
+                sentCohort: queryItems.contains { $0.name == "cohort" }
+            )
         }
 
         return data
@@ -1889,7 +1902,12 @@ actor UmamiAPI: AnalyticsProvider {
         }
 
         guard (200...299).contains(httpResponse.statusCode) else {
-            throw Self.apiError(statusCode: httpResponse.statusCode, data: data)
+            let filters = body["filters"] as? [String: Any]
+            throw Self.apiError(
+                statusCode: httpResponse.statusCode,
+                data: data,
+                sentCohort: body["cohort"] != nil || filters?["cohort"] != nil
+            )
         }
 
         return data
@@ -1973,6 +1991,7 @@ enum APIError: LocalizedError, Sendable {
     case umamiCloudRequiresAPIKey
     case invalidAPIKey
     case twoFactorSetupRequired
+    case cohortNeedsUpdate
 
     var errorDescription: String? {
         switch self {
@@ -2000,6 +2019,8 @@ enum APIError: LocalizedError, Sendable {
             return "Der API-Schlüssel wurde nicht akzeptiert. Bitte in Umami unter Einstellungen → API keys prüfen."
         case .twoFactorSetupRequired:
             return String(localized: "error.twoFactorSetupRequired")
+        case .cohortNeedsUpdate:
+            return String(localized: "error.cohortNeedsUpdate")
         }
     }
 }

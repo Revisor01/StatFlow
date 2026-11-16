@@ -149,4 +149,43 @@ final class Umami35CompatibilityTests: XCTestCase {
         PasswordChangeNotice.record(accountId: account, required: false, defaults: defaults)
         XCTAssertEqual(defaults.string(forKey: PasswordChangeNotice.storageKey), "")
     }
+
+    // MARK: - Kohorte mit abgeschaffter Aktion
+
+    func testServerErrorWithCohortMapsToCohortNeedsUpdate() {
+        guard case .cohortNeedsUpdate = UmamiAPI.apiError(statusCode: 500, data: Data(), sentCohort: true) else {
+            return XCTFail("500 bei gesetzter Kohorte muss auf die Kohorte verweisen")
+        }
+    }
+
+    func testServerErrorWithoutCohortStaysServerError() {
+        guard case .serverError(let code) = UmamiAPI.apiError(statusCode: 500, data: Data(), sentCohort: false) else {
+            return XCTFail("500 ohne Kohorte muss ein Serverfehler bleiben")
+        }
+        XCTAssertEqual(code, 500)
+    }
+
+    func testRetiredActionMessageIsRecognizedOnOther5xx() {
+        let body = "Error: This cohort uses a retired action and must be updated.".data(using: .utf8)!
+
+        XCTAssertTrue(UmamiAPI.isRetiredCohortError(statusCode: 502, data: body, sentCohort: true))
+        XCTAssertFalse(UmamiAPI.isRetiredCohortError(statusCode: 502, data: Data(), sentCohort: true))
+        XCTAssertFalse(UmamiAPI.isRetiredCohortError(statusCode: 502, data: body, sentCohort: false))
+    }
+
+    func testClientErrorsWithCohortAreNotCohortErrors() {
+        XCTAssertFalse(UmamiAPI.isRetiredCohortError(statusCode: 400, data: Data(), sentCohort: true))
+        XCTAssertFalse(UmamiAPI.isRetiredCohortError(statusCode: 404, data: Data(), sentCohort: true))
+        guard case .unauthorized = UmamiAPI.apiError(statusCode: 401, data: Data(), sentCohort: true) else {
+            return XCTFail("401 muss auch mit Kohorte .unauthorized bleiben")
+        }
+    }
+
+    func testCohortNeedsUpdateHasLocalizedMessage() {
+        let message = APIError.cohortNeedsUpdate.errorDescription
+
+        XCTAssertEqual(message, String(localized: "error.cohortNeedsUpdate"))
+        XCTAssertNotEqual(message, "error.cohortNeedsUpdate")
+        XCTAssertNotEqual(message, APIError.serverError(500).errorDescription)
+    }
 }
