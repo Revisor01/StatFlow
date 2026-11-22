@@ -57,7 +57,7 @@ and credentials in the app, pick your websites, done.
 
 | Provider | Required | Last tested against |
 |----------|----------|---------------------|
-| **Umami** | 3.0 or later, self-hosted or cloud | 3.3.0, 3.4.0 and 3.4.1 |
+| **Umami** | 3.0 or later, self-hosted or cloud | 3.3.0, 3.4.0, 3.4.1; 3.5.0 for login and data routes |
 | **Plausible** | CE 2.1 or later, or cloud | CE 3.2.1 |
 
 Umami 2.x answers in a different format and is not supported. Some reports need

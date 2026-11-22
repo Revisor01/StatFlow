@@ -57,7 +57,7 @@ Adresse des Servers und die Zugangsdaten eintragen, Websites auswählen, fertig.
 
 | Anbieter | Nötig | Zuletzt geprüft gegen |
 |----------|-------|-----------------------|
-| **Umami** | ab 3.0, selbst betrieben oder Cloud | 3.3.0, 3.4.0 und 3.4.1 |
+| **Umami** | ab 3.0, selbst betrieben oder Cloud | 3.3.0, 3.4.0, 3.4.1; 3.5.0 an Anmeldung und Datenrouten |
 | **Plausible** | ab CE 2.1 oder Cloud | CE 3.2.1 |
 
 Umami 2.x antwortet in einem anderen Format und wird nicht unterstützt. Einige
