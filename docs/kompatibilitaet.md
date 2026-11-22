@@ -1,12 +1,14 @@
 # Was bei welchem Server geht
 
-Stand: Oktober 2026. Die Angaben unter „zuletzt geprüft" bezeichnen die
+Stand: November 2026. Die Angaben unter „zuletzt geprüft" bezeichnen die
 Versionen, gegen deren laufende Instanzen sämtliche Abfragen der App zuletzt
-durchgespielt wurden.
+durchgespielt wurden. Gegen 3.5.0 sind am 17.11.2026 Anmeldung (mit und ohne
+Bestätigung in zwei Schritten), Konto, Website-Liste und Kennzahlen geprüft,
+noch nicht alle Auswertungen.
 
 | Anbieter | Nötig | Zuletzt geprüft |
 |----------|-------|-----------------|
-| **Umami** | ab 3.0, selbst betrieben oder Cloud | 3.3.0 und 3.4.0 |
+| **Umami** | ab 3.0, selbst betrieben oder Cloud | 3.3.0, 3.4.0, 3.4.1; 3.5.0 teilweise |
 | **Plausible** | ab CE 2.1 oder Cloud | CE 3.2.1 |
 
 ## Umami
